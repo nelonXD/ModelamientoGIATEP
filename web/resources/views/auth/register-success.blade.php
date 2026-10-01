@@ -1,0 +1,3 @@
+<x-layouts.guest title='Solicitud enviada · GIATEP'>
+<div class='card p-8 text-center sm:p-12'><div class='mx-auto flex size-16 items-center justify-center rounded-full bg-emerald-100 text-3xl text-emerald-700'>✓</div><p class='eyebrow mt-6'>Solicitud recibida</p><h2 class='mt-2 text-3xl font-bold'>Tu solicitud fue enviada</h2><p class='mx-auto mt-4 max-w-md text-slate-600'>Un administrador debe revisarla antes de que puedas acceder. El rol solicitado no concede permisos hasta su aprobación.</p><a href='{{ route('login') }}' class='btn-primary mt-8 inline-flex'>Volver al inicio de sesión</a></div>
+</x-layouts.guest>
