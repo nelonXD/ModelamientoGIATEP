@@ -11,6 +11,7 @@ Route::redirect('/', '/login');
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
+    Route::post('/login/verificar-rut', [AuthenticatedSessionController::class, 'checkRut'])->middleware('throttle:10,1')->name('login.check-rut');
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware('throttle:5,1')->name('login.store');
     Route::get('/solicitar-acceso', [RegistrationRequestController::class, 'create'])->name('register');
     Route::post('/solicitar-acceso', [RegistrationRequestController::class, 'store'])->middleware('throttle:5,1')->name('register.store');

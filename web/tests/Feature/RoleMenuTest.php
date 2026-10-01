@@ -20,9 +20,37 @@ class RoleMenuTest extends TestCase
 
     public function test_prevention_menu_includes_statistics_and_reports(): void
     {
-        $user = $this->userWithRole('prevencion', 'Unidad de Prevención');
+        $user = $this->userWithRole('prevencion', 'Prevencionista');
 
-        $this->actingAs($user)->get('/inicio')->assertSee('Dashboards y estadísticas')->assertSee('Reportes');
+        $this->actingAs($user)->get('/inicio')
+            ->assertSee('Prevencionista')
+            ->assertSee('Revisiones y validaciones')
+            ->assertSee('Dashboards y estadísticas')
+            ->assertSee('Reportes');
+    }
+
+    public function test_direct_management_dashboard_excludes_global_statistics(): void
+    {
+        $user = $this->userWithRole('jefatura', 'Jefatura');
+
+        $this->actingAs($user)->get('/inicio')
+            ->assertSee('Jefatura')
+            ->assertSee('Investigaciones')
+            ->assertSee('Observaciones')
+            ->assertDontSee('Dashboards y estadísticas')
+            ->assertDontSee('Reportes');
+    }
+
+    public function test_senior_management_dashboard_includes_global_statistics(): void
+    {
+        $user = $this->userWithRole('alta-direccion', 'Alta Dirección');
+
+        $this->actingAs($user)->get('/inicio')
+            ->assertSee('Alta Dirección')
+            ->assertSee('Investigaciones')
+            ->assertSee('Dashboards y estadísticas')
+            ->assertSee('Reportes')
+            ->assertDontSee('Revisiones y validaciones');
     }
 
     public function test_delegate_menu_excludes_global_statistics(): void
