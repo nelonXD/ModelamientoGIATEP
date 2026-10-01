@@ -18,6 +18,7 @@ class AuthenticationTest extends TestCase
             ->assertSee('data-login-continue', false)
             ->assertSee('data-login-password-step', false)
             ->assertSee('Credenciales de prueba')
+            ->assertSee('21.200.314-K')
             ->assertSee('44.444.444-4')
             ->assertSee('55.555.555-5')
             ->assertSee('GiatepDemo2026!');

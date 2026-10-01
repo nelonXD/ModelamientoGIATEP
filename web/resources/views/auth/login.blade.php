@@ -20,6 +20,7 @@
     <h2 id='demo-credentials-title' class='mt-2 text-lg font-bold text-slate-950'>Credenciales de prueba</h2>
     <p class='mt-1 text-sm text-slate-600'>Todas las cuentas usan la contraseña <code class='rounded bg-white px-1.5 py-0.5 font-bold text-blue-900'>GiatepDemo2026!</code></p>
     <dl class='mt-4 grid gap-3 text-sm sm:grid-cols-2'>
+        <div><dt>Administrador</dt><dd class='font-mono'>21.200.314-K</dd></div>
         <div><dt>Comité Paritario</dt><dd class='font-mono'>44.444.444-4</dd></div>
         <div><dt>Delegado de Seguridad</dt><dd class='font-mono'>55.555.555-5</dd></div>
         <div><dt>Prevencionista</dt><dd class='font-mono'>11.111.111-1</dd></div>
