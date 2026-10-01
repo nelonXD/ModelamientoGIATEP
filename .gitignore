@@ -1,6 +1,7 @@
 /.agents/
 /.codex/
 /db_data/
+/Pasted text.txt
 /web/.env
 /web/.env.*
 !/web/.env.example
