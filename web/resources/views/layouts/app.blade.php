@@ -3,13 +3,13 @@
 @php
 $items = [
 ['Inicio', 'dashboard.view', route('dashboard')], ['Inicio administrativo', 'admin.dashboard', route('dashboard')],
-['Casos', 'cases.read', route('modules.show', 'casos')], ['Investigaciones', 'investigations.read', route('modules.show', 'investigaciones')],
-['Revisiones y validaciones', 'reviews.read', route('modules.show', 'revisiones')], ['Medidas y planes de acción', 'measures.read', route('modules.show', 'medidas')],
-['Observaciones', 'observations.read', route('modules.show', 'observaciones')], ['Dashboards y estadísticas', 'statistics.read', route('modules.show', 'estadisticas')],
-['Reportes', 'reports.export', route('modules.show', 'reportes')], ['Solicitudes de registro', 'registration-requests.review', route('admin.registration-requests.index')],
-['Usuarios', 'users.manage', route('modules.show', 'usuarios')], ['Roles y permisos', 'roles.manage', route('modules.show', 'roles')],
-['Establecimientos', 'establishments.manage', route('modules.show', 'establecimientos')], ['Parámetros institucionales', 'settings.manage', route('modules.show', 'parametros')],
-['Mi perfil', 'profile.read', route('modules.show', 'perfil')],
+['Casos', 'cases.read', route('modules.cases.index')], ['Investigaciones', 'investigations.read', route('modules.investigations.index')],
+['Revisiones y validaciones', 'reviews.read', route('modules.reviews.index')], ['Medidas y planes de acción', 'measures.read', route('modules.measures.index')],
+['Observaciones', 'observations.read', route('modules.observations.index')], ['Dashboards y estadísticas', 'statistics.read', route('modules.statistics.index')],
+['Reportes', 'reports.export', route('modules.reports.index')], ['Solicitudes de registro', 'registration-requests.review', route('admin.registration-requests.index')],
+['Usuarios', 'users.manage', route('admin.users.index')], ['Roles y permisos', 'roles.manage', route('admin.roles.index')],
+['Establecimientos', 'establishments.manage', route('admin.establishments.index')], ['Parámetros institucionales', 'settings.manage', route('admin.settings.index')],
+['Mi perfil', 'profile.read', route('modules.profile.index')],
 ];
 @endphp
 <div class='min-h-screen lg:grid lg:grid-cols-[18rem_1fr]'>

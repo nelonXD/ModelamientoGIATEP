@@ -1,0 +1,16 @@
+name: Despliegue a producción
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deployment-placeholder:
+    name: Preparar despliegue de producción
+    runs-on: ubuntu-latest
+    environment: produccion
+    steps:
+      - name: Estado de configuración
+        run: echo "Pendiente definir aprobaciones, servidor, secretos y estrategia de despliegue para producción."

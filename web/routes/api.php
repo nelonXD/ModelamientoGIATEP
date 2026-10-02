@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthTokenController;
+use App\Http\Controllers\Api\V1\DashboardDataController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function (): void {
@@ -10,6 +11,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
 
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/me', [AuthTokenController::class, 'show'])->name('me');
+        Route::get('/dashboard', DashboardDataController::class)->name('dashboard.show');
         Route::delete('/auth/token', [AuthTokenController::class, 'destroy'])->name('auth.logout');
     });
 });

@@ -26,6 +26,10 @@ class GiatepDemoSeeder extends Seeder
         }
 
         $demoPassword = env('GIATEP_DEMO_PASSWORD');
+        if ((! is_string($demoPassword) || strlen($demoPassword) < 8) && app()->environment(['local', 'testing'])) {
+            $demoPassword = 'GiatepDemo2026!';
+        }
+
         if (! is_string($demoPassword) || strlen($demoPassword) < 8) {
             $this->command?->warn('Define GIATEP_DEMO_PASSWORD con al menos 8 caracteres para crear los usuarios operativos de demostración.');
         } else {
@@ -82,13 +86,17 @@ class GiatepDemoSeeder extends Seeder
         }
 
         $password = env('GIATEP_ADMIN_PASSWORD');
+        if ((! is_string($password) || strlen($password) < 8) && app()->environment(['local', 'testing'])) {
+            $password = $demoPassword;
+        }
+
         if (! is_string($password) || strlen($password) < 8) {
             $this->command?->warn('Define GIATEP_ADMIN_PASSWORD con al menos 8 caracteres para crear el administrador inicial.');
 
             return;
         }
 
-        $admin = User::updateOrCreate(['rut' => '12345678-5'], [
+        $admin = User::updateOrCreate(['rut' => '21200314-K'], [
             'name' => 'Administrador de Demostración', 'email' => 'admin.demo@giatep.local',
             'job_title' => 'Administración de plataforma', 'status' => 'active', 'password' => $password,
         ]);
