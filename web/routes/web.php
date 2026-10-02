@@ -34,7 +34,8 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/cerrar-sesion', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
     Route::prefix('modulos')->name('modules.')->group(function (): void {
-        Route::get('/casos', CaseController::class)->name('cases.index');
+        Route::get('/casos', [CaseController::class, 'index'])->name('cases.index');
+        Route::get('/casos/crear', [CaseController::class, 'create'])->name('cases.create');
         Route::get('/investigaciones', InvestigationController::class)->name('investigations.index');
         Route::get('/revisiones', ReviewController::class)->name('reviews.index');
         Route::get('/medidas', MeasureController::class)->name('measures.index');
