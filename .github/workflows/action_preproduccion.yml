@@ -1,0 +1,16 @@
+name: Despliegue a preproducción
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deployment-placeholder:
+    name: Preparar despliegue de preproducción
+    runs-on: ubuntu-latest
+    environment: preproduccion
+    steps:
+      - name: Estado de configuración
+        run: echo "Pendiente definir servidor, secretos y estrategia de despliegue para preproducción."
