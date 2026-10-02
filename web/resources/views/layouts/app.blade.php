@@ -20,4 +20,5 @@ $items = [
     </aside>
     <div class='min-w-0'><header class='sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 lg:px-8'><button type='button' class='btn-secondary lg:hidden' data-menu-toggle aria-expanded='false'>Menú</button><div><p class='font-bold'>{{ auth()->user()->name }}</p><p class='text-xs text-slate-500'>{{ auth()->user()->roles->pluck('name')->join(' · ') }}</p></div></header><main class='p-4 sm:p-6 lg:p-8'>{{ $slot }}</main></div>
 </div>
+@stack('scripts')
 </body></html>
