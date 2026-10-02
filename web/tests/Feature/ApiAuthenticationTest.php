@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class ApiAuthenticationTest extends TestCase
@@ -94,6 +96,24 @@ class ApiAuthenticationTest extends TestCase
     public function test_protected_routes_require_a_valid_token_with_401(): void
     {
         $this->getJson('/api/v1/me')->assertUnauthorized();
+        $this->getJson('/api/v1/dashboard')->assertUnauthorized();
         $this->deleteJson('/api/v1/auth/token')->assertUnauthorized();
+    }
+
+    public function test_authenticated_user_can_get_role_filtered_dashboard_data(): void
+    {
+        $user = User::factory()->create();
+        $user->roles()->attach(Role::factory()->create([
+            'slug' => 'prevencion',
+            'name' => 'Prevencionista',
+        ]));
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/v1/dashboard')
+            ->assertOk()
+            ->assertJsonPath('user.id', $user->id)
+            ->assertJsonPath('profile.label', 'Prevencionista')
+            ->assertJsonFragment(['module' => 'estadisticas'])
+            ->assertJsonFragment(['module' => 'reportes']);
     }
 }

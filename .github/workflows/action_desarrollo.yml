@@ -1,0 +1,16 @@
+name: Despliegue a desarrollo
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deployment-placeholder:
+    name: Preparar despliegue de desarrollo
+    runs-on: ubuntu-latest
+    environment: desarrollo
+    steps:
+      - name: Estado de configuración
+        run: echo "Pendiente definir servidor, secretos y estrategia de despliegue para desarrollo."

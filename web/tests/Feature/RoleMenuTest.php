@@ -15,7 +15,10 @@ class RoleMenuTest extends TestCase
     {
         $user = $this->userWithRole('administrador', 'Administrador');
 
-        $this->actingAs($user)->get('/inicio')->assertSee('Solicitudes de registro')->assertDontSee('Casos');
+        $this->actingAs($user)->get('/inicio')
+            ->assertSee('Administrador')
+            ->assertSee('Solicitudes de registro')
+            ->assertDontSee('Casos');
     }
 
     public function test_prevention_menu_includes_statistics_and_reports(): void
@@ -34,7 +37,7 @@ class RoleMenuTest extends TestCase
         $user = $this->userWithRole('jefatura', 'Jefatura');
 
         $this->actingAs($user)->get('/inicio')
-            ->assertSee('Jefatura')
+            ->assertSee('Jefatura Directa')
             ->assertSee('Investigaciones')
             ->assertSee('Observaciones')
             ->assertDontSee('Dashboards y estadísticas')
@@ -57,7 +60,20 @@ class RoleMenuTest extends TestCase
     {
         $user = $this->userWithRole('delegado', 'Delegado de Seguridad');
 
-        $this->actingAs($user)->get('/inicio')->assertSee('Casos')->assertDontSee('Dashboards y estadísticas');
+        $this->actingAs($user)->get('/inicio')
+            ->assertSee('Delegado de Seguridad')
+            ->assertSee('Casos')
+            ->assertDontSee('Dashboards y estadísticas');
+    }
+
+    public function test_committee_dashboard_identifies_the_committee_role(): void
+    {
+        $user = $this->userWithRole('cphs', 'Comité Paritario');
+
+        $this->actingAs($user)->get('/inicio')
+            ->assertSee('Comité Paritario')
+            ->assertSee('Casos')
+            ->assertDontSee('Dashboards y estadísticas');
     }
 
     private function userWithRole(string $slug, string $name): User
