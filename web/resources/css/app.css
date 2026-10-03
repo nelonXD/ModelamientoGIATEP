@@ -38,4 +38,74 @@
     .status-pending { @apply bg-amber-100 text-amber-900; }
     .status-approved { @apply bg-emerald-100 text-emerald-800; }
     .status-rejected { @apply bg-red-100 text-red-800; }
+    .filter-bar { @apply grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-2 xl:grid-cols-5; }
+    .table-card { @apply overflow-x-auto; }
+    .data-table { @apply w-full min-w-[760px] text-left text-sm; }
+    .data-table thead { @apply border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500; }
+    .data-table tbody { @apply divide-y divide-slate-100; }
+    .data-table tbody tr { @apply transition hover:bg-sky-50/60; }
+    .data-table small { @apply mt-1 block text-xs text-slate-500; }
+    .text-link { @apply font-bold text-blue-800 hover:underline; }
+    .empty-state { @apply rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-600; }
+    .metric { @apply flex min-h-32 flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm; }
+    .metric span { @apply text-sm font-bold text-slate-600; }
+    .metric strong { @apply mt-3 text-3xl font-black text-slate-950; }
+    .metric small { @apply mt-auto pt-3 text-xs font-bold text-sky-700; }
+    .metric-link { @apply transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md; }
+    .metric-danger { @apply border-red-200 bg-red-50; }
+    .metric-danger strong { @apply text-red-800; }
+    .module-icon { @apply inline-grid h-11 w-11 place-items-center rounded-xl bg-sky-100 text-lg font-black text-sky-800; }
+    .step-pill { @apply inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold text-slate-500; }
+    .step-pill span { @apply grid h-6 w-6 place-items-center rounded-full bg-slate-200; }
+    .step-pill-active { @apply bg-sky-100 text-sky-900; }
+    .step-pill-active span { @apply bg-sky-700 text-white; }
+    .tab-list { @apply flex gap-1 overflow-x-auto border-b border-slate-200; }
+    .tab-button { @apply whitespace-nowrap border-b-2 border-transparent px-4 py-3 text-sm font-bold text-slate-500; }
+    .tab-button-active { @apply border-sky-600 text-sky-800; }
+    .timeline { @apply space-y-0 border-l-2 border-sky-100 pl-5; }
+    .timeline li { @apply relative pb-5 text-sm; }
+    .timeline li::before { content: ''; @apply absolute -left-[1.65rem] top-1 h-3 w-3 rounded-full bg-sky-600 ring-4 ring-white; }
+    .timeline strong, .timeline span { @apply block; }
+    .timeline span { @apply mt-1 text-xs text-slate-500; }
+    .section-link { @apply block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-slate-600 hover:bg-slate-100; }
+    .section-link-active { @apply bg-sky-100 text-sky-900; }
+    .section-title { @apply mb-5 text-xl font-black text-slate-950; }
+    .source-banner { @apply rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900; }
+    .upload-zone { @apply flex cursor-pointer flex-col items-center rounded-2xl border-2 border-dashed border-sky-300 bg-sky-50 p-10 text-center text-sky-900 hover:bg-sky-100; }
+    .upload-zone span { @apply mt-2 text-sm; }
+    .repeat-row { @apply grid items-center gap-3 sm:grid-cols-[auto_1fr_auto]; }
+    .drag-handle { @apply cursor-grab text-slate-400; }
+    .cause-tree { @apply rounded-2xl bg-slate-50 p-5 text-center; }
+    .cause-node { @apply rounded-xl border-2 border-sky-200 bg-white p-4 font-bold text-sky-950 shadow-sm; }
+    .cause-final { @apply mx-auto max-w-md border-blue-700 bg-blue-50; }
+    .cause-connector { @apply py-3 font-black text-sky-700; }
+    .progress { @apply h-2 w-24 overflow-hidden rounded bg-slate-100; }
+    .progress span { @apply block h-full rounded bg-sky-600; }
+    .bar-chart { @apply space-y-4; }
+    .bar-chart > div { @apply grid grid-cols-[10rem_1fr_2rem] items-center gap-3 text-sm; }
+    .bar-chart > div > div { @apply h-3 overflow-hidden rounded-full bg-slate-100; }
+    .bar-chart i { @apply block h-full rounded-full bg-sky-600; }
+    .donut-wrap { @apply flex flex-col items-center gap-8 sm:flex-row; }
+    .donut { @apply h-40 w-40 rounded-full; background: conic-gradient(#0369a1 0 83%, #f59e0b 83% 100%); mask: radial-gradient(circle, transparent 48%, #000 50%); }
+    .donut-wrap ul { @apply space-y-3 text-sm; }
+    .donut-wrap li { @apply flex items-center gap-3; }
+    .donut-wrap li i { @apply h-3 w-3 rounded-full; }
+    .rank { @apply grid h-8 w-8 place-items-center rounded-full bg-sky-100 font-black text-sky-800; }
+    .report-card { @apply flex min-h-48 flex-col rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-sky-300; }
+    .report-card span { @apply text-xs font-black uppercase tracking-wider text-sky-700; }
+    .report-card strong { @apply mt-4 text-lg; }
+    .report-card small { @apply mt-2 text-sm leading-5 text-slate-500; }
+    .report-card-active { @apply border-sky-600 ring-2 ring-sky-100; }
+    .demo-dialog { @apply m-auto w-[min(36rem,calc(100%-2rem))] bg-transparent backdrop:bg-slate-950/50; }
+    .mini-columns { @apply flex h-44 items-end justify-around gap-3 border-b border-slate-200; }
+    .mini-columns > div { @apply flex h-full flex-1 flex-col items-center justify-end gap-1; }
+    .mini-columns > div > span { @apply order-2 w-full max-w-12 rounded-t-lg bg-gradient-to-t from-blue-800 to-sky-400; }
+    .mini-columns strong { @apply order-1 text-sm; }
+    .mini-columns small { @apply order-3 py-2 text-xs text-slate-500; }
+}
+
+@media print {
+    aside, header, nav, .filter-bar, button, .report-card, form { display: none !important; }
+    main { padding: 0 !important; }
+    .print-card { border: 0 !important; box-shadow: none !important; }
 }

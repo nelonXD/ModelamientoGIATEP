@@ -40,7 +40,8 @@ class ModulePagesTest extends TestCase
         $this->actingAs($user)
             ->get(route($routeName))
             ->assertOk()
-            ->assertSee($title);
+            ->assertSee($title)
+            ->assertSee('Prototipo visual');
     }
 
     public function test_role_without_permission_cannot_open_module_page(): void
