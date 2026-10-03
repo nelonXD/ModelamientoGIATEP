@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\Settings\SettingController;
 use App\Http\Controllers\Admin\Users\UserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DemoWorkspaceController;
 use App\Http\Controllers\Modules\Cases\CaseController;
 use App\Http\Controllers\Modules\Investigations\InvestigationController;
 use App\Http\Controllers\Modules\Measures\MeasureController;
@@ -32,6 +33,9 @@ Route::middleware('guest')->group(function (): void {
 Route::middleware('auth')->group(function (): void {
     Route::get('/inicio', DashboardController::class)->name('dashboard');
     Route::post('/cerrar-sesion', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+    Route::get('/prototipo/{module}/{id?}', [DemoWorkspaceController::class, 'show'])->name('demo.show');
+    Route::post('/prototipo/{module}', [DemoWorkspaceController::class, 'action'])->name('demo.action');
+    Route::post('/prototipo-restablecer', [DemoWorkspaceController::class, 'reset'])->name('demo.reset');
 
     Route::prefix('modulos')->name('modules.')->group(function (): void {
         Route::get('/casos', CaseController::class)->name('cases.index');

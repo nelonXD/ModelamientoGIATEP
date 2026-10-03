@@ -41,7 +41,7 @@ class ModulePagesTest extends TestCase
             ->get(route($routeName))
             ->assertOk()
             ->assertSee($title)
-            ->assertSee('Base de diseño');
+            ->assertSee('Prototipo visual');
     }
 
     public function test_role_without_permission_cannot_open_module_page(): void
