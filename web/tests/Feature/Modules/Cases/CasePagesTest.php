@@ -44,7 +44,9 @@ class CasePagesTest extends TestCase
             ->assertSee('Relato del caso y propuesta asistida')
             ->assertSee('Medidas de control y plan de acción')
             ->assertSee('Agregar medida al plan')
-            ->assertSee('Recopilación del caso');
+            ->assertSee('Recopilación del caso')
+            ->assertSee("wizard.addEventListener('click'", false)
+            ->assertSee('showStep(currentStep + 1)', false);
     }
 
     public function test_role_without_case_permission_cannot_open_case_pages(): void
