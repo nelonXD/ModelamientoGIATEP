@@ -21,9 +21,9 @@ class CaseController extends ModuleController
                 'date' => '02-10-2026', 'time' => '09:15', 'location' => 'Pasillo de acceso a box clínico', 'status' => 'Borrador',
                 'summary' => 'Durante el traslado de insumos, la persona resbaló en una superficie húmeda y presentó una molestia en la rodilla derecha.',
                 'witnesses' => 'Testigo de demostración y registro fotográfico pendiente.',
-                'measures' => [
-                    ['measure' => 'Inspeccionar el lugar y registrar las condiciones del piso.', 'owner' => 'Prevención', 'deadline' => '2026-10-05'],
-                    ['measure' => 'Revisar la frecuencia de limpieza y la señalización preventiva.', 'owner' => 'Jefatura del centro', 'deadline' => '2026-10-08'],
+                'evidenceFiles' => [
+                    ['name' => 'fotografia-lugar.jpg', 'type' => 'image/jpeg', 'size' => 248320],
+                    ['name' => 'declaracion-testigo.pdf', 'type' => 'application/pdf', 'size' => 512000],
                 ],
             ],
             [
@@ -34,8 +34,8 @@ class CaseController extends ModuleController
                 'date' => '01-10-2026', 'time' => '08:05', 'location' => 'Intersección cercana al lugar de trabajo', 'status' => 'En revisión',
                 'summary' => 'La persona informó una caída durante su trayecto habitual hacia el establecimiento.',
                 'witnesses' => 'Comprobante de atención y croquis de trayecto disponibles para revisión.',
-                'measures' => [
-                    ['measure' => 'Verificar la concordancia entre horario, recorrido y antecedentes.', 'owner' => 'Comité investigador', 'deadline' => '2026-10-06'],
+                'evidenceFiles' => [
+                    ['name' => 'comprobante-atencion.pdf', 'type' => 'application/pdf', 'size' => 184000],
                 ],
             ],
         ]);

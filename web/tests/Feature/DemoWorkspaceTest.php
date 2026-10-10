@@ -38,6 +38,23 @@ class DemoWorkspaceTest extends TestCase
             ->assertSessionHas('demo_status');
     }
 
+    public function test_investigation_interview_includes_case_witness_and_not_applicable_options(): void
+    {
+        $user = User::factory()->create();
+        $user->roles()->attach(Role::factory()->create(['slug' => 'delegado', 'name' => 'Delegado']));
+
+        $this->actingAs($user)
+            ->get(route('demo.show', ['module' => 'investigations', 'id' => 'INV-2026-011']))
+            ->assertOk()
+            ->assertSee('Testigo presencial directo')
+            ->assertSee('Testigo documental')
+            ->assertSee('4. Reconstrucción cronológica de los hechos')
+            ->assertSee('chronology_not_applicable', false)
+            ->assertSee('7. Equipos de protección personal')
+            ->assertSee('8. Información y capacitación')
+            ->assertSee('No aplica');
+    }
+
     public function test_user_cannot_open_demo_module_without_permission(): void
     {
         $user = User::factory()->create();

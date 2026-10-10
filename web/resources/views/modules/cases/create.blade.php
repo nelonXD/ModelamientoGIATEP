@@ -6,7 +6,7 @@
         </div>
         <nav class='card mt-6 p-4' aria-label='Progreso del registro'>
             <ol class='grid gap-3 sm:grid-cols-4'>
-                @foreach([1 => ['Empleador', 'Datos institucionales'], 2 => ['Persona accidentada', 'Identificación'], 3 => ['Relato y análisis', 'Circunstancias e IA'], 4 => ['Recopilación', 'Revisión final']] as $number => [$name, $detail])
+                @foreach([1 => ['Empleador', 'Datos institucionales'], 2 => ['Persona accidentada', 'Identificación'], 3 => ['Antecedentes del caso', 'Circunstancias y evidencias'], 4 => ['Recopilación', 'Revisión final']] as $number => [$name, $detail])
                     <li><button type='button' class='flex w-full items-center gap-3 rounded-xl border border-transparent p-2 text-left transition' data-step-trigger='{{ $number }}'><span class='flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-black text-slate-600' data-step-number>{{ $number }}</span><span><strong class='block text-sm text-slate-900'>{{ $name }}</strong><small class='text-xs text-slate-500'>{{ $detail }}</small></span></button></li>
                 @endforeach
             </ol>
