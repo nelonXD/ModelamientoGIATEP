@@ -4,104 +4,283 @@
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --color-brand-950: #082f49;
-    --color-brand-800: #075985;
+    --color-brand-950: #0b2545;
+    --color-brand-900: #0f305c;
+    --color-brand-800: #133e7c;
+    --color-brand-700: #1a4f9c;
     --color-brand-600: #0284c7;
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
 @layer base {
-    button, a, input, select, textarea { @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600; }
-    th, td { @apply px-4 py-3 align-top; }
-    dt { @apply text-xs font-bold uppercase tracking-wide text-slate-500; }
-    dd { @apply mt-1 font-semibold text-slate-900; }
+    button, a, input, select, textarea { 
+        @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600; 
+    }
+    th, td { 
+        @apply px-4 py-3 align-middle; 
+    }
+    dt { 
+        @apply text-xs font-bold uppercase tracking-wider text-slate-500; 
+    }
+    dd { 
+        @apply mt-1 font-semibold text-slate-900; 
+    }
 }
 
 @layer components {
-    .brand-panel { background: radial-gradient(circle at top left, #0ea5e9, transparent 45%), linear-gradient(145deg, #082f49, #075985); }
-    .card { @apply rounded-2xl border border-slate-200 bg-white shadow-sm; }
-    .eyebrow { @apply text-xs font-extrabold uppercase tracking-[0.18em] text-sky-700; }
-    .label { @apply mb-2 block text-sm font-bold text-slate-700; }
-    .input { @apply block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 shadow-sm placeholder:text-slate-400 focus:border-sky-600 focus:ring-2 focus:ring-sky-100; }
-    .error { @apply mt-2 text-sm font-semibold text-red-700; }
-    .hint { @apply mt-2 text-xs text-slate-500; }
-    .btn-primary { @apply items-center justify-center rounded-xl bg-blue-800 px-5 py-3 font-bold text-white shadow-sm transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-60; }
-    .btn-secondary { @apply inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 font-bold text-slate-700 hover:bg-slate-50; }
-    .btn-danger { @apply rounded-xl bg-red-700 px-5 py-3 font-bold text-white hover:bg-red-800; }
-    .password-toggle { @apply absolute inset-y-0 right-0 px-4 text-sm font-bold text-blue-800; }
-    .nav-link { @apply block rounded-lg px-3 py-2.5 text-sm font-semibold text-blue-100 hover:bg-white/10 hover:text-white; }
-    .nav-link-active { @apply bg-sky-600 text-white; }
-    .stat-card { @apply flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 text-slate-600 shadow-sm; }
-    .stat-card strong { @apply text-3xl text-slate-950; }
-    .status { @apply inline-flex rounded-full px-3 py-1 text-xs font-bold; }
-    .status-pending { @apply bg-amber-100 text-amber-900; }
-    .status-approved { @apply bg-emerald-100 text-emerald-800; }
-    .status-rejected { @apply bg-red-100 text-red-800; }
-    .filter-bar { @apply grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-2 xl:grid-cols-5; }
-    .table-card { @apply overflow-x-auto; }
-    .data-table { @apply w-full min-w-[760px] text-left text-sm; }
-    .data-table thead { @apply border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500; }
-    .data-table tbody { @apply divide-y divide-slate-100; }
-    .data-table tbody tr { @apply transition hover:bg-sky-50/60; }
-    .data-table small { @apply mt-1 block text-xs text-slate-500; }
-    .text-link { @apply font-bold text-blue-800 hover:underline; }
-    .empty-state { @apply rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-600; }
-    .metric { @apply flex min-h-32 flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm; }
-    .metric span { @apply text-sm font-bold text-slate-600; }
-    .metric strong { @apply mt-3 text-3xl font-black text-slate-950; }
-    .metric small { @apply mt-auto pt-3 text-xs font-bold text-sky-700; }
-    .metric-link { @apply transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md; }
-    .metric-danger { @apply border-red-200 bg-red-50; }
-    .metric-danger strong { @apply text-red-800; }
-    .module-icon { @apply inline-grid h-11 w-11 place-items-center rounded-xl bg-sky-100 text-lg font-black text-sky-800; }
-    .step-pill { @apply inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold text-slate-500; }
-    .step-pill span { @apply grid h-6 w-6 place-items-center rounded-full bg-slate-200; }
-    .step-pill-active { @apply bg-sky-100 text-sky-900; }
-    .step-pill-active span { @apply bg-sky-700 text-white; }
-    .tab-list { @apply flex gap-1 overflow-x-auto border-b border-slate-200; }
-    .tab-button { @apply whitespace-nowrap border-b-2 border-transparent px-4 py-3 text-sm font-bold text-slate-500; }
-    .tab-button-active { @apply border-sky-600 text-sky-800; }
-    .timeline { @apply space-y-0 border-l-2 border-sky-100 pl-5; }
-    .timeline li { @apply relative pb-5 text-sm; }
-    .timeline li::before { content: ''; @apply absolute -left-[1.65rem] top-1 h-3 w-3 rounded-full bg-sky-600 ring-4 ring-white; }
-    .timeline strong, .timeline span { @apply block; }
-    .timeline span { @apply mt-1 text-xs text-slate-500; }
-    .section-link { @apply block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-slate-600 hover:bg-slate-100; }
-    .section-link-active { @apply bg-sky-100 text-sky-900; }
-    .section-title { @apply mb-5 text-xl font-black text-slate-950; }
-    .source-banner { @apply rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900; }
-    .upload-zone { @apply flex cursor-pointer flex-col items-center rounded-2xl border-2 border-dashed border-sky-300 bg-sky-50 p-10 text-center text-sky-900 hover:bg-sky-100; }
-    .upload-zone span { @apply mt-2 text-sm; }
-    .repeat-row { @apply grid items-center gap-3 sm:grid-cols-[auto_1fr_auto]; }
-    .drag-handle { @apply cursor-grab text-slate-400; }
-    .cause-tree { @apply rounded-2xl bg-slate-50 p-5 text-center; }
-    .cause-node { @apply rounded-xl border-2 border-sky-200 bg-white p-4 font-bold text-sky-950 shadow-sm; }
-    .cause-final { @apply mx-auto max-w-md border-blue-700 bg-blue-50; }
-    .cause-connector { @apply py-3 font-black text-sky-700; }
-    .progress { @apply h-2 w-24 overflow-hidden rounded bg-slate-100; }
-    .progress span { @apply block h-full rounded bg-sky-600; }
-    .bar-chart { @apply space-y-4; }
-    .bar-chart > div { @apply grid grid-cols-[10rem_1fr_2rem] items-center gap-3 text-sm; }
-    .bar-chart > div > div { @apply h-3 overflow-hidden rounded-full bg-slate-100; }
-    .bar-chart i { @apply block h-full rounded-full bg-sky-600; }
-    .donut-wrap { @apply flex flex-col items-center gap-8 sm:flex-row; }
-    .donut { @apply h-40 w-40 rounded-full; background: conic-gradient(#0369a1 0 83%, #f59e0b 83% 100%); mask: radial-gradient(circle, transparent 48%, #000 50%); }
-    .donut-wrap ul { @apply space-y-3 text-sm; }
-    .donut-wrap li { @apply flex items-center gap-3; }
-    .donut-wrap li i { @apply h-3 w-3 rounded-full; }
-    .rank { @apply grid h-8 w-8 place-items-center rounded-full bg-sky-100 font-black text-sky-800; }
-    .report-card { @apply flex min-h-48 flex-col rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-sky-300; }
-    .report-card span { @apply text-xs font-black uppercase tracking-wider text-sky-700; }
-    .report-card strong { @apply mt-4 text-lg; }
-    .report-card small { @apply mt-2 text-sm leading-5 text-slate-500; }
-    .report-card-active { @apply border-sky-600 ring-2 ring-sky-100; }
-    .demo-dialog { @apply m-auto w-[min(36rem,calc(100%-2rem))] bg-transparent backdrop:bg-slate-950/50; }
-    .mini-columns { @apply flex h-44 items-end justify-around gap-3 border-b border-slate-200; }
-    .mini-columns > div { @apply flex h-full flex-1 flex-col items-center justify-end gap-1; }
-    .mini-columns > div > span { @apply order-2 w-full max-w-12 rounded-t-lg bg-gradient-to-t from-blue-800 to-sky-400; }
-    .mini-columns strong { @apply order-1 text-sm; }
-    .mini-columns small { @apply order-3 py-2 text-xs text-slate-500; }
+    .brand-panel { 
+        background: radial-gradient(circle at top left, #0284c7, transparent 50%), linear-gradient(155deg, #071a30, #0b2545 60%, #133e7c); 
+    }
+    .card { 
+        @apply rounded-2xl border border-slate-200/90 bg-white shadow-xs; 
+    }
+    .eyebrow { 
+        @apply text-[11px] font-extrabold uppercase tracking-[0.16em] text-sky-700; 
+    }
+    .label { 
+        @apply mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-700; 
+    }
+    .input { 
+        @apply block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 shadow-xs placeholder:text-slate-400 focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-100 transition duration-150; 
+    }
+    .error { 
+        @apply mt-1.5 text-xs font-bold text-red-700; 
+    }
+    .hint { 
+        @apply mt-1.5 text-xs font-medium text-slate-500; 
+    }
+    .btn-primary { 
+        @apply inline-flex items-center justify-center rounded-xl bg-[#0b2545] px-4 py-2.5 text-sm font-bold text-white shadow-xs transition duration-150 hover:bg-[#133e7c] active:bg-[#071a30] focus-visible:ring-2 focus-visible:ring-sky-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50; 
+    }
+    .btn-secondary { 
+        @apply inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-xs transition duration-150 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-400 active:bg-slate-100; 
+    }
+    .btn-danger { 
+        @apply inline-flex items-center justify-center rounded-xl bg-red-700 px-4 py-2.5 text-sm font-bold text-white shadow-xs transition duration-150 hover:bg-red-800 active:bg-red-900; 
+    }
+    .password-toggle { 
+        @apply absolute inset-y-0 right-0 px-4 text-xs font-bold text-[#0b2545] hover:text-[#133e7c]; 
+    }
+    .nav-link { 
+        @apply block rounded-xl px-3 py-2 text-sm font-semibold text-slate-200 transition duration-150 hover:bg-white/10 hover:text-white; 
+    }
+    .nav-link-active { 
+        @apply bg-sky-600 font-bold text-white shadow-xs; 
+    }
+    .stat-card { 
+        @apply flex items-center justify-between rounded-2xl border border-slate-200/90 bg-white p-5 text-slate-600 shadow-xs; 
+    }
+    .stat-card strong { 
+        @apply text-3xl font-black text-slate-950; 
+    }
+    .status { 
+        @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold tracking-tight border; 
+    }
+    .status-pending { 
+        @apply border-amber-200 bg-amber-50 text-amber-900; 
+    }
+    .status-approved { 
+        @apply border-emerald-200 bg-emerald-50 text-emerald-900; 
+    }
+    .status-rejected { 
+        @apply border-red-200 bg-red-50 text-red-900; 
+    }
+    .filter-bar { 
+        @apply grid gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs md:grid-cols-2 xl:grid-cols-5; 
+    }
+    .table-card { 
+        @apply overflow-x-auto rounded-2xl border border-slate-200/90 bg-white shadow-xs; 
+    }
+    .data-table { 
+        @apply w-full min-w-[760px] text-left text-sm; 
+    }
+    .data-table thead { 
+        @apply border-b border-slate-200 bg-slate-50/90 text-[11px] font-black uppercase tracking-wider text-slate-600; 
+    }
+    .data-table tbody { 
+        @apply divide-y divide-slate-100; 
+    }
+    .data-table tbody tr { 
+        @apply transition-colors hover:bg-slate-50/80; 
+    }
+    .data-table small { 
+        @apply mt-0.5 block text-xs font-medium text-slate-500; 
+    }
+    .text-link { 
+        @apply font-bold text-[#0b2545] transition-colors hover:text-[#133e7c] hover:underline; 
+    }
+    .empty-state { 
+        @apply rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-8 text-center text-sm font-medium text-slate-600; 
+    }
+    .metric { 
+        @apply flex min-h-32 flex-col rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs transition duration-150; 
+    }
+    .metric span { 
+        @apply text-xs font-bold uppercase tracking-wider text-slate-500; 
+    }
+    .metric strong { 
+        @apply mt-2 text-3xl font-black text-slate-950; 
+    }
+    .metric small { 
+        @apply mt-auto pt-3 text-xs font-bold text-sky-800; 
+    }
+    .metric-link { 
+        @apply hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md; 
+    }
+    .metric-danger { 
+        @apply border-red-200/90 bg-red-50/40; 
+    }
+    .metric-danger strong { 
+        @apply text-red-900; 
+    }
+    .module-icon { 
+        @apply inline-grid size-11 place-items-center rounded-xl bg-sky-100 text-lg font-black text-sky-900; 
+    }
+    .step-pill { 
+        @apply inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-100; 
+    }
+    .step-pill span { 
+        @apply grid size-6 place-items-center rounded-lg bg-slate-200 text-slate-700 font-bold; 
+    }
+    .step-pill-active { 
+        @apply bg-[#0b2545] text-white shadow-xs hover:bg-[#133e7c]; 
+    }
+    .step-pill-active span { 
+        @apply bg-sky-500 text-slate-950 font-black; 
+    }
+    .tab-list { 
+        @apply flex gap-1 overflow-x-auto border-b border-slate-200; 
+    }
+    .tab-button { 
+        @apply whitespace-nowrap border-b-2 border-transparent px-4 py-3 text-xs font-bold uppercase tracking-wider text-slate-500 transition hover:text-slate-900; 
+    }
+    .tab-button-active { 
+        @apply border-sky-600 font-black text-sky-800; 
+    }
+    .timeline { 
+        @apply space-y-0 border-l-2 border-sky-100 pl-5; 
+    }
+    .timeline li { 
+        @apply relative pb-5 text-sm; 
+    }
+    .timeline li::before { 
+        content: ''; 
+        @apply absolute -left-[1.65rem] top-1 size-3 rounded-full bg-sky-600 ring-4 ring-white; 
+    }
+    .timeline strong, .timeline span { 
+        @apply block; 
+    }
+    .timeline span { 
+        @apply mt-1 text-xs text-slate-500; 
+    }
+    .section-link { 
+        @apply block w-full rounded-xl px-3.5 py-2.5 text-left text-xs font-bold text-slate-600 transition duration-150 hover:bg-slate-100 hover:text-slate-900; 
+    }
+    .section-link-active { 
+        @apply border-l-4 border-sky-600 bg-sky-50 font-black text-sky-950; 
+    }
+    .section-title { 
+        @apply mb-4 text-xl font-black text-slate-950 tracking-tight; 
+    }
+    .source-banner { 
+        @apply rounded-xl border border-sky-200 bg-sky-50/80 p-4 text-xs font-medium text-sky-950 leading-relaxed; 
+    }
+    .upload-zone { 
+        @apply flex cursor-pointer flex-col items-center rounded-2xl border-2 border-dashed border-sky-300 bg-sky-50/60 p-8 text-center text-sky-950 transition hover:bg-sky-100/60; 
+    }
+    .upload-zone span { 
+        @apply mt-1.5 text-xs text-slate-500; 
+    }
+    .repeat-row { 
+        @apply grid items-center gap-3 sm:grid-cols-[auto_1fr_auto]; 
+    }
+    .drag-handle { 
+        @apply cursor-grab text-slate-400; 
+    }
+    .cause-tree { 
+        @apply rounded-2xl border border-slate-200/90 bg-slate-50/60 p-6 text-center; 
+    }
+    .cause-node { 
+        @apply rounded-xl border border-slate-200 bg-white p-4 font-bold text-slate-900 shadow-xs transition hover:border-sky-400 hover:shadow-sm; 
+    }
+    .cause-final { 
+        @apply mx-auto max-w-lg border-2 border-red-500 bg-red-50/50 text-red-950 font-black; 
+    }
+    .cause-connector { 
+        @apply py-2 font-black text-sky-700 text-xs tracking-widest; 
+    }
+    .progress { 
+        @apply h-2 w-24 overflow-hidden rounded-full bg-slate-100; 
+    }
+    .progress span { 
+        @apply block h-full rounded-full bg-sky-600; 
+    }
+    .bar-chart { 
+        @apply space-y-4; 
+    }
+    .bar-chart > div { 
+        @apply grid grid-cols-[10rem_1fr_2rem] items-center gap-3 text-xs font-semibold; 
+    }
+    .bar-chart > div > div { 
+        @apply h-3 overflow-hidden rounded-full bg-slate-100; 
+    }
+    .bar-chart i { 
+        @apply block h-full rounded-full bg-sky-600; 
+    }
+    .donut-wrap { 
+        @apply flex flex-col items-center gap-8 sm:flex-row; 
+    }
+    .donut { 
+        @apply size-40 rounded-full; 
+        background: conic-gradient(#0284c7 0 67%, #6366f1 67% 83%, #f59e0b 83% 100%); 
+        mask: radial-gradient(circle, transparent 48%, #000 50%); 
+    }
+    .donut-wrap ul { 
+        @apply space-y-3 text-xs font-medium text-slate-700; 
+    }
+    .donut-wrap li { 
+        @apply flex items-center gap-2.5; 
+    }
+    .donut-wrap li i { 
+        @apply size-3 rounded-full shrink-0; 
+    }
+    .rank { 
+        @apply grid size-8 place-items-center rounded-xl bg-sky-100 font-black text-sky-900 text-xs; 
+    }
+    .report-card { 
+        @apply flex min-h-40 flex-col rounded-2xl border border-slate-200/90 bg-white p-5 text-left shadow-xs transition duration-150 hover:border-sky-400 hover:shadow-sm; 
+    }
+    .report-card span { 
+        @apply text-[10px] font-black uppercase tracking-wider text-sky-700; 
+    }
+    .report-card strong { 
+        @apply mt-3 text-base font-black text-slate-950; 
+    }
+    .report-card small { 
+        @apply mt-2 text-xs leading-relaxed text-slate-500; 
+    }
+    .report-card-active { 
+        @apply border-sky-600 ring-2 ring-sky-100 shadow-sm; 
+    }
+    .demo-dialog { 
+        @apply m-auto w-[min(36rem,calc(100%-2rem))] bg-transparent backdrop:bg-slate-950/50; 
+    }
+    .mini-columns { 
+        @apply flex h-44 items-end justify-around gap-3 border-b border-slate-200; 
+    }
+    .mini-columns > div { 
+        @apply flex h-full flex-1 flex-col items-center justify-end gap-1; 
+    }
+    .mini-columns > div > span { 
+        @apply order-2 w-full max-w-12 rounded-t-lg bg-gradient-to-t from-[#0b2545] to-sky-400; 
+    }
+    .mini-columns strong { 
+        @apply order-1 text-xs font-bold text-slate-800; 
+    }
+    .mini-columns small { 
+        @apply order-3 py-2 text-[11px] font-semibold text-slate-500; 
+    }
 }
 
 @media print {

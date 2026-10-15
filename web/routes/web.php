@@ -1,22 +1,23 @@
 <?php
 
-use App\Http\Controllers\Admin\Establishments\EstablishmentController;
-use App\Http\Controllers\Admin\RegistrationRequestController as AdminRegistrationRequestController;
-use App\Http\Controllers\Admin\Roles\RoleController;
-use App\Http\Controllers\Admin\Settings\SettingController;
-use App\Http\Controllers\Admin\Users\UserController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\DemoWorkspaceController;
-use App\Http\Controllers\Modules\Cases\CaseController;
-use App\Http\Controllers\Modules\Investigations\InvestigationController;
-use App\Http\Controllers\Modules\Measures\MeasureController;
-use App\Http\Controllers\Modules\Observations\ObservationController;
-use App\Http\Controllers\Modules\Profile\ProfileController;
-use App\Http\Controllers\Modules\Reports\ReportController;
-use App\Http\Controllers\Modules\Reviews\ReviewController;
-use App\Http\Controllers\Modules\Statistics\StatisticController;
-use App\Http\Controllers\RegistrationRequestController;
+use App\Http\Controllers\Web\Admin\EstablishmentController;
+use App\Http\Controllers\Web\Admin\RegistrationRequestController as AdminRegistrationRequestController;
+use App\Http\Controllers\Web\Admin\RoleController;
+use App\Http\Controllers\Web\Admin\SettingController;
+use App\Http\Controllers\Web\Admin\UserController;
+use App\Http\Controllers\Web\AiAnalysisController;
+use App\Http\Controllers\Web\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Web\CaseController;
+use App\Http\Controllers\Web\DashboardController;
+use App\Http\Controllers\Web\DemoWorkspaceController;
+use App\Http\Controllers\Web\InvestigationController;
+use App\Http\Controllers\Web\MeasureController;
+use App\Http\Controllers\Web\ObservationController;
+use App\Http\Controllers\Web\ProfileController;
+use App\Http\Controllers\Web\RegistrationRequestController;
+use App\Http\Controllers\Web\ReportController;
+use App\Http\Controllers\Web\ReviewController;
+use App\Http\Controllers\Web\StatisticController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login');
@@ -36,11 +37,17 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/prototipo/{module}/{id?}', [DemoWorkspaceController::class, 'show'])->name('demo.show');
     Route::post('/prototipo/{module}', [DemoWorkspaceController::class, 'action'])->name('demo.action');
     Route::post('/prototipo-restablecer', [DemoWorkspaceController::class, 'reset'])->name('demo.reset');
+    Route::post('/prototipo-cambiar-rol', [DemoWorkspaceController::class, 'switchRole'])->name('demo.switch-role');
 
     Route::prefix('modulos')->name('modules.')->group(function (): void {
         Route::get('/casos', [CaseController::class, 'index'])->name('cases.index');
         Route::get('/casos/crear', [CaseController::class, 'create'])->name('cases.create');
+        Route::post('/casos', [CaseController::class, 'store'])->name('cases.store');
         Route::get('/investigaciones', InvestigationController::class)->name('investigations.index');
+        Route::post('/investigaciones/relato-final', [AiAnalysisController::class, 'storeFinalStory'])->name('investigations.story.store');
+        Route::post('/investigaciones/analizar', [AiAnalysisController::class, 'analyze'])->middleware('throttle:10,1')->name('investigations.ai.analyze');
+        Route::post('/investigaciones/propuesta', [AiAnalysisController::class, 'store'])->name('investigations.ai.store');
+        Route::post('/investigaciones/entrevistas', [AiAnalysisController::class, 'storeInterview'])->name('investigations.interviews.store');
         Route::get('/revisiones', ReviewController::class)->name('reviews.index');
         Route::get('/medidas', MeasureController::class)->name('measures.index');
         Route::get('/observaciones', ObservationController::class)->name('observations.index');

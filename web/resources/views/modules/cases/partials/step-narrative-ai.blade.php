@@ -1,44 +1,185 @@
 <section class='card hidden p-6 sm:p-8' data-step-panel='3'>
-    <div class='flex items-start gap-4'><span class='flex size-11 shrink-0 items-center justify-center rounded-xl bg-blue-950 font-black text-white'>3</span><div><p class='eyebrow'>Circunstancias y apoyo</p><h2 class='mt-1 text-2xl font-black text-slate-950'>Relato del caso y propuesta asistida</h2><p class='mt-1 text-sm text-slate-600'>Describe lo ocurrido y, si lo deseas, genera una propuesta preliminar para revisarla.</p></div></div>
-    <div class='mt-7 grid gap-5 md:grid-cols-2'>
-        <fieldset class='md:col-span-2'><legend class='label'>Tipo de caso</legend><div class='grid gap-3 sm:grid-cols-3'>@foreach(['Accidente del trabajo', 'Accidente de trayecto', 'Enfermedad profesional'] as $type)<label class='flex cursor-pointer items-center gap-3 rounded-xl border border-slate-300 bg-white p-4 font-bold text-slate-700 has-checked:border-blue-800 has-checked:bg-blue-50 has-checked:text-blue-950'><input type='radio' name='case_type' value='{{ $type }}' class='accent-blue-800' @checked($loop->first)>{{ $type }}</label>@endforeach</div></fieldset>
-        <label><span class='label'>Fecha del suceso o detección</span><input class='input' type='date' name='event_date' data-summary='event_date'></label>
-        <label><span class='label'>Hora aproximada</span><input class='input' type='time' name='event_time'></label>
-        <label class='md:col-span-2'><span class='label'>Lugar específico</span><input class='input' name='event_location' placeholder='Ej.: pasillo, box, estacionamiento o trayecto' data-summary='event_location'></label>
-        <label class='md:col-span-2'><span class='label'>Relato de lo ocurrido</span><textarea class='input min-h-40 resize-y' name='narrative' placeholder='Describe la secuencia de hechos de manera clara, evitando conclusiones anticipadas.' data-summary='narrative'></textarea><span class='hint'>Incluye actividad realizada, condiciones del lugar y consecuencias inmediatas.</span></label>
-        <label class='md:col-span-2'><span class='label'>Testigos o antecedentes disponibles</span><textarea class='input min-h-24 resize-y' name='witnesses' placeholder='Nombres, documentos, fotografías u otros antecedentes disponibles.'></textarea></label>
-    </div>
-
-    <aside class='mt-8 overflow-hidden rounded-2xl border border-sky-200 bg-sky-50'>
-        <div class='flex flex-col gap-4 border-b border-sky-200 p-5 sm:flex-row sm:items-center sm:justify-between'><div><p class='eyebrow'>Asistencia experimental</p><h3 class='mt-1 text-xl font-black text-slate-950'>Propuesta de análisis con IA</h3><p class='mt-1 text-sm text-sky-900'>Usará el relato para preparar elementos que deberán ser revisados por una persona.</p></div><button type='button' class='btn-primary inline-flex shrink-0' data-generate-ai>Generar propuesta</button></div>
-        <div class='p-5 text-sm text-sky-900' data-ai-empty>Completa el relato y selecciona <strong>Generar propuesta</strong>. En este prototipo se mostrará un ejemplo visual; no se envían datos a una IA.</div>
-        <div class='hidden space-y-4 p-5' data-ai-results>
-            <div class='grid gap-4 lg:grid-cols-2'>
-                <article class='rounded-xl border border-sky-200 bg-white p-4'><h4 class='font-black text-blue-950'>Hechos sugeridos</h4><ul class='mt-3 list-disc space-y-2 pl-5 text-sm text-slate-600'><li>La persona realizaba una actividad propia de su jornada.</li><li>Se reportó una condición del entorno que requiere verificación.</li><li>La consecuencia inmediata debe contrastarse con los antecedentes.</li></ul></article>
-                <article class='rounded-xl border border-sky-200 bg-white p-4'><h4 class='font-black text-blue-950'>Borrador de árbol de causas</h4><div class='mt-3 space-y-2 text-sm text-slate-600'><p class='rounded-lg bg-slate-100 p-3'><strong>Hecho final:</strong> evento informado.</p><p class='ml-4 rounded-lg bg-slate-100 p-3'><strong>Factor:</strong> condición por confirmar.</p><p class='ml-8 rounded-lg bg-slate-100 p-3'><strong>Origen:</strong> requiere investigación.</p></div></article>
-            </div>
-
-            <article class='rounded-xl border border-sky-200 bg-white p-5'>
-                <div><h4 class='font-black text-blue-950'>Medidas de control y plan de acción</h4><p class='mt-1 text-sm text-slate-500'>La IA propone las medidas. Puedes editar su redacción, responsable y plazo antes de continuar.</p></div>
-                <div class='mt-4 space-y-3' data-action-plan>
-                    @foreach([
-                        ['Inspeccionar el lugar y registrar evidencia verificable.', 'Encargado por definir', ''],
-                        ['Revisar el procedimiento de trabajo relacionado con el evento.', 'Jefatura responsable', ''],
-                        ['Implementar la medida validada y comprobar su cumplimiento.', 'Prevención', ''],
-                    ] as [$measure, $owner, $deadline])
-                        <div class='grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[1fr_13rem_11rem_auto]' data-action-row>
-                            <label><span class='label'>Medida propuesta</span><textarea class='input min-h-20 resize-y' name='control_measures[]' data-control-measure>{{ $measure }}</textarea></label>
-                            <label><span class='label'>Responsable</span><input class='input' name='action_owners[]' value='{{ $owner }}'></label>
-                            <label><span class='label'>Plazo</span><input class='input' type='date' name='action_deadlines[]' value='{{ $deadline }}'></label>
-                            <button type='button' class='self-end rounded-xl px-3 py-3 font-bold text-red-700 hover:bg-red-50' data-remove-action aria-label='Eliminar medida'>Eliminar</button>
-                        </div>
-                    @endforeach
-                </div>
-                <button type='button' class='btn-secondary mt-4' data-add-action>+ Agregar medida al plan</button>
-                <template data-action-template><div class='grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[1fr_13rem_11rem_auto]' data-action-row><label><span class='label'>Medida propuesta</span><textarea class='input min-h-20 resize-y' name='control_measures[]' data-control-measure></textarea></label><label><span class='label'>Responsable</span><input class='input' name='action_owners[]'></label><label><span class='label'>Plazo</span><input class='input' type='date' name='action_deadlines[]'></label><button type='button' class='self-end rounded-xl px-3 py-3 font-bold text-red-700 hover:bg-red-50' data-remove-action aria-label='Eliminar medida'>Eliminar</button></div></template>
-            </article>
+    <div class='flex items-start gap-4'>
+        <span class='flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#0b2545] font-black text-white text-sm'>3</span>
+        <div>
+            <p class='text-xs font-bold uppercase tracking-wider text-sky-700'>Circunstancias del Evento</p>
+            <h2 class='mt-0.5 text-xl sm:text-2xl font-black text-slate-950'>Antecedentes del caso</h2>
+            <p class='mt-1 text-xs sm:text-sm text-slate-600'>Registro de los hechos ocurridos, clasificación oficial y evidencias adjuntas al momento de la notificación.</p>
         </div>
-        <p class='border-t border-sky-200 px-5 py-3 text-xs font-semibold text-sky-900'>La IA solo propone. No reemplaza la investigación, la validación humana ni la decisión institucional.</p>
-    </aside>
-    <div class='mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between'><button type='button' class='btn-secondary' data-previous-step>← Volver</button><button type='button' class='btn-primary inline-flex' data-next-step>Revisar recopilación →</button></div>
+    </div>
+    <div class='mt-6 space-y-6'>
+        <fieldset class='rounded-xl border border-slate-200 bg-slate-50/50 p-5'>
+            <legend class='text-xs font-bold uppercase tracking-wider text-slate-500 mb-2'>Tipo de caso (Clasificación oficial) <span class='text-red-700'>*</span></legend>
+            <div class='grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4'>
+                @foreach(['Accidente de trabajo', 'Accidente de trayecto', 'Enfermedad profesional', 'Accidente grave', 'Accidente fatal', 'Accidente de trabajo sin días perdidos', 'Incidente o suceso peligroso', 'Accidente o enfermedad común'] as $type)
+                    <label class='flex cursor-pointer items-center gap-2.5 rounded-lg border border-slate-300 bg-white p-3 text-xs font-bold text-slate-700 transition hover:border-slate-400 has-checked:border-blue-800 has-checked:bg-blue-50 has-checked:text-blue-950'>
+                        <input type='radio' name='case_type' value='{{ $type }}' class='accent-blue-800' data-case-classification required>
+                        <span>{{ $type }}</span>
+                    </label>
+                @endforeach
+            </div>
+            <p class='mt-3 hidden text-xs font-semibold text-red-700' data-case-classification-error role='alert'>Seleccione el tipo de caso antes de continuar.</p>
+        </fieldset>
+
+        <section class='hidden rounded-xl border border-slate-200 bg-slate-50/50 p-5' data-accident-report aria-hidden='true'>
+            <h3 class='text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200 pb-2 mb-4'>Datos del accidente o incidente</h3>
+            <div class='grid gap-4 md:grid-cols-2'>
+                <label>
+                    <span class='label text-xs'>Fecha del accidente <span class='text-red-700'>*</span></span>
+                    <input class='input text-sm' type='date' name='event_date' data-summary='event_date' disabled>
+                </label>
+                <label>
+                    <span class='label text-xs'>Hora del accidente <span class='text-red-700'>*</span></span>
+                    <input class='input text-sm' type='time' name='event_time' disabled>
+                </label>
+                <label>
+                    <span class='label text-xs'>Hora de ingreso al trabajo</span>
+                    <input class='input text-sm' type='time' name='work_start_time' disabled>
+                </label>
+                <label>
+                    <span class='label text-xs'>Hora de salida del trabajo</span>
+                    <input class='input text-sm' type='time' name='work_end_time' disabled>
+                </label>
+                <label class='md:col-span-2'>
+                    <span class='label text-xs'>Lugar específico del accidente <span class='text-red-700'>*</span></span>
+                    <input class='input text-sm' name='event_location' placeholder='Box de atención, pasillo, calle o trayecto específico' data-summary='event_location' disabled>
+                </label>
+                <label>
+                    <span class='label text-xs'>¿Qué hacía la persona justo antes del accidente?</span>
+                    <textarea class='input text-sm' name='activity_before_event' rows='3' disabled></textarea>
+                </label>
+                <label>
+                    <span class='label text-xs'>Trabajo habitual</span>
+                    <textarea class='input text-sm' name='usual_job_description' rows='3' disabled></textarea>
+                </label>
+                <label class='md:col-span-2'>
+                    <span class='label text-xs'>Describa cómo ocurrió el accidente <span class='text-red-700'>*</span></span>
+                    <textarea class='input text-sm min-h-36 resize-y' name='narrative' placeholder='Relato detallado de la secuencia de hechos acontecidos...' data-summary='narrative' disabled></textarea>
+                </label>
+                <fieldset>
+                    <legend class='label text-xs'>¿Desarrollaba su trabajo habitual?</legend>
+                    <div class='flex gap-2.5'>
+                        <label class='btn-secondary text-xs py-1.5 px-3 gap-2'><input type='radio' name='doing_usual_job' value='Sí' disabled> Sí</label>
+                        <label class='btn-secondary text-xs py-1.5 px-3 gap-2'><input type='radio' name='doing_usual_job' value='No' disabled> No</label>
+                    </div>
+                </fieldset>
+                <fieldset class='hidden md:col-span-2' data-route-type>
+                    <legend class='label text-xs'>Tipo de accidente de trayecto <span class='text-red-700'>*</span></legend>
+                    <div class='flex flex-wrap gap-3'>
+                        @foreach(['Domicilio - Trabajo','Trabajo - Domicilio','Entre dos trabajos'] as $route)
+                            <label class='btn-secondary text-xs py-1.5 px-3 gap-2'><input type='radio' name='route_type' value='{{ $route }}' disabled> {{ $route }}</label>
+                        @endforeach
+                    </div>
+                </fieldset>
+            </div>
+        </section>
+
+        <section class='hidden rounded-xl border border-slate-200 bg-slate-50/50 p-5' data-disease-report aria-hidden='true'>
+            <h3 class='text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200 pb-2 mb-4'>Datos de la enfermedad profesional</h3>
+            <div class='grid gap-4 md:grid-cols-2'>
+                <label class='md:col-span-2'>
+                    <span class='label text-xs'>Molestias o síntomas actuales <span class='text-red-700'>*</span></span>
+                    <textarea class='input text-sm min-h-28 resize-y' name='narrative' placeholder='Describa detalladamente los síntomas o molestias informadas...' data-summary='narrative' disabled></textarea>
+                </label>
+                <label>
+                    <span class='label text-xs'>Fecha de detección <span class='text-red-700'>*</span></span>
+                    <input class='input text-sm' type='date' name='event_date' data-summary='event_date' disabled>
+                </label>
+                <label>
+                    <span class='label text-xs'>Parte del cuerpo afectada</span>
+                    <input class='input text-sm' name='affected_body_part' placeholder='Ej.: Muñeca, hombro, zona lumbar' disabled>
+                </label>
+                <label>
+                    <span class='label text-xs'>¿Hace cuánto presenta los síntomas?</span>
+                    <input class='input text-sm' name='symptom_duration' placeholder='Días, meses o años' disabled>
+                </label>
+                <fieldset>
+                    <legend class='label text-xs'>¿Había tenido estas molestias anteriormente?</legend>
+                    <div class='flex gap-2.5'>
+                        <label class='btn-secondary text-xs py-1.5 px-3 gap-2'><input type='radio' name='previous_symptoms' value='Sí' disabled> Sí</label>
+                        <label class='btn-secondary text-xs py-1.5 px-3 gap-2'><input type='radio' name='previous_symptoms' value='No' disabled> No</label>
+                    </div>
+                </fieldset>
+                <label class='md:col-span-2'>
+                    <span class='label text-xs'>Trabajo o actividad que realizaba cuando comenzaron las molestias <span class='text-red-700'>*</span></span>
+                    <textarea class='input text-sm' name='activity_when_symptoms_began' rows='3' disabled></textarea>
+                </label>
+                <label>
+                    <span class='label text-xs'>Puesto de trabajo donde comenzaron las molestias</span>
+                    <input class='input text-sm' name='symptom_job_position' disabled>
+                </label>
+                <fieldset>
+                    <legend class='label text-xs'>¿Existen compañeros con los mismos síntomas?</legend>
+                    <div class='flex gap-2.5'>
+                        <label class='btn-secondary text-xs py-1.5 px-3 gap-2'><input type='radio' name='coworkers_same_symptoms' value='Sí' disabled> Sí</label>
+                        <label class='btn-secondary text-xs py-1.5 px-3 gap-2'><input type='radio' name='coworkers_same_symptoms' value='No' disabled> No</label>
+                    </div>
+                </fieldset>
+                <label class='md:col-span-2'>
+                    <span class='label text-xs'>Agentes, sustancias o condiciones laborales que podrían causar las molestias <span class='text-red-700'>*</span></span>
+                    <textarea class='input text-sm' name='suspected_work_agents' rows='3' placeholder='Factores ergonómicos, biológicos, químicos o psicosociales...' disabled></textarea>
+                </label>
+                <label>
+                    <span class='label text-xs'>Tiempo de exposición</span>
+                    <input class='input text-sm' name='exposure_duration' placeholder='Ej.: 6 meses' disabled>
+                </label>
+                <label>
+                    <span class='label text-xs'>Lugar o establecimiento relacionado</span>
+                    <input class='input text-sm' name='event_location' data-summary='event_location' disabled>
+                </label>
+            </div>
+        </section>
+
+        <label class='block'>
+            <span class='label text-xs'>Testigos o antecedentes conocidos</span>
+            <textarea class='input text-sm min-h-20 resize-y' name='witnesses' placeholder='Nombres y cargos de testigos u otros antecedentes relevantes conocidos.'></textarea>
+        </label>
+
+        <section class='overflow-hidden rounded-xl border border-slate-200 bg-white'>
+            <div class='border-b border-slate-200 bg-slate-50/70 p-4'>
+                <div class='flex items-center gap-3'>
+                    <span class='flex size-8 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-800 text-sm font-bold'>📎</span>
+                    <div>
+                        <h3 class='text-sm font-bold text-slate-900'>Evidencias del caso</h3>
+                        <p class='text-xs text-slate-500'>Medios de prueba acreditados, documentos médicos, fotografías del lugar, declaraciones o partes policiales.</p>
+                    </div>
+                </div>
+            </div>
+            <div class='p-5 space-y-5'>
+                <fieldset>
+                    <legend class='label text-xs mb-2'>Medios de prueba disponibles</legend>
+                    <div class='flex flex-wrap gap-2.5 mb-2'>
+                        @foreach(['Parte de Carabineros','Declaración','Testigos','Fotografías','Otro'] as $proof)
+                            <label class='flex items-center gap-2 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg cursor-pointer transition'>
+                                <input type='checkbox' name='proof_types[]' value='{{ $proof }}' class='accent-blue-800'>
+                                <span>{{ $proof }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                    <textarea class='input text-xs' name='proof_detail' rows='2' placeholder='Detalle o comentarios de los medios de prueba acompañados o pendientes...'></textarea>
+                </fieldset>
+
+                <div>
+                    <label class='label text-xs mb-2 block'>Archivos adjuntos</label>
+                    <label class='group flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-6 text-center transition hover:border-sky-500 hover:bg-sky-50/50' data-evidence-dropzone>
+                        <span class='flex size-10 items-center justify-center rounded-full bg-sky-100 text-sky-800 text-lg font-light'>+</span>
+                        <span class='mt-2.5 text-xs font-bold text-slate-900'>Adjuntar documentos o evidencias</span>
+                        <span class='mt-1 text-[11px] text-slate-500'>PDF, Word, Excel, imágenes, audios o videos</span>
+                        <input class='sr-only' type='file' name='evidence_files[]' multiple accept='.pdf,.doc,.docx,.xls,.xlsx,image/*,audio/*,video/*' data-evidence-files>
+                    </label>
+                    <div class='mt-4 hidden' data-evidence-panel>
+                        <div class='flex items-center justify-between gap-3 border-b border-slate-100 pb-2'>
+                            <h4 class='text-xs font-bold text-slate-900 uppercase tracking-wider'>Archivos seleccionados</h4>
+                            <span class='rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-900' data-evidence-count></span>
+                        </div>
+                        <div class='mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3' data-evidence-list></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    <div class='mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between border-t border-slate-100 pt-5'>
+        <button type='button' class='btn-secondary text-xs py-2.5 px-4' data-previous-step>← Volver</button>
+        <button type='button' class='btn-primary inline-flex text-xs py-2.5 px-5' data-next-step>Continuar a revisión final →</button>
+    </div>
 </section>

@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'lm_studio' => [
+        'url' => env('LM_STUDIO_URL', 'http://127.0.0.1:1234/v1'),
+        'model' => env('LM_STUDIO_MODEL'),
+        'token' => env('LM_STUDIO_API_TOKEN'),
+        'timeout' => env('LM_STUDIO_TIMEOUT', 120),
+    ],
+
 ];

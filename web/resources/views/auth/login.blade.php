@@ -15,10 +15,10 @@
     <div class='mt-7 border-t border-slate-200 pt-6 text-center'><p class='text-sm text-slate-600'>Solo Comité Paritario y Delegado de Seguridad requieren aprobación previa.</p><a href='{{ route('register') }}' class='mt-2 inline-block font-bold text-blue-800 hover:underline'>Solicitar acceso</a><p class='mt-3 text-xs text-slate-500'>Prevencionistas, Jefaturas y Alta Dirección serán validados mediante el registro institucional.</p></div>
 </div>
 @if(app()->environment(['local', 'testing']))
-<aside class='mt-5 rounded-2xl border border-sky-200 bg-sky-50 p-5' aria-labelledby='demo-credentials-title'>
-    <p class='eyebrow'>Entorno de demostración</p>
-    <h2 id='demo-credentials-title' class='mt-2 text-lg font-bold text-slate-950'>Credenciales de prueba</h2>
-    <p class='mt-1 text-sm text-slate-600'>Todas las cuentas usan la contraseña <code class='rounded bg-white px-1.5 py-0.5 font-bold text-blue-900'>GiatepDemo2026!</code></p>
+<aside class='mt-5 rounded-2xl border border-slate-200 bg-slate-50/80 p-5' aria-labelledby='demo-credentials-title'>
+    <p class='text-[10px] font-bold uppercase tracking-wider text-sky-800'>Acceso Institucional</p>
+    <h2 id='demo-credentials-title' class='mt-1 text-base font-bold text-slate-950'>Credenciales de prueba (Roles DCS)</h2>
+    <p class='mt-1 text-xs text-slate-600'>Contraseña de acceso: <code class='rounded bg-white px-1.5 py-0.5 font-bold text-blue-900 border border-slate-200'>GiatepDemo2026!</code></p>
     <dl class='mt-4 grid gap-3 text-sm sm:grid-cols-2'>
         <div><dt>Administrador</dt><dd class='font-mono'>21.200.314-K</dd></div>
         <div><dt>Comité Paritario</dt><dd class='font-mono'>44.444.444-4</dd></div>

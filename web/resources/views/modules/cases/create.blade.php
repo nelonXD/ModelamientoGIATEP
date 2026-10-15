@@ -1,17 +1,42 @@
 <x-layouts.app title='Registrar caso · GIATEP'>
-    <div class='mx-auto max-w-6xl' data-case-wizard data-list-url='{{ route('modules.cases.index') }}'>
-        <div class='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
-            <div><a href='{{ route('modules.cases.index') }}' class='text-sm font-bold text-blue-800 hover:text-blue-950'>← Volver a casos</a><p class='eyebrow mt-5'>Nuevo expediente</p><h1 class='mt-2 text-3xl font-black tracking-tight text-slate-950'>Registrar un caso</h1><p class='mt-2 max-w-2xl text-sm leading-6 text-slate-600'>Completa la información en cuatro pasos. Los casos ficticios se guardarán solo en este navegador.</p></div>
-            <span class='status bg-sky-100 text-sky-800'>Borrador de diseño</span>
+    <div class='mx-auto max-w-6xl space-y-6' data-case-wizard data-list-url='{{ route('modules.cases.index') }}'>
+        <div class='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between border-b border-slate-200 pb-5'>
+            <div>
+                <a href='{{ route('modules.cases.index') }}' class='inline-flex items-center gap-1.5 text-xs font-bold text-sky-700 hover:text-sky-900'>
+                    <span aria-hidden='true'>←</span> Volver a casos
+                </a>
+                <p class='text-xs font-bold uppercase tracking-wider text-sky-700 mt-3'>Notificación y apertura · Ley 16.744</p>
+                <h1 class='mt-1 text-2xl sm:text-3xl font-black tracking-tight text-slate-950'>Registrar un caso</h1>
+                <p class='mt-1 text-sm text-slate-600'>Formulario oficial de notificación inicial y captura de antecedentes para accidentes del trabajo y enfermedades profesionales.</p>
+            </div>
+            <span class='inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-900 border border-blue-200'>
+                Apertura oficial (DIAT / DIEP)
+            </span>
         </div>
-        <nav class='card mt-6 p-4' aria-label='Progreso del registro'>
-            <ol class='grid gap-3 sm:grid-cols-4'>
-                @foreach([1 => ['Empleador', 'Datos institucionales'], 2 => ['Persona accidentada', 'Identificación'], 3 => ['Relato y análisis', 'Circunstancias e IA'], 4 => ['Recopilación', 'Revisión final']] as $number => [$name, $detail])
-                    <li><button type='button' class='flex w-full items-center gap-3 rounded-xl border border-transparent p-2 text-left transition' data-step-trigger='{{ $number }}'><span class='flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-black text-slate-600' data-step-number>{{ $number }}</span><span><strong class='block text-sm text-slate-900'>{{ $name }}</strong><small class='text-xs text-slate-500'>{{ $detail }}</small></span></button></li>
+
+        <nav class='card p-3 shadow-sm' aria-label='Progreso del registro'>
+            <ol class='grid gap-2 sm:grid-cols-4'>
+                @foreach([
+                    1 => ['Datos del empleador', 'Identificación institucional'],
+                    2 => ['Datos de la persona accidentada', 'Identificación y cargo'],
+                    3 => ['Antecedentes del caso', 'Circunstancias y evidencias'],
+                    4 => ['Recopilación del caso', 'Revisión final']
+                ] as $number => [$name, $detail])
+                    <li>
+                        <button type='button' class='flex w-full items-center gap-3 rounded-xl border border-transparent p-2.5 text-left transition hover:bg-slate-50' data-step-trigger='{{ $number }}'>
+                            <span class='flex size-8 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-xs font-black text-slate-700' data-step-number>{{ $number }}</span>
+                            <span class='min-w-0'>
+                                <strong class='block text-xs font-bold text-slate-900 truncate'>{{ $name }}</strong>
+                                <small class='block text-[11px] text-slate-500 truncate'>{{ $detail }}</small>
+                            </span>
+                        </button>
+                    </li>
                 @endforeach
             </ol>
         </nav>
-        <form class='mt-6' data-case-form novalidate>
+
+        <form class='space-y-6' method='POST' action='{{ route('modules.cases.store') }}' enctype='multipart/form-data' data-case-form novalidate>
+            @csrf
             @include('modules.cases.partials.step-employer')
             @include('modules.cases.partials.step-injured-worker')
             @include('modules.cases.partials.step-narrative-ai')

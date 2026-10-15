@@ -1,106 +1,1657 @@
 @php
 $titles = [
-    'cases' => ['Casos', 'Registro y seguimiento de accidentes del trabajo y enfermedades profesionales.'],
-    'investigations' => ['Investigaciones', 'Expedientes, entrevistas, evidencias, hechos y análisis causal.'],
-    'reviews' => ['Revisiones y validaciones', 'Bandeja técnica, observaciones e historial de decisiones.'],
-    'observations' => ['Observaciones', 'Correcciones y respuestas vinculadas a los expedientes.'],
-    'measures' => ['Medidas y planes de acción', 'Seguimiento de controles, responsables y vencimientos.'],
-    'statistics' => ['Dashboards y estadísticas', 'Indicadores descriptivos construidos con datos de demostración.'],
-    'reports' => ['Reportes', 'Catálogo, filtros y vista previa de informes.'],
-    'profile' => ['Mi perfil', 'Datos personales, alcance y preferencias de esta demostración.'],
-    'users' => ['Usuarios', 'Boceto de administración de cuentas sin modificar usuarios reales.'],
-    'roles' => ['Roles y permisos', 'Matriz visual y configuración simulada.'],
-    'establishments' => ['Establecimientos', 'Catálogo ficticio de centros de trabajo.'],
-    'settings' => ['Parámetros institucionales', 'Catálogos y clasificaciones utilizados por el prototipo.'],
+    'cases' => ['Casos (DIAT / DIEP)', 'Registro y seguimiento de accidentes del trabajo y enfermedades profesionales de la Red APS Los Ángeles.'],
+    'investigations' => ['Investigaciones Técnicas', 'Expedientes, entrevistas a testigos, evidencias, hechos constatados y Árbol de Causas.'],
+    'reviews' => ['Revisiones y Validaciones', 'Bandeja técnica de validación de expedientes para Prevención y Alta Dirección.'],
+    'observations' => ['Observaciones y Trazabilidad', 'Correcciones y observaciones a la investigación, medidas de control y plan de acción.'],
+    'measures' => ['Medidas y Planes de Acción', 'Seguimiento de jerarquía de control, responsables institucionales y porcentaje de avance.'],
+    'statistics' => ['Dashboards y Estadísticas', 'Indicadores descriptivos y accidentabilidad por CESFAM, SAR y tipo de evento.'],
+    'reports' => ['Informes y Reportes Oficiales', 'Catálogo, vista previa de formularios oficiales DIAT/DIEP e Informes de Árbol de Causas.'],
+    'profile' => ['Mi Perfil de Usuario', 'Datos del funcionario, roles activos y centros de salud autorizados.'],
+    'users' => ['Gestión de Usuarios', 'Administración de cuentas y perfiles autorizados de la Dirección Comunal de Salud.'],
+    'roles' => ['Roles y Permisos RBAC', 'Matriz de control de acceso según la normativa institucional.'],
+    'establishments' => ['Catálogo de Establecimientos', 'Red de Atención Primaria: CESFAM, SAR, CECOSF y postas rurales.'],
+    'settings' => ['Parámetros Institucionales', 'Catálogos normativos, matriz de 222 factores y jerarquías de prevención.'],
 ];
 [$pageTitle, $pageDescription] = $titles[$module];
 $changes = session(\App\Support\DemoWorkspace::SESSION_KEY, []);
-$statusClass = fn ($status) => match ($status) { 'Vencida', 'Con observaciones' => 'status-rejected', 'Implementada', 'Concluida', 'Cerrado', 'Resuelta' => 'status-approved', default => 'status-pending' };
+$statusClass = fn ($status) => match ($status) {
+    'Vencida', 'Con observaciones' => 'status-rejected',
+    'Implementada', 'Concluida', 'Cerrado', 'Resuelta', 'Laboral (Cerrado)' => 'status-approved',
+    'Seguimiento de medidas', 'En ejecución' => 'bg-blue-100 text-blue-800',
+    default => 'status-pending'
+};
 @endphp
-<x-layouts.app :title="$pageTitle.' · GIATEP'">
-<div class="mx-auto max-w-[1500px] space-y-6" data-demo-workspace data-demo-module="{{ $module }}">
-    <nav class="text-sm text-slate-500" aria-label="Migas de pan"><a href="{{ route('dashboard') }}" class="hover:text-blue-800">Inicio</a><span class="mx-2">/</span><span class="font-semibold text-slate-800">{{ $pageTitle }}</span></nav>
-    @if(session('demo_status'))<div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 font-semibold text-emerald-900" role="status">{{ session('demo_status') }}</div>@endif
-    <section class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div><p class="eyebrow">Prototipo visual · Datos de demostración</p><h1 class="mt-2 text-3xl font-black tracking-tight sm:text-4xl">{{ $pageTitle }}</h1><p class="mt-2 max-w-3xl text-slate-600">{{ $pageDescription }}</p></div>
-        <div class="flex flex-wrap gap-2">
-            @if(in_array($module, ['cases','users','establishments']))<a class="btn-primary inline-flex" href="{{ route('demo.show', ['module' => $module, 'mode' => 'create']) }}">+ Crear {{ $module === 'cases' ? 'caso' : ($module === 'users' ? 'usuario' : 'establecimiento') }}</a>@endif
-            <form method="POST" action="{{ route('demo.reset') }}" data-confirm="¿Restablecer todos los cambios temporales de la demostración?">@csrf<button class="btn-secondary" type="submit">Restablecer demostración</button></form>
+<x-layouts.app :title="$pageTitle.' · GIATEP Los Ángeles'">
+<div class="mx-auto max-w-[1600px] space-y-6" data-demo-workspace data-demo-module="{{ $module }}" data-case-folio="{{ $module === 'investigations' && $selected ? $selected['case_id'] : '' }}" data-story-store-url="{{ route('modules.investigations.story.store') }}" data-ai-analyze-url="{{ route('modules.investigations.ai.analyze') }}" data-ai-store-url="{{ route('modules.investigations.ai.store') }}" data-interview-store-url="{{ route('modules.investigations.interviews.store') }}">
+    <!-- Migas de pan y encabezado -->
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+            @unless(in_array($module, ['cases', 'investigations', 'reviews', 'observations', 'measures', 'statistics', 'reports']))
+                <nav class="mb-2 text-xs font-bold text-slate-500" aria-label="Migas de pan">
+                    <a href="{{ route('dashboard') }}" class="text-sky-700 hover:underline">Inicio</a>
+                    <span class="mx-2 text-slate-300">/</span>
+                    <span class="text-slate-800">{{ $pageTitle }}</span>
+                </nav>
+                <p class="text-xs font-bold uppercase tracking-wider text-sky-700">Sistema Institucional GIATEP · Ley 16.744</p>
+                <div class="mt-1 flex flex-wrap items-center gap-2">
+                    <span class="rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-blue-900">Módulo Oficial</span>
+                    <span class="text-xs font-semibold text-slate-500">Dirección Comunal de Salud de Los Ángeles</span>
+                </div>
+            @endunless
+            <h1 class="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl {{ in_array($module, ['cases', 'investigations', 'reviews', 'observations', 'measures', 'statistics', 'reports']) ? '' : 'mt-2' }}">{{ $pageTitle }}</h1>
+            <p class="mt-1 max-w-3xl text-sm leading-relaxed text-slate-600">{{ $pageDescription }}</p>
         </div>
-    </section>
+        <div class="flex flex-wrap gap-2.5">
+            @if(in_array($module, ['cases','users','establishments']))
+                <a class="btn-primary inline-flex gap-2 shadow-sm" href="{{ route('demo.show', ['module' => $module, 'mode' => 'create']) }}">
+                    <span class="text-base font-bold">+</span>
+                    {{ $module === 'cases' ? 'Registrar Caso (DIAT / DIEP)' : ($module === 'users' ? 'Nuevo Usuario' : 'Nuevo Centro de Salud') }}
+                </a>
+            @endif
+            <form method="POST" action="{{ route('demo.reset') }}" data-confirm="¿Desea restablecer los datos al estado oficial inicial?">
+                @csrf
+                <button class="btn-secondary" type="submit">Restablecer datos iniciales</button>
+            </form>
+        </div>
+    </div>
 
-    @if($changes)<details class="card p-5"><summary class="cursor-pointer font-bold">Actividad temporal de esta sesión ({{ count($changes) }})</summary><ol class="mt-4 space-y-2 text-sm">@foreach(array_reverse($changes) as $change)<li><strong>{{ $change['at'] }}</strong> · {{ $change['action'] }} <span class="text-slate-500">por {{ $change['user'] }}</span></li>@endforeach</ol></details>@endif
+    @if($changes)
+        <details class="card p-4 text-xs">
+            <summary class="cursor-pointer font-bold text-slate-700">Historial de acciones registradas en esta sesión ({{ count($changes) }} registros)</summary>
+            <ol class="mt-3 space-y-1.5 border-t pt-2 text-slate-600">
+                @foreach(array_reverse($changes) as $change)
+                    <li><strong>{{ $change['at'] }}</strong>: {{ $change['action'] }} <span class="text-slate-400">por {{ $change['user'] }}</span></li>
+                @endforeach
+            </ol>
+        </details>
+    @endif
 
+    <!-- ==================== MÓDULO: CASOS ==================== -->
     @if($module === 'cases')
         @if($mode === 'create' || $mode === 'edit')
-            <form class="card overflow-hidden" method="POST" action="{{ route('demo.action', 'cases') }}" data-demo-form data-unsaved-form>@csrf<input type="hidden" name="action" value="{{ $mode === 'edit' ? 'Caso editado' : 'Caso registrado' }}"><input type="hidden" name="return_to" value="{{ route('modules.cases.index') }}">
-                <div class="border-b border-slate-200 bg-slate-50 p-5"><div class="flex flex-wrap gap-2" data-step-nav>@foreach(['Trabajador','Establecimiento','Evento','Relato','Antecedentes','Resumen'] as $index => $step)<button type="button" class="step-pill {{ $index === 0 ? 'step-pill-active' : '' }}" data-step-target="{{ $index }}"><span>{{ $index + 1 }}</span>{{ $step }}</button>@endforeach</div></div>
-                <div class="p-6 sm:p-8">
-                    <section data-step="0" class="grid gap-5 md:grid-cols-2"><div><label class="label">RUT del trabajador</label><input class="input" value="{{ $selected['rut'] ?? '11.111.111-1' }}" required></div><div><label class="label">Nombre completo</label><input class="input" value="{{ $selected['worker'] ?? 'Camila Soto Rojas' }}" required></div><div><label class="label">Cargo</label><input class="input" value="Técnico en enfermería"></div><div><label class="label">Unidad</label><input class="input" value="Bodega clínica"></div></section>
-                    <section data-step="1" class="hidden grid gap-5 md:grid-cols-2"><div><label class="label">Establecimiento</label><select class="input">@foreach($demo['establishments'] as $item)<option>{{ $item }}</option>@endforeach</select></div><div><label class="label">Tipo de vínculo</label><select class="input"><option>Funcionario/a</option><option>Honorarios</option><option>Empresa externa</option></select></div><div class="md:col-span-2"><label class="label">Lugar o dependencia</label><input class="input" value="Pasillo de acceso a bodega"></div></section>
-                    <section data-step="2" class="hidden grid gap-5 md:grid-cols-2"><div><label class="label">Tipo de caso</label><select class="input" data-case-type><option>Accidente del trabajo</option><option>Enfermedad profesional</option></select></div><div><label class="label">Fecha del evento o diagnóstico</label><input type="date" class="input" value="2026-09-28"></div><div data-accident-field><label class="label">Hora</label><input type="time" class="input" value="10:35"></div><div data-accident-field><label class="label">Actividad realizada</label><input class="input" value="Traslado de insumos"></div><div data-disease-field class="hidden"><label class="label">Agente o factor de riesgo</label><input class="input" value="Agente químico irritante"></div><div data-disease-field class="hidden"><label class="label">Organismo calificador</label><input class="input" value="Organismo administrador"></div></section>
-                    <section data-step="3" class="hidden"><label class="label">Relato inicial</label><textarea class="input" rows="8">{{ $selected['story'] ?? 'Durante el traslado de insumos, la trabajadora perdió estabilidad en una superficie húmeda.' }}</textarea><p class="hint">Registra hechos conocidos, sin conclusiones anticipadas.</p></section>
-                    <section data-step="4" class="hidden grid gap-5 md:grid-cols-2"><div><label class="label">Lesión o diagnóstico</label><input class="input" value="{{ $selected['injury'] ?? 'Esguince de tobillo' }}"></div><div><label class="label">Parte del cuerpo</label><input class="input" value="{{ $selected['body_part'] ?? 'Tobillo derecho' }}"></div><div><label class="label">Calificación</label><select class="input"><option>Pendiente</option><option>Laboral</option><option>No laboral</option></select></div><div><label class="label">Documento de referencia</label><input type="file" class="input" data-local-file><p class="hint">Vista previa local; el archivo no se envía ni almacena.</p></div></section>
-                    <section data-step="5" class="hidden space-y-5"><div class="rounded-xl bg-sky-50 p-5"><h3 class="font-bold text-sky-950">Resumen antes de registrar</h3><p class="mt-2 text-sm text-sky-900">Accidente del trabajo · Camila Soto Rojas · CESFAM Los Aromos · Calificación pendiente.</p></div><div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><strong>Regla de demostración:</strong> un caso puede iniciar investigación cuando tiene antecedentes mínimos y el perfil posee permiso. Este criterio debe validarse antes de integración real.</div></section>
+            <form class="card overflow-hidden shadow-md" method="POST" action="{{ route('demo.action', 'cases') }}" data-demo-form data-unsaved-form>
+                @csrf
+                <input type="hidden" name="action" value="{{ $mode === 'edit' ? 'Caso editado' : 'Caso registrado' }}">
+                <input type="hidden" name="return_to" value="{{ route('modules.cases.index') }}">
+                
+                <div class="border-b border-slate-200 bg-slate-50/80 p-5">
+                    <div class="flex flex-wrap gap-2" data-step-nav>
+                        @foreach(['1. Trabajador / Afectado', '2. Establecimiento APS', '3. Evento (DIAT / DIEP)', '4. Relato Circunstanciado', '5. Lesión o Diagnóstico', '6. Carátula y Resumen'] as $index => $step)
+                            <button type="button" class="step-pill {{ $index === 0 ? 'step-pill-active' : '' }}" data-step-target="{{ $index }}">
+                                <span>{{ $index + 1 }}</span>{{ $step }}
+                            </button>
+                        @endforeach
+                    </div>
                 </div>
-                <div class="flex flex-wrap justify-between gap-3 border-t border-slate-200 bg-slate-50 p-5"><button type="button" class="btn-secondary" data-step-prev>Anterior</button><div class="flex gap-2"><button class="btn-secondary" name="action" value="Borrador de caso guardado">Guardar borrador</button><button type="button" class="btn-primary" data-step-next>Siguiente</button><button class="btn-primary hidden" data-step-submit>Registrar caso</button></div></div>
+
+                <div class="p-6 sm:p-8">
+                    <!-- Paso 1: Trabajador -->
+                    <section data-step="0" class="space-y-6">
+                        <div class="rounded-xl border border-sky-200 bg-sky-50 p-4 text-xs text-sky-900">
+                            <strong>Paso 1:</strong> Ingrese el RUT del funcionario. El sistema normaliza el formato con puntos y dígito verificador.
+                        </div>
+                        <div class="grid gap-5 md:grid-cols-2">
+                            <div>
+                                <label class="label">RUT del trabajador o funcionario</label>
+                                <input class="input" value="{{ $selected['rut'] ?? '17.456.321-8' }}" required placeholder="12.345.678-9">
+                            </div>
+                            <div>
+                                <label class="label">Nombre completo</label>
+                                <input class="input" value="{{ $selected['worker'] ?? 'Daniela Araya Soto' }}" required placeholder="Nombres y Apellidos">
+                            </div>
+                            <div>
+                                <label class="label">Cargo u oficio habitual</label>
+                                <input class="input" value="{{ $selected['job_title'] ?? 'Técnica en enfermería (TENS)' }}" placeholder="Ej. TENS, Odontólogo, Chofer">
+                            </div>
+                            <div>
+                                <label class="label">Teléfono de contacto</label>
+                                <input class="input" value="{{ $selected['phone'] ?? '+56 9 8123 4567' }}" placeholder="+56 9 ...">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Paso 2: Establecimiento -->
+                    <section data-step="1" class="hidden space-y-6">
+                        <div class="grid gap-5 md:grid-cols-2">
+                            <div>
+                                <label class="label">Establecimiento de salud comunal</label>
+                                <select class="input">
+                                    @foreach($demo['establishments'] as $item)
+                                        <option {{ ($selected['establishment'] ?? '') === $item ? 'selected' : '' }}>{{ $item }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="label">Tipo de vínculo contractual</label>
+                                <select class="input">
+                                    <option>Estatuto de Atención Primaria (Ley 19.378 - Planta)</option>
+                                    <option>Estatuto de Atención Primaria (Ley 19.378 - Contrata)</option>
+                                    <option>Código del Trabajo</option>
+                                    <option>Honorarios</option>
+                                    <option>Empresa Externa / Proveedor</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="label">Lugar específico o dependencia interna</label>
+                                <input class="input" value="{{ $selected['location'] ?? 'Pasillo de acceso a bodega clínica' }}" placeholder="Ej. Box dental N° 3, Central de esterilización, Pasillo">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Paso 3: Evento DIAT vs DIEP -->
+                    <section data-step="2" class="hidden space-y-6">
+                        <div class="grid gap-5 md:grid-cols-2">
+                            <div>
+                                <label class="label">Tipo de caso (Formulario)</label>
+                                <select class="input font-bold text-blue-900" data-case-type>
+                                    <option value="Accidente del trabajo">Accidente del trabajo (Formulario DIAT)</option>
+                                    <option value="Accidente de trayecto">Accidente de trayecto (Formulario DIAT)</option>
+                                    <option value="Enfermedad profesional">Enfermedad profesional (Formulario DIEP)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="label">Fecha del evento o inicio de síntomas</label>
+                                <input type="date" class="input" value="{{ $selected['date'] ?? '2026-10-02' }}">
+                            </div>
+                            <div data-accident-field>
+                                <label class="label">Hora del accidente</label>
+                                <input type="time" class="input" value="{{ $selected['time'] ?? '09:15' }}">
+                            </div>
+                            <div data-accident-field>
+                                <label class="label">¿La tarea realizada era habitual?</label>
+                                <select class="input">
+                                    <option>Sí, labor habitual del cargo</option>
+                                    <option>No, labor extraordinaria o de apoyo</option>
+                                </select>
+                            </div>
+                            <div data-disease-field class="hidden">
+                                <label class="label">Agente de riesgo sospechoso (DIEP)</label>
+                                <select class="input">
+                                    <option>Químico (Detergentes enzimáticos, antisépticos, desinfectantes)</option>
+                                    <option>Ergonómico (Manejo manual de pacientes, sobreesfuerzo, posturas forzadas)</option>
+                                    <option>Biológico (Exposición a patógenos o fluidos biológicos)</option>
+                                    <option>Físico (Ruido, radiaciones, temperaturas extremas)</option>
+                                    <option>Psicosocial laboral</option>
+                                </select>
+                            </div>
+                            <div data-disease-field class="hidden">
+                                <label class="label">Tiempo de exposición en el puesto</label>
+                                <input class="input" placeholder="Ej. 1 año y 6 meses">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Paso 4: Relato -->
+                    <section data-step="3" class="hidden space-y-4">
+                        <label class="label">Relato circunstanciado inicial del evento o sintomatología</label>
+                        <textarea class="input text-slate-800 leading-relaxed" rows="8">{{ $selected['story'] ?? 'Durante el traslado de insumos clínicos hacia la bodega, la trabajadora resbaló sobre una zona húmeda del pasillo y cayó apoyando la rodilla derecha contra el suelo.' }}</textarea>
+                        <p class="hint">Describa qué hacía la persona, cómo ocurrió el hecho y quiénes presenciaron el evento. Este relato servirá de base para la posterior investigación formal.</p>
+                    </section>
+
+                    <!-- Paso 5: Lesión -->
+                    <section data-step="4" class="hidden space-y-6">
+                        <div class="grid gap-5 md:grid-cols-2">
+                            <div>
+                                <label class="label">Parte del cuerpo afectada</label>
+                                <input class="input" value="{{ $selected['body_part'] ?? 'Rodilla derecha' }}" placeholder="Ej. Rodilla derecha, Dedo índice, Zona lumbar">
+                            </div>
+                            <div>
+                                <label class="label">Gravedad preliminar (según criterio ACHS)</label>
+                                <select class="input">
+                                    <option>Leve (sin riesgo vital ni secuela previsible)</option>
+                                    <option>Grave (requiere maniobras de reanimación o rescate)</option>
+                                    <option>Fatal</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="label">Calificación previsional inicial</label>
+                                <select class="input">
+                                    <option>Pendiente de calificación</option>
+                                    <option>Laboral</option>
+                                    <option>Común / No laboral</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="label">Documento o certificado de atención (local)</label>
+                                <input type="file" class="input" data-local-file>
+                                <p class="hint">Comprobante médico o documento de respaldo del suceso.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Paso 6: Resumen -->
+                    <section data-step="5" class="hidden space-y-6">
+                        <div class="rounded-2xl border border-sky-300 bg-sky-50/70 p-6">
+                            <div class="flex items-center justify-between border-b border-sky-200 pb-3">
+                                <h3 class="font-black text-blue-950">Carátula de Envío a la Dirección Comunal de Salud</h3>
+                                <span class="rounded bg-sky-600 px-2 py-1 text-xs font-bold text-white">Formulario DIAT / DIEP</span>
+                            </div>
+                            <dl class="mt-4 grid gap-4 text-xs sm:grid-cols-3">
+                                <div><dt>Empleador:</dt><dd>Dirección Comunal de Salud (RUT: 69.170.102-6)</dd></div>
+                                <div><dt>Organismo Administrador:</dt><dd>Asociación Chilena de Seguridad (ACHS)</dd></div>
+                                <div><dt>Funcionario/a:</dt><dd>{{ $selected['worker'] ?? 'Daniela Araya Soto' }}</dd></div>
+                                <div><dt>Establecimiento:</dt><dd>{{ $selected['establishment'] ?? 'CESFAM Nororiente' }}</dd></div>
+                                <div><dt>Fecha del caso:</dt><dd>2026-10-02</dd></div>
+                                <div><dt>Estado al registrar:</dt><dd><span class="status status-pending">Registrado</span></dd></div>
+                            </dl>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="flex flex-wrap justify-between gap-3 border-t border-slate-200 bg-slate-50/90 p-5">
+                    <button type="button" class="btn-secondary" data-step-prev>← Anterior</button>
+                    <div class="flex gap-2">
+                        <button class="btn-secondary" name="action" value="Borrador de caso guardado">Guardar borrador</button>
+                        <button type="button" class="btn-primary" data-step-next>Siguiente →</button>
+                        <button class="btn-primary hidden" data-step-submit>Registrar caso formal</button>
+                    </div>
+                </div>
             </form>
+
         @elseif($selected)
+            <!-- Vista de Detalle de Caso Seleccionado -->
             @php $relatedInvestigation = $selected['investigation_id'] ? $demo['investigations']->firstWhere('id', $selected['investigation_id']) : null; @endphp
-            <div class="grid gap-6 xl:grid-cols-[1fr_22rem]"><section class="space-y-6"><div class="card p-6"><div class="flex flex-wrap items-start justify-between gap-3"><div><p class="eyebrow">{{ $selected['id'] }}</p><h2 class="mt-1 text-2xl font-black">{{ $selected['worker'] }}</h2></div><span class="status {{ $statusClass($selected['status']) }}">{{ $selected['status'] }}</span></div><dl class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4"><div><dt>Tipo</dt><dd>{{ $selected['type'] }}</dd></div><div><dt>Fecha</dt><dd>{{ $selected['date'] }}</dd></div><div><dt>Establecimiento</dt><dd>{{ $selected['establishment'] }}</dd></div><div><dt>Calificación</dt><dd>{{ $selected['qualification'] }}</dd></div></dl></div>
-                <div class="card p-6"><div class="tab-list" data-tabs>@foreach(['Resumen','Historial','Documentos','Investigación','Medidas'] as $i => $tab)<button class="tab-button {{ $i===0?'tab-button-active':'' }}" data-tab-target="case-{{ $i }}">{{ $tab }}</button>@endforeach</div><div class="mt-6" data-tab-panel="case-0"><h3 class="font-bold">Relato inicial</h3><p class="mt-2 text-slate-600">{{ $selected['story'] }}</p><dl class="mt-5 grid gap-4 sm:grid-cols-2"><div><dt>Lesión</dt><dd>{{ $selected['injury'] }}</dd></div><div><dt>Parte afectada</dt><dd>{{ $selected['body_part'] }}</dd></div></dl></div><div class="mt-6 hidden" data-tab-panel="case-1"><ul class="timeline"><li><strong>Caso registrado</strong><span>28/09/2026 · Usuario de demostración</span></li><li><strong>Antecedentes revisados</strong><span>29/09/2026 · Prevención de riesgos</span></li></ul></div><div class="mt-6 hidden" data-tab-panel="case-2"><div class="empty-state">No hay documentos almacenados. En el prototipo solo se previsualizan archivos locales.</div></div><div class="mt-6 hidden" data-tab-panel="case-3">@if($relatedInvestigation)<a class="text-link" href="{{ route('demo.show', ['module'=>'investigations','id'=>$relatedInvestigation['id']]) }}">Abrir {{ $relatedInvestigation['id'] }} · {{ $relatedInvestigation['status'] }}</a>@else<div class="empty-state">Aún no existe investigación asociada.</div>@endif</div><div class="mt-6 hidden" data-tab-panel="case-4"><ul class="space-y-3">@forelse($demo['measures']->where('case_id',$selected['id']) as $measure)<li class="rounded-xl border p-4"><strong>{{ $measure['description'] }}</strong><span class="status {{ $statusClass($measure['status']) }} ml-2">{{ $measure['status'] }}</span></li>@empty<li class="empty-state">Sin medidas asociadas.</li>@endforelse</ul></div></div></section>
-                <aside class="space-y-3"><a class="btn-primary flex" href="{{ route('demo.show', ['module'=>'cases','id'=>$selected['id'],'mode'=>'edit']) }}">Editar caso</a><a class="btn-secondary flex" href="{{ route('demo.show', ['module'=>'investigations','id'=>$selected['investigation_id'] ?: 'INV-2026-011','mode'=>'edit']) }}">{{ $relatedInvestigation ? 'Continuar investigación' : 'Iniciar investigación' }}</a><div class="card p-5 text-sm"><strong>Separación de estados</strong><p class="mt-2 text-slate-600">La investigación puede concluir mientras las medidas y el caso continúan en seguimiento.</p></div></aside></div>
+            <div class="grid gap-6 xl:grid-cols-[1fr_24rem]">
+                <section class="space-y-6">
+                    <!-- Ficha Encabezado -->
+                    <div class="card p-6 shadow-sm">
+                        <div class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-5">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="rounded-full bg-blue-100 px-3 py-1 text-xs font-black text-blue-900">
+                                        {{ $selected['type'] === 'Enfermedad profesional' ? 'DIEP' : 'DIAT' }}
+                                    </span>
+                                    <span class="font-mono text-sm font-bold text-slate-500">{{ $selected['id'] }}</span>
+                                </div>
+                                <h2 class="mt-2 text-2xl font-black text-slate-950">{{ $selected['worker'] }}</h2>
+                                <p class="text-xs font-semibold text-slate-500">{{ $selected['rut'] }} · {{ $selected['job_title'] }}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="status {{ $statusClass($selected['status']) }} text-sm">{{ $selected['status'] }}</span>
+                                <p class="mt-2 text-xs font-bold text-slate-500">{{ $selected['establishment'] }}</p>
+                            </div>
+                        </div>
+
+                        <dl class="mt-5 grid gap-4 text-xs sm:grid-cols-2 lg:grid-cols-4">
+                            <div><dt>Tipo de Caso</dt><dd class="text-sm font-bold text-slate-900">{{ $selected['type'] }}</dd></div>
+                            <div><dt>Fecha y Hora</dt><dd class="text-sm font-bold text-slate-900">{{ $selected['date'] }} · {{ $selected['time'] }}</dd></div>
+                            <div><dt>Lugar Específico</dt><dd class="text-sm font-bold text-slate-900">{{ $selected['location'] }}</dd></div>
+                            <div><dt>Calificación</dt><dd class="text-sm font-bold text-slate-900">{{ $selected['qualification'] }}</dd></div>
+                        </dl>
+                    </div>
+
+                    <!-- Pestañas de Detalle -->
+                    <div class="card p-6 shadow-sm">
+                        <div class="tab-list" data-tabs>
+                            @foreach(['Formulario Oficial DIAT/DIEP', 'Historial y Trazabilidad', 'Investigación Asociada', 'Medidas Preventivas'] as $i => $tab)
+                                <button class="tab-button {{ $i === 0 ? 'tab-button-active' : '' }}" data-tab-target="case-{{ $i }}">{{ $tab }}</button>
+                            @endforeach
+                        </div>
+
+                        <!-- Tab 0: Ficha Oficial -->
+                        <div class="mt-6 space-y-6" data-tab-panel="case-0">
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-6">
+                                <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                                    <div class="flex items-center gap-2">
+                                        <span class="size-3 rounded-full bg-blue-800"></span>
+                                        <h3 class="font-black text-blue-950">Denuncia Oficial ({{ $selected['type'] === 'Enfermedad profesional' ? 'DIEP' : 'DIAT' }})</h3>
+                                    </div>
+                                    <span class="text-xs font-bold text-slate-500">ACHS · Folio {{ $selected['id'] }}</span>
+                                </div>
+                                <div class="mt-4 grid gap-5 sm:grid-cols-2 text-xs">
+                                    <div><dt>Razón Social:</dt><dd class="font-bold text-slate-900">{{ $selected['employer_name'] }}</dd></div>
+                                    <div><dt>RUT Empleador:</dt><dd class="font-bold text-slate-900">{{ $selected['employer_rut'] }}</dd></div>
+                                    <div><dt>Dirección Empleador:</dt><dd class="font-bold text-slate-900">{{ $selected['employer_address'] }}</dd></div>
+                                    <div><dt>Actividad Económica:</dt><dd class="font-bold text-slate-900">{{ $selected['economic_activity'] }}</dd></div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3">
+                                <h4 class="font-black text-slate-900">Relato del Evento</h4>
+                                <div class="rounded-xl border border-slate-200 bg-white p-4 text-sm leading-relaxed text-slate-700">
+                                    {{ $selected['story'] }}
+                                </div>
+                            </div>
+
+                            <div class="grid gap-4 sm:grid-cols-2">
+                                <div class="rounded-xl border border-slate-200 p-4 text-xs">
+                                    <dt>Lesión o Síntoma:</dt>
+                                    <dd class="mt-1 text-sm font-bold text-slate-900">{{ $selected['injury'] }}</dd>
+                                </div>
+                                <div class="rounded-xl border border-slate-200 p-4 text-xs">
+                                    <dt>Parte Afectada:</dt>
+                                    <dd class="mt-1 text-sm font-bold text-slate-900">{{ $selected['body_part'] }}</dd>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 1: Historial -->
+                        <div class="mt-6 hidden" data-tab-panel="case-1">
+                            <ul class="timeline">
+                                <li><strong>Caso registrado en plataforma</strong><span>{{ $selected['date'] }} · Ingreso de antecedentes iniciales</span></li>
+                                <li><strong>Notificación a Comité Paritario y Prevención</strong><span>{{ $selected['date'] }} · Envío automático de ficha</span></li>
+                                @if($relatedInvestigation)
+                                    <li><strong>Investigación formal aperturada</strong><span>{{ $relatedInvestigation['updated'] }} · Folio {{ $relatedInvestigation['id'] }}</span></li>
+                                @endif
+                                @if($selected['status'] === 'Cerrado')
+                                    <li><strong>Caso Cerrado</strong><span>Medidas implementadas al 100% y funcionario reintegrado</span></li>
+                                @endif
+                            </ul>
+                        </div>
+
+                        <!-- Tab 2: Investigación -->
+                        <div class="mt-6 hidden" data-tab-panel="case-2">
+                            @if($relatedInvestigation)
+                                <div class="rounded-2xl border border-sky-200 bg-sky-50 p-6">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <span class="rounded bg-sky-700 px-2 py-0.5 text-xs font-bold text-white">Investigación {{ $relatedInvestigation['id'] }}</span>
+                                            <h4 class="mt-2 text-lg font-black text-slate-950">{{ $relatedInvestigation['kind'] }}</h4>
+                                            <p class="mt-1 text-xs text-slate-600">Responsable: {{ $relatedInvestigation['owner'] }} · Estado: {{ $relatedInvestigation['status'] }}</p>
+                                        </div>
+                                        <a href="{{ route('demo.show', ['module'=>'investigations','id'=>$relatedInvestigation['id']]) }}" class="btn-primary">
+                                            Abrir Árbol de Causas →
+                                        </a>
+                                    </div>
+                                </div>
+                            @elseif(in_array($selected['type'] ?? '', ['Accidente o enfermedad común', 'Accidente común', 'Enfermedad común']))
+                                <div class="empty-state">
+                                    <p class="font-bold text-slate-800">Investigación no aplica para este tipo de caso.</p>
+                                    <p class="mt-1 text-xs text-slate-500">Los casos de patología o accidente común se derivan al sistema de salud previsional común (FONASA/ISAPRE) bajo la Ley 16.744.</p>
+                                    <button type="button" disabled class="btn-secondary mt-4 inline-flex cursor-not-allowed opacity-60">Investigación no aplica</button>
+                                </div>
+                            @else
+                                <div class="empty-state">
+                                    <p class="font-bold text-slate-800">Aún no existe una investigación para este caso.</p>
+                                    <p class="mt-1 text-xs text-slate-500">Los roles autorizados (Prevención, CPHS, Delegado) pueden iniciar la investigación en cualquier momento.</p>
+                                    <a href="{{ route('modules.investigations.index', ['case' => $selected['id']]) }}" class="btn-primary mt-4 inline-flex">
+                                        Iniciar Investigación Ahora →
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Tab 3: Medidas -->
+                        <div class="mt-6 hidden" data-tab-panel="case-3">
+                            <ul class="space-y-3">
+                                @forelse($demo['measures']->where('case_id', $selected['id']) as $measure)
+                                    <li class="rounded-xl border border-slate-200 p-4">
+                                        <div class="flex items-start justify-between">
+                                            <div>
+                                                <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-700">{{ $measure['category'] }}</span>
+                                                <p class="mt-2 font-bold text-slate-900">{{ $measure['description'] }}</p>
+                                                <p class="mt-1 text-xs text-slate-500">Responsable: {{ $measure['owner'] }} · Plazo: {{ $measure['due'] }}</p>
+                                            </div>
+                                            <span class="status {{ $statusClass($measure['status']) }}">{{ $measure['status'] }} ({{ $measure['progress'] }}%)</span>
+                                        </div>
+                                    </li>
+                                @empty
+                                    <li class="empty-state">No hay medidas asociadas a este caso todavía.</li>
+                                @endforelse
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Panel Lateral de Acciones -->
+                <aside class="space-y-4">
+                    <div class="card p-5 space-y-3">
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Acciones del Caso</p>
+                        
+                        <a class="btn-primary flex justify-center text-center w-full" href="{{ route('demo.show', ['module'=>'cases','id'=>$selected['id'],'mode'=>'edit']) }}">
+                            ✎ Editar Antecedentes
+                        </a>
+
+                        @if($relatedInvestigation)
+                            <a class="btn-secondary flex justify-center text-center w-full" href="{{ route('demo.show', ['module'=>'investigations','id'=>$selected['investigation_id']]) }}">
+                                🔍 Ver Investigación ({{ $selected['investigation_id'] }})
+                            </a>
+                        @elseif(in_array($selected['type'] ?? '', ['Accidente o enfermedad común', 'Accidente común', 'Enfermedad común']))
+                            <button type="button" disabled class="btn-secondary flex justify-center text-center w-full cursor-not-allowed opacity-60" title="No aplica investigación laboral">
+                                Investigación no aplica
+                            </button>
+                        @else
+                            <a class="btn-primary flex justify-center text-center w-full bg-emerald-700 hover:bg-emerald-800" href="{{ route('modules.investigations.index', ['case'=>$selected['id']]) }}">
+                                + Iniciar Investigación
+                            </a>
+                        @endif
+
+                        @if(auth()->user()->hasPermission('observations.read'))
+                            <a class="btn-secondary flex justify-center text-center w-full" href="{{ route('modules.observations.index', ['case'=>$selected['id']]) }}">
+                                💬 Ver / Dejar Observaciones
+                            </a>
+                        @endif
+
+                        <!-- Botón Cerrar Caso (Autorizado para Comité, Delegado y Prevención) -->
+                        @if(auth()->user()->hasRole('cphs') || auth()->user()->hasRole('delegado') || auth()->user()->hasRole('prevencion'))
+                            @if($selected['status'] !== 'Cerrado')
+                                <button type="button" class="btn-secondary flex justify-center text-center w-full border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100" data-open-demo-modal data-record="Cerrar Caso {{ $selected['id'] }}">
+                                    ✓ Cerrar Caso Formalmente
+                                </button>
+                            @else
+                                <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-center text-xs font-bold text-emerald-900">
+                                    Caso Cerrado y Regularizado
+                                </div>
+                            @endif
+                        @endif
+                    </div>
+
+                    <div class="card p-5 text-xs text-slate-600 space-y-2">
+                        <strong class="font-bold text-slate-900">Normativa Institucional:</strong>
+                        <p class="leading-relaxed">
+                            Según el manual de la Dirección Comunal de Salud de Los Ángeles, el Comité Paritario (CPHS), Delegados de Seguridad y Prevención tienen la potestad de realizar la investigación y cerrar el caso una vez verificadas las medidas correctivas.
+                        </p>
+                    </div>
+                </aside>
+            </div>
+
         @else
-            <div class="filter-bar" data-filter-scope><input class="input" placeholder="Buscar trabajador o folio" data-table-search><select class="input" data-table-filter="type"><option value="">Todos los tipos</option><option>Accidente del trabajo</option><option>Enfermedad profesional</option></select><select class="input" data-table-filter="status"><option value="">Todos los estados</option>@foreach($demo['cases']->pluck('status')->unique() as $state)<option>{{ $state }}</option>@endforeach</select><select class="input"><option>Todos los establecimientos</option>@foreach($demo['establishments'] as $item)<option>{{ $item }}</option>@endforeach</select><input type="date" class="input"></div>
-            <div class="card table-card"><table class="data-table"><thead><tr><th>Folio</th><th>Trabajador</th><th>Tipo</th><th>Establecimiento</th><th>Fecha</th><th>Estado</th><th></th></tr></thead><tbody>@foreach($demo['cases'] as $case)<tr data-table-row data-type="{{ $case['type'] }}" data-status="{{ $case['status'] }}"><td class="font-bold">{{ $case['id'] }}</td><td>{{ $case['worker'] }}<small>{{ $case['rut'] }}</small></td><td>{{ $case['type'] }}</td><td>{{ $case['establishment'] }}</td><td>{{ $case['date'] }}</td><td><span class="status {{ $statusClass($case['status']) }}">{{ $case['status'] }}</span></td><td><a class="text-link" href="{{ route('demo.show',['module'=>'cases','id'=>$case['id']]) }}">Ver detalle</a></td></tr>@endforeach</tbody></table><div class="empty-state m-5 hidden" data-filter-empty>No hay casos para los filtros seleccionados.</div></div>
+            <!-- Listado Principal de Casos -->
+            <div class="filter-bar" data-filter-scope>
+                <input class="input" placeholder="Buscar por trabajador, RUT o folio" data-table-search>
+                <select class="input" data-table-filter="type">
+                    <option value="">Todos los tipos (DIAT / DIEP)</option>
+                    <option value="Accidente de trabajo">Accidente de trabajo</option>
+                    <option value="Accidente de trayecto">Accidente de trayecto</option>
+                    <option value="Enfermedad profesional">Enfermedad profesional</option>
+                </select>
+                <select class="input" data-table-filter="status">
+                    <option value="">Todos los estados</option>
+                    @foreach($demo['cases']->pluck('status')->unique() as $state)
+                        <option>{{ $state }}</option>
+                    @endforeach
+                </select>
+                <select class="input">
+                    <option value="">Todos los establecimientos de Los Ángeles</option>
+                    @foreach($demo['establishments'] as $item)
+                        <option>{{ $item }}</option>
+                    @endforeach
+                </select>
+                <input type="date" class="input">
+            </div>
+
+            <div class="card table-card shadow-sm">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Folio / Formulario</th>
+                            <th>Trabajador Afectado</th>
+                            <th>Tipo de Evento</th>
+                            <th>Centro de Salud</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($demo['cases'] as $case)
+                            <tr data-table-row data-type="{{ $case['type'] }}" data-status="{{ $case['status'] }}">
+                                <td>
+                                    <span class="font-black text-blue-950">{{ $case['id'] }}</span>
+                                    <span class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                                        {{ $case['type'] === 'Enfermedad profesional' ? 'DIEP' : 'DIAT' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong class="text-slate-900">{{ $case['worker'] }}</strong>
+                                    <small>{{ $case['rut'] }} · {{ $case['job_title'] }}</small>
+                                </td>
+                                <td>
+                                    <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-bold {{ $case['type'] === 'Enfermedad profesional' ? 'bg-amber-100 text-amber-900' : 'bg-blue-50 text-blue-900' }}">
+                                        {{ $case['type'] }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="font-semibold text-slate-800">{{ $case['establishment'] }}</span>
+                                    <small>{{ $case['location'] }}</small>
+                                </td>
+                                <td>
+                                    <span class="font-semibold text-slate-800">{{ $case['date'] }}</span>
+                                    <small>{{ $case['time'] }}</small>
+                                </td>
+                                <td>
+                                    <span class="status {{ $statusClass($case['status']) }}">{{ $case['status'] }}</span>
+                                </td>
+                                <td>
+                                    <div class="flex items-center gap-2">
+                                        <a class="text-link" href="{{ route('demo.show', ['module'=>'cases','id'=>$case['id']]) }}">Ver Ficha</a>
+                                        @if($case['investigation_id'])
+                                            <span class="text-slate-300">|</span>
+                                            <a class="text-xs font-bold text-emerald-700 hover:underline" href="{{ route('demo.show', ['module'=>'investigations','id'=>$case['investigation_id']]) }}">Investigación</a>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                <div class="empty-state m-5 hidden" data-filter-empty>No hay casos registrados para los filtros seleccionados.</div>
+            </div>
         @endif
+
+    <!-- ==================== MÓDULO: INVESTIGACIONES ==================== -->
     @elseif($module === 'investigations')
         @if($selected)
-            @php $case = $demo['cases']->firstWhere('id',$selected['case_id']); @endphp
-            <div class="grid gap-6 xl:grid-cols-[15rem_1fr]"><aside class="card h-fit p-3"><p class="px-3 py-2 text-xs font-bold uppercase text-slate-500">Expediente {{ $selected['id'] }}</p>@foreach(['Antecedentes','Entrevistas','Evidencias','Relato final','Hechos','Árbol de causas','Matriz y medidas','Participantes','Propuesta IA','Resumen'] as $i=>$section)<button class="section-link {{ $i===0?'section-link-active':'' }}" data-section-target="inv-{{ $i }}">{{ $i+1 }}. {{ $section }}</button>@endforeach</aside>
-            <form method="POST" action="{{ route('demo.action','investigations') }}" class="card min-w-0" data-unsaved-form>@csrf<input type="hidden" name="action" value="Borrador de investigación guardado"><input type="hidden" name="return_to" value="{{ url()->current() }}"><header class="border-b p-6"><div class="flex flex-wrap justify-between gap-4"><div><p class="eyebrow">{{ $selected['kind'] }} · {{ $case['id'] }}</p><h2 class="mt-1 text-2xl font-black">{{ $selected['id'] }}</h2></div><span class="status {{ $statusClass($selected['status']) }}">{{ $selected['status'] }}</span></div><div class="mt-4 h-2 rounded bg-slate-100"><div class="h-2 rounded bg-sky-600" style="width:{{ $selected['progress'] }}%"></div></div></header><div class="p-6 sm:p-8">
-            <section data-section="inv-0"><h3 class="section-title">Antecedentes recuperados del caso</h3><div class="source-banner">Origen: {{ $case['id'] }} · Estos datos se muestran como referencia y no se editan aquí.</div><dl class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"><div><dt>Trabajador</dt><dd>{{ $case['worker'] }}</dd></div><div><dt>Establecimiento</dt><dd>{{ $case['establishment'] }}</dd></div><div><dt>Evento</dt><dd>{{ $case['date'] }}</dd></div><div class="sm:col-span-2 lg:col-span-3"><dt>Relato inicial</dt><dd>{{ $case['story'] }}</dd></div></dl></section>
-            <section data-section="inv-1" class="hidden"><h3 class="section-title">Entrevistas</h3><div class="grid gap-4 md:grid-cols-2"><input class="input" placeholder="Nombre del entrevistado" value="Daniela Araya"><select class="input"><option>Testigo presencial</option><option>Jefatura</option><option>Trabajador/a afectado/a</option></select><input class="input" placeholder="Cargo" value="Auxiliar de servicio"><input type="date" class="input" value="2026-09-24"><textarea class="input md:col-span-2" rows="5" placeholder="Declaración">Observé que el acceso se cerró mientras se trasladaba el carro.</textarea></div></section>
-            <section data-section="inv-2" class="hidden"><h3 class="section-title">Evidencias</h3><label class="upload-zone"><input type="file" multiple data-local-file class="sr-only"><strong>Seleccionar archivos para vista previa local</strong><span>Los archivos no se almacenan ni se envían a un servidor.</span></label><ul class="mt-4 space-y-2" data-file-list></ul></section>
-            <section data-section="inv-3" class="hidden"><h3 class="section-title">Relato cronológico final</h3><div class="source-banner mb-4"><strong>Referencia inicial:</strong> {{ $case['story'] }}</div><textarea class="input" rows="10">A las 10:35 horas, durante el traslado planificado de insumos, se produjo el evento descrito. La condición del lugar fue verificada posteriormente por el equipo investigador.</textarea></section>
-            <section data-section="inv-4" class="hidden"><h3 class="section-title">Hechos constatados</h3><div class="space-y-3" data-repeat-list>@foreach(['H-01 · Se trasladaban insumos hacia la bodega.','H-02 · El piso presentaba humedad visible.','H-03 · No existía señalización preventiva instalada.','H-04 · La trabajadora perdió estabilidad.'] as $fact)<div class="repeat-row"><span class="drag-handle">⋮⋮</span><input class="input" value="{{ $fact }}"><button type="button" class="btn-secondary" data-remove-row>Quitar</button></div>@endforeach</div><button type="button" class="btn-secondary mt-4" data-add-fact>+ Agregar hecho</button></section>
-            <section data-section="inv-5" class="hidden"><h3 class="section-title">Árbol de causas</h3><p class="mb-5 text-sm text-slate-600">Representación simplificada. Las relaciones no permiten conectar un hecho consigo mismo.</p><div class="cause-tree"><div class="cause-node cause-final">H-04 · Pérdida de estabilidad</div><div class="cause-connector">↑ Y ↑</div><div class="grid gap-4 md:grid-cols-2"><div class="cause-node">H-02 · Piso húmedo</div><div class="cause-node">H-03 · Sin señalización</div></div><div class="cause-connector">↑</div><div class="cause-node mx-auto">H-01 · Traslado de insumos</div></div><div class="mt-6 grid gap-4 sm:grid-cols-3"><select class="input"><option>H-02</option><option>H-03</option></select><select class="input"><option>antecede a</option><option>conjunción con</option><option>alternativa de</option></select><select class="input"><option>H-04</option><option>H-03</option></select></div></section>
-            <section data-section="inv-6" class="hidden"><h3 class="section-title">Matriz de causas y medidas</h3><div class="card table-card shadow-none"><table class="data-table"><thead><tr><th>Hechos</th><th>Causa / código</th><th>Medida</th><th>Categoría</th><th>Responsable / plazo</th></tr></thead><tbody><tr><td>H-02 + H-03</td><td>Condición locativa · CL-04</td><td>Instalar señalización y definir inspección</td><td>Administrativa</td><td>Mantención · 07/10/2026</td></tr><tr><td>H-01</td><td>Traslado manual · TM-02</td><td>Revisar ruta de traslado</td><td>Ingeniería</td><td>Jefatura · 15/10/2026</td></tr></tbody></table></div></section>
-            <section data-section="inv-7" class="hidden"><h3 class="section-title">Participantes</h3><div class="card table-card shadow-none"><table class="data-table"><thead><tr><th>Nombre</th><th>Cargo</th><th>Establecimiento</th><th>Función</th><th>Firma</th></tr></thead><tbody><tr><td>Paula Contreras</td><td>Prevencionista</td><td>Dirección Comunal</td><td>Coordinación</td><td><span class="status status-pending">Pendiente</span></td></tr><tr><td>Daniela Araya</td><td>Auxiliar de servicio</td><td>{{ $case['establishment'] }}</td><td>Testigo</td><td><span class="status status-pending">Pendiente</span></td></tr></tbody></table></div></section>
-            <section data-section="inv-8" class="hidden"><h3 class="section-title">Ejemplo de propuesta IA</h3><div class="rounded-xl border border-violet-200 bg-violet-50 p-5"><p class="font-bold text-violet-950">Información que utilizaría este ejemplo</p><p class="mt-2 text-sm text-violet-900">Relato inicial, dos entrevistas, cuatro hechos y referencias visuales de evidencia. No se realiza análisis real ni se conecta un servicio externo.</p></div><button type="button" class="btn-primary mt-5" data-ai-example>Mostrar propuesta de ejemplo</button><div class="mt-5 hidden space-y-4" data-ai-result><div class="rounded-xl border p-5"><strong>Propuesta ficticia</strong><p class="mt-2 text-sm">Incorporar H-05: “La ruta habitual de traslado no estaba delimitada”. Relacionarlo como antecedente de H-01 y considerar una medida de ingeniería.</p></div><button type="button" class="btn-secondary" data-confirm-ai>Revisar e incorporar</button></div></section>
-            <section data-section="inv-9" class="hidden"><h3 class="section-title">Resumen del expediente</h3><div class="grid gap-4 sm:grid-cols-3"><div class="metric"><span>Progreso</span><strong>{{ $selected['progress'] }}%</strong></div><div class="metric"><span>Estado</span><strong class="text-lg">{{ $selected['status'] }}</strong></div><div class="metric"><span>Pendiente</span><strong class="text-base">{{ $selected['pending'] }}</strong></div></div></section>
-            </div><footer class="flex flex-wrap justify-between gap-3 border-t bg-slate-50 p-5"><button class="btn-secondary">Guardar borrador</button><div class="flex gap-2"><button name="action" value="Correcciones guardadas" class="btn-secondary">Corregir</button><button name="action" value="Investigación enviada a revisión" class="btn-primary">Enviar a revisión</button></div></footer></form></div>
+            @php
+                $case = $demo['cases']->firstWhere('id', $selected['case_id']);
+                $manualStages = [
+                    ['number' => '01', 'title' => 'Recopilación', 'description' => 'Entrevistas, inspección del lugar y documentos verificables.', 'ready' => ($case['evidence_count'] ?? 0) > 0],
+                    ['number' => '02', 'title' => 'Construcción del árbol', 'description' => 'Relato objetivo, lista numerada de hechos y relaciones lógicas.', 'ready' => ! empty($selected['has_facts'])],
+                    ['number' => '03', 'title' => 'Administración', 'description' => 'Causas codificadas, medidas, responsables, plazos y seguimiento.', 'ready' => ($selected['progress'] ?? 0) >= 80],
+                ];
+                $manualChecks = [
+                    ['label' => 'Caso identificado y antecedentes generales', 'done' => ! empty($case['worker']) && ! empty($case['date'])],
+                    ['label' => 'Evidencia testimonial registrada', 'done' => ! empty($case['witnesses']) && $case['witnesses'] !== 'Sin testigos'],
+                    ['label' => 'Evidencia física o documental adjunta', 'done' => ($case['evidence_count'] ?? 0) > 0],
+                    ['label' => 'Relato cronológico verificable', 'done' => mb_strlen((string) ($selected['final_story'] ?? '')) >= 120],
+                    ['label' => 'Hechos y árbol causal construidos', 'done' => ! empty($selected['has_facts'])],
+                    ['label' => 'Plan de acción listo para revisión', 'done' => ($selected['progress'] ?? 0) >= 80],
+                ];
+                $completedManualChecks = collect($manualChecks)->where('done', true)->count();
+            @endphp
+
+            <section class="rounded-2xl border border-sky-200 bg-gradient-to-r from-sky-50 to-white p-5 shadow-xs" aria-labelledby="training-mode-title">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div class="max-w-3xl">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="rounded-full bg-sky-700 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white">Entorno de pruebas guiado</span>
+                            <span class="text-xs font-bold text-sky-900">Guía ISP · Metodología Árbol de Causas</span>
+                        </div>
+                        <h2 id="training-mode-title" class="mt-3 text-xl font-black text-slate-950">Práctica de investigación con controles del manual</h2>
+                        <p class="mt-1 text-sm leading-relaxed text-slate-600">Los datos son demostrativos. El expediente guía la recopilación, la construcción causal y el plan de acción, pero ninguna propuesta de IA queda validada sin revisión humana.</p>
+                    </div>
+                    <div class="min-w-52 rounded-xl border border-sky-200 bg-white p-4">
+                        <div class="flex items-end justify-between gap-4">
+                            <span class="text-xs font-bold text-slate-600">Completitud metodológica</span>
+                            <strong class="text-2xl font-black text-sky-800">{{ $completedManualChecks }}/{{ count($manualChecks) }}</strong>
+                        </div>
+                        <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-sky-600" style="width: {{ round(($completedManualChecks / count($manualChecks)) * 100) }}%"></div></div>
+                    </div>
+                </div>
+                <div class="mt-5 grid gap-3 md:grid-cols-3">
+                    @foreach($manualStages as $stage)
+                        <div class="rounded-xl border {{ $stage['ready'] ? 'border-emerald-200 bg-emerald-50/70' : 'border-slate-200 bg-white' }} p-4">
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="text-xs font-black text-sky-800">FASE {{ $stage['number'] }}</span>
+                                <span class="status {{ $stage['ready'] ? 'status-approved' : 'status-pending' }}">{{ $stage['ready'] ? 'Con antecedente' : 'Pendiente' }}</span>
+                            </div>
+                            <h3 class="mt-2 font-black text-slate-950">{{ $stage['title'] }}</h3>
+                            <p class="mt-1 text-xs leading-relaxed text-slate-600">{{ $stage['description'] }}</p>
+                        </div>
+                    @endforeach
+                </div>
+                <details class="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+                    <summary class="cursor-pointer text-sm font-black text-slate-900">Ver controles mínimos del expediente</summary>
+                    <div class="mt-4 grid gap-2 md:grid-cols-2">
+                        @foreach($manualChecks as $check)
+                            <div class="flex items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
+                                <span class="grid size-6 shrink-0 place-items-center rounded-full {{ $check['done'] ? 'bg-emerald-600 text-white' : 'bg-amber-100 text-amber-800' }}">{{ $check['done'] ? '✓' : '!' }}</span>
+                                {{ $check['label'] }}
+                            </div>
+                        @endforeach
+                    </div>
+                </details>
+            </section>
+            <div class="grid gap-6 xl:grid-cols-[16rem_1fr]">
+                <!-- Barra de Fases del Expediente -->
+                <aside class="card h-fit p-3 shadow-sm">
+                    <div class="border-b border-slate-100 px-3 py-2">
+                        <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Expediente Oficial</span>
+                        <p class="font-black text-slate-900">{{ $selected['id'] }}</p>
+                        <p class="text-[11px] text-slate-500">{{ $selected['case_id'] }}</p>
+                    </div>
+                    <nav class="mt-2 space-y-1">
+                        @foreach([
+                            '1. Antecedentes Generales',
+                            '2. Entrevistas y Testigos',
+                            '3. Evidencias y Documentos',
+                            '4. Relato Cronológico Final',
+                            '5. Hechos Constatados',
+                            '6. Árbol de Causas Visual',
+                            '7. Matriz de Causas y Medidas',
+                            '8. Participantes y Firmas',
+                            '9. Dictamen y Cierre'
+                        ] as $i => $section)
+                            <button class="section-link {{ $i === 0 ? 'section-link-active' : '' }} {{ in_array($i, [4,5,6]) && empty($selected['has_facts']) ? 'hidden' : '' }}" data-section-target="inv-{{ $i }}" @if(in_array($i, [4,5,6])) data-ai-derived-nav @endif>
+                                {{ $section }}
+                            </button>
+                        @endforeach
+                    </nav>
+                </aside>
+
+                <!-- Contenido de la Investigación -->
+                <form method="POST" action="{{ route('demo.action', 'investigations') }}" class="card min-w-0 shadow-sm" data-unsaved-form>
+                    @csrf
+                    <input type="hidden" name="action" value="Borrador de investigación guardado">
+                    <input type="hidden" name="return_to" value="{{ url()->current() }}">
+
+                    <header class="border-b border-slate-200 bg-slate-50/70 p-6">
+                        <div class="flex flex-wrap items-center justify-between gap-4">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="rounded bg-sky-700 px-2 py-0.5 text-xs font-bold text-white">{{ $selected['kind'] }}</span>
+                                    <span class="text-xs font-bold text-slate-500">Caso: {{ $selected['case_id'] }}</span>
+                                </div>
+                                <h2 class="mt-2 text-2xl font-black text-slate-950">{{ $selected['id'] }} · {{ $case['worker'] ?? 'Funcionario' }}</h2>
+                                <p class="text-xs text-slate-500">Centro: {{ $case['establishment'] ?? 'Establecimiento APS' }} · Responsable: {{ $selected['owner'] }}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="status {{ $statusClass($selected['status']) }} text-sm">{{ $selected['status'] }}</span>
+                                <div class="mt-2 flex items-center gap-2">
+                                    <div class="h-2 w-24 rounded-full bg-slate-200 overflow-hidden">
+                                        <div class="h-full bg-sky-600 rounded-full" style="width: {{ $selected['progress'] }}%"></div>
+                                    </div>
+                                    <span class="text-xs font-bold text-slate-600">{{ $selected['progress'] }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <div class="p-6 sm:p-8">
+                        <!-- Sección 0: Antecedentes Generales -->
+                        <section data-section="inv-0" class="space-y-6">
+                            <h3 class="section-title">1. Antecedentes Generales de la Investigación</h3>
+                            <div class="source-banner">Información recuperada del caso {{ $case['id'] }}. Puede corregirse o completarse para la investigación.</div>
+
+                            <fieldset class="rounded-2xl border border-slate-200 p-5">
+                                <legend class="px-2 font-black text-blue-950">1.1 Datos del Empleador</legend>
+                                <div class="mt-3 grid gap-4 md:grid-cols-2 text-xs">
+                                    <label><span class="label">Razón Social</span><input class="input" name="employer_name" value="{{ $case['employer_name'] ?? 'Dirección Comunal de Salud de Los Ángeles' }}"></label>
+                                    <label><span class="label">RUT Institucional</span><input class="input" name="employer_rut" value="{{ $case['employer_rut'] ?? '69.170.102-6' }}"></label>
+                                    <label><span class="label">Organismo Administrador</span><input class="input" name="administrator" value="{{ $case['administrator'] ?? 'ACHS' }}"></label>
+                                    <label><span class="label">Actividad Económica</span><input class="input" name="economic_activity" value="{{ $case['economic_activity'] ?? 'Salud Pública Municipal APS' }}"></label>
+                                    <label class="md:col-span-2"><span class="label">Dirección</span><input class="input" name="employer_address" value="{{ $case['employer_address'] ?? 'Calle Valdivia #150, Los Ángeles' }}"></label>
+                                </div>
+                            </fieldset>
+
+                            <fieldset class="rounded-2xl border border-slate-200 p-5">
+                                <legend class="px-2 font-black text-blue-950">1.2 Datos del Funcionario Afectado</legend>
+                                <div class="mt-3 grid gap-4 md:grid-cols-2 text-xs">
+                                    <label><span class="label">Nombre Completo</span><input class="input" name="worker_name" value="{{ $case['worker'] ?? '' }}"></label>
+                                    <label><span class="label">RUT</span><input class="input" name="worker_rut" value="{{ $case['rut'] ?? '' }}"></label>
+                                    <label><span class="label">Cargo u Oficio</span><input class="input" name="job_title" value="{{ $case['job_title'] ?? '' }}"></label>
+                                    <label><span class="label">Teléfono</span><input class="input" name="worker_phone" value="{{ $case['phone'] ?? '' }}"></label>
+                                </div>
+                            </fieldset>
+
+                            <fieldset class="rounded-2xl border border-slate-200 p-5">
+                                <legend class="px-2 font-black text-blue-950">1.3 Antecedentes del Suceso</legend>
+                                <div class="mt-3 grid gap-4 md:grid-cols-2 text-xs">
+                                    <label><span class="label">Fecha</span><input type="date" class="input" name="event_date" value="{{ $case['date'] ?? '' }}"></label>
+                                    <label><span class="label">Hora</span><input type="time" class="input" name="event_time" value="{{ $case['time'] ?? '09:15' }}"></label>
+                                    <label><span class="label">Lugar Específico</span><input class="input" name="event_location" value="{{ $case['location'] ?? '' }}"></label>
+                                    <label><span class="label">Tipo de evento</span><input class="input" name="event_type" value="{{ $case['type'] }}"></label>
+                                    <label class="md:col-span-2"><span class="label">Relato Inicial Recuperado</span><textarea class="input" name="initial_story" rows="4">{{ $case['story'] ?? '' }}</textarea></label>
+                                </div>
+                            </fieldset>
+                        </section>
+
+                        <!-- Sección 1: Entrevistas a Testigos -->
+                        @php
+                            $caseInterviews = collect();
+                            $currentInvFolio = $selected['id'] ?? null;
+                            $currentCaseFolio = $selected['case_id'] ?? ($case['id'] ?? null);
+
+                            if ($currentInvFolio && $currentInvFolio !== 'INV-NUEVA') {
+                                $invModel = \App\Models\Investigation::where('folio', $currentInvFolio)->with('interviews.answers')->first();
+                                if ($invModel) {
+                                    $caseInterviews = $invModel->interviews;
+                                }
+                            } elseif ($currentCaseFolio) {
+                                $caseModel = \App\Models\OccupationalCase::where('folio', $currentCaseFolio)->with('investigation.interviews.answers')->first();
+                                if ($caseModel && $caseModel->investigation) {
+                                    $caseInterviews = $caseModel->investigation->interviews;
+                                }
+                            }
+                        @endphp
+                        <section data-section="inv-1" class="hidden space-y-6" data-interviews-workspace>
+                            <div data-interview-list>
+                                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
+                                    <div>
+                                        <h3 class="section-title mb-1">Entrevistas</h3>
+                                        <p class="text-xs text-slate-600">Declaraciones oficiales según la normativa de investigación de la Municipalidad de Los Ángeles.</p>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        <button type="button" class="btn-secondary" data-create-legacy-interview>+ Crear entrevista anterior</button>
+                                        <button type="button" class="btn-primary" data-create-interview>+ Crear entrevista</button>
+                                    </div>
+                                </div>
+                                <div class="card table-card mt-5 shadow-none">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Entrevistado</th>
+                                                <th>Tipología de Testigo</th>
+                                                <th>Cargo</th>
+                                                <th>Fecha</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody data-interview-rows>
+                                            @forelse($caseInterviews as $interview)
+                                                <tr>
+                                                    <td class="font-bold">{{ $interview->interviewee_name }}</td>
+                                                    <td>
+                                                        <span class="rounded bg-sky-50 px-2 py-0.5 text-xs font-bold text-sky-800">
+                                                            {{ match($interview->witness_type) {
+                                                                'direct' => 'Testigo presencial directo',
+                                                                'affected' => 'Trabajador/a afectado/a',
+                                                                'indirect' => 'Testigo indirecto o referencial',
+                                                                'documentary' => 'Testigo documental',
+                                                                'context' => 'Testigo circunstancial',
+                                                                'supervisor' => 'Jefatura directa / Supervisor',
+                                                                'technical' => 'Testigo técnico o especialista',
+                                                                'institutional' => 'Testigo institucional',
+                                                                'emergency' => 'Testigo de respuesta a la emergencia',
+                                                                default => $interview->witness_type ?? 'Testigo presencial',
+                                                            } }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ $interview->interviewee_role ?? 'Sin cargo informado' }}</td>
+                                                    <td>{{ $interview->interview_date ? $interview->interview_date->format('Y-m-d') : ($interview->created_at ? $interview->created_at->format('Y-m-d') : now()->toDateString()) }}</td>
+                                                    <td><span class="status status-approved">{{ $interview->status ?? 'Completada' }}</span></td>
+                                                    <td><button type="button" class="text-link" data-create-interview>Ver / Editar</button></td>
+                                                </tr>
+                                            @empty
+                                                <tr data-empty-interview-row>
+                                                    <td colspan="6" class="py-8 text-center text-xs text-slate-500">
+                                                        <div class="flex flex-col items-center justify-center gap-1.5">
+                                                            <span class="rounded-full bg-slate-100 p-2 text-slate-400">
+                                                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                                </svg>
+                                                            </span>
+                                                            <p class="font-bold text-slate-700">Sin entrevistas registradas</p>
+                                                            <p class="text-slate-500">Aún no se han levantado declaraciones de testigos para esta investigación. Utilice <strong>"+ Crear entrevista"</strong> para registrar una.</p>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Editor de Entrevista -->
+                            <div class="hidden" data-interview-editor data-interview-form>
+                                <div class="mb-5 flex items-center justify-between border-b pb-4">
+                                    <div>
+                                        <p class="eyebrow">Formulario de entrevista</p>
+                                        <h4 class="text-xl font-black text-slate-900" data-interview-form-title>Formulario de entrevista</h4>
+                                    </div>
+                                    <button type="button" class="btn-secondary" data-cancel-interview>← Volver a la Lista</button>
+                                </div>
+                                <div class="mb-5 hidden rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800" data-interview-validation role="alert">Complete las preguntas obligatorias marcadas con * para guardar la entrevista.</div>
+                                <fieldset disabled class="mt-6 hidden space-y-5" aria-hidden="true" data-legacy-questionnaire>
+                                    <fieldset class="rounded-xl border border-slate-200 p-4 sm:p-5" data-question-group="chronology">
+                                        <legend class="px-2 font-black text-blue-950">4. Reconstrucción cronológica de los hechos</legend>
+                                        <div class="mt-3 grid gap-4">
+                                            @foreach(['¿Qué trabajo o actividad se estaba realizando?', '¿Cuál era el objetivo de la tarea?'] as $question)
+                                                <div data-development-question>
+                                                    <div class="flex items-start justify-between gap-3">
+                                                        <label class="text-sm font-semibold text-slate-800">{{ $question }}</label>
+                                                        <label class="flex shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold">
+                                                            <input type="checkbox" name="chronology_not_applicable[]" value="{{ $loop->index }}" data-development-na>No aplica
+                                                        </label>
+                                                    </div>
+                                                    <textarea class="input mt-2" rows="2" name="chronology_detail[]"></textarea>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </fieldset>
+
+                                    <fieldset class="rounded-xl border border-slate-200 p-4 sm:p-5" data-question-group="protection">
+                                        <legend class="px-2 font-black text-blue-950">7. Equipos de protección personal</legend>
+                                        <div data-yes-options>
+                                            <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-center">
+                                                <p class="text-sm font-semibold text-slate-800">¿La tarea requería elementos de protección personal?</p>
+                                                <div class="grid grid-cols-3 gap-2">
+                                                    @foreach(['yes' => 'Sí', 'no' => 'No', 'na' => 'No aplica'] as $value => $answer)
+                                                        <label class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 px-2 py-3 text-xs font-bold">
+                                                            <input type="radio" name="ppe_required" value="{{ $value }}">{{ $answer }}
+                                                        </label>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+
+                                    <fieldset class="rounded-xl border border-slate-200 p-4 sm:p-5" data-question-group="training">
+                                        <legend class="px-2 font-black text-blue-950">8. Información y capacitación</legend>
+                                        <div data-yes-options>
+                                            <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-center">
+                                                <p class="text-sm font-semibold text-slate-800">¿Recibió instrucción para realizar esta tarea?</p>
+                                                <div class="grid grid-cols-3 gap-2">
+                                                    @foreach(['yes' => 'Sí', 'no' => 'No', 'na' => 'No aplica'] as $value => $answer)
+                                                        <label class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 px-2 py-3 text-xs font-bold">
+                                                            <input type="radio" name="instruction_received" value="{{ $value }}">{{ $answer }}
+                                                        </label>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                </fieldset>
+                                <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                                    <label>
+                                        <span class="label">Tipología de Testigo Oficial</span>
+                                        <select class="input" name="witness_type" data-witness-type>
+                                            <option value="direct">Testigo presencial directo</option>
+                                            <option value="affected">Trabajador o trabajadora accidentada</option>
+                                            <option value="indirect">Testigo presencial indirecto</option>
+                                            <option value="documentary">Testigo documental</option>
+                                            <option value="context">Testigo de contexto o circunstancial</option>
+                                            <option value="supervisor">Supervisor o jefatura directa</option>
+                                            <option value="technical">Testigo técnico o especialista</option>
+                                            <option value="institutional">Testigo institucional</option>
+                                            <option value="emergency">Testigo de respuesta a la emergencia</option>
+                                        </select>
+                                    </label>
+                                    <label><span class="label">Fecha de la Entrevista</span><input type="date" class="input" name="interview_date" value="{{ now()->toDateString() }}"></label>
+                                    <label><span class="label">Nombre Completo</span><input class="input" name="interviewee_name" value="" placeholder="Ej. Nombre completo del testigo o entrevistado"></label>
+                                    <label><span class="label">RUT</span><input class="input" name="interviewee_rut" placeholder="12.345.678-9"></label>
+                                    <label><span class="label">Cargo u Oficio</span><input class="input" name="interviewee_role" value="" placeholder="Ej. TENS / Auxiliar / Enfermera"></label>
+                                    <label><span class="label">Lugar de la Entrevista</span><input class="input" name="interview_location" value="{{ $case['establishment'] ?? 'Establecimiento de salud' }}" placeholder="Ej. Box / Oficina de Prevención"></label>
+                                </div>
+                                @include('modules.investigations.partials.interview-questionnaire')
+                                <div class="mt-6 flex justify-end gap-3 border-t pt-5">
+                                    <button type="button" class="btn-secondary" data-cancel-interview>Cancelar</button>
+                                    <button type="button" class="btn-primary" data-save-interview>Guardar Declaración</button>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Sección 2: Evidencias -->
+                        <section data-section="inv-2" class="hidden space-y-6">
+                            <h3 class="section-title">3. Evidencias y Documentos Recopilados</h3>
+                            <div class="source-banner"><strong>Criterio del manual:</strong> la recolección debe cubrir información testimonial, física o del entorno y documental. Cada antecedente debe indicar origen, fecha y custodio para mantener trazabilidad.</div>
+                            <div class="grid gap-3 md:grid-cols-3">
+                                @foreach([
+                                    ['Testimonial', 'Entrevistas y declaraciones', ! empty($case['witnesses']) && $case['witnesses'] !== 'Sin testigos'],
+                                    ['Física y entorno', 'Fotografías, croquis, equipos y condiciones', ($case['evidence_count'] ?? 0) > 0],
+                                    ['Documental', 'Procedimientos, capacitación, matrices y registros', ($case['evidence_count'] ?? 0) > 1],
+                                ] as [$type, $description, $available])
+                                    <div class="rounded-xl border {{ $available ? 'border-emerald-200 bg-emerald-50/60' : 'border-amber-200 bg-amber-50/60' }} p-4">
+                                        <div class="flex items-center justify-between gap-2"><strong class="text-sm text-slate-950">{{ $type }}</strong><span class="status {{ $available ? 'status-approved' : 'status-pending' }}">{{ $available ? 'Disponible' : 'Por recopilar' }}</span></div>
+                                        <p class="mt-2 text-xs text-slate-600">{{ $description }}</p>
+                                    </div>
+                                @endforeach
+                            </div>
+                            <div class="grid gap-4 md:grid-cols-3">
+                                <label><span class="label">Tipo de Evidencia</span><select class="input"><option>Fotografía del lugar</option><option>Procedimiento de Trabajo Seguro (PTS)</option><option>Registro de Capacitación / Inducción</option><option>Certificado de Atención Médica ACHS</option><option>Hoja de Datos de Seguridad (HDS)</option></select></label>
+                                <label><span class="label">Origen / Custodio</span><input class="input" placeholder="Ej. Prevencionista / Jefatura"></label>
+                                <label><span class="label">Fecha de Recopilación</span><input type="date" class="input" value="2026-10-03"></label>
+                            </div>
+                            <label class="upload-zone">
+                                <input type="file" multiple data-local-file class="sr-only">
+                                <strong>Adjuntar archivos de evidencia fotográfica o documental</strong>
+                                <span>Formatos JPG, PNG, PDF para verificación en el informe técnico.</span>
+                            </label>
+                            <ul class="space-y-2" data-file-list></ul>
+                        </section>
+
+                        <!-- Sección 3: Relato Cronológico Final + IA -->
+                        <section data-section="inv-3" class="hidden space-y-6" data-final-story-ai>
+                            <h3 class="section-title">4. Relato Cronológico Final de los Hechos</h3>
+                            <div class="source-banner">
+                                Redactado por la comisión investigadora (Prevención, CPHS y Delegado) integrando los antecedentes, declaraciones y evidencias verificadas.
+                            </div>
+                            <label for="final-investigation-story" class="block">
+                                <span class="label">Relato Técnico y Cronológico Validado</span>
+                                <textarea id="final-investigation-story" class="input leading-relaxed" name="final_story" rows="8" placeholder="Redacte cronológicamente los hechos sin adjetivos subjetivos ni conclusiones apresuradas.">{{ old('final_story', !empty($selected['final_story']) ? $selected['final_story'] : ($case['story'] ?? '')) }}</textarea>
+                                <span class="hint">Debe ser redactado y revisado por el prevencionista, Comité Paritario o delegado responsable.</span>
+                            </label>
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5" data-story-quality>
+                                <div class="flex flex-wrap items-center justify-between gap-3">
+                                    <div>
+                                        <h4 class="font-black text-slate-950">Control de calidad del relato</h4>
+                                        <p class="mt-1 text-xs text-slate-600">Ayuda de entrenamiento. La comisión investigadora debe confirmar el contenido.</p>
+                                    </div>
+                                    <span class="status status-pending" data-story-quality-status>Revisión pendiente</span>
+                                </div>
+                                <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                    @foreach(['Quién', 'Qué ocurrió', 'Cuándo', 'Dónde', 'Por qué verificable', 'Cómo ocurrió'] as $criterion)
+                                        <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">
+                                            <input type="checkbox" class="rounded border-slate-300 text-sky-700" data-story-criterion> {{ $criterion }}
+                                        </label>
+                                    @endforeach
+                                </div>
+                                <p class="mt-3 hidden text-xs font-semibold text-amber-800" data-story-subjective-warning>Revise expresiones potencialmente subjetivas. El manual exige hechos concretos y verificables, sin juicios de valor.</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button type="button" class="btn-secondary" data-save-final-story>Guardar Relato Final</button>
+                                <p class="hidden text-sm font-bold text-emerald-800" data-final-story-saved>Relato guardado correctamente.</p>
+                            </div>
+
+                            <!-- Módulo Asistido por Inteligencia Artificial -->
+                            <div class="rounded-2xl border border-violet-200 bg-violet-50/70 p-6 shadow-sm">
+                                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="rounded bg-violet-700 px-2.5 py-0.5 text-xs font-black text-white">IA Asistida · LM Studio</span>
+                                            <span class="text-xs font-semibold text-violet-900">Endpoint: {{ config('services.lm_studio.url') }}</span>
+                                        </div>
+                                        <h4 class="mt-2 text-lg font-black text-violet-950">Construcción Asistida del Árbol de Causas</h4>
+                                        <p class="mt-1 text-xs text-violet-900 leading-relaxed">
+                                            Analiza el relato final para desglosar hechos cronológicos, estructurar el árbol causal y sugerir factores de la matriz oficial de 222 causas.
+                                        </p>
+                                    </div>
+                                    <button type="button" class="btn-primary shrink-0 bg-violet-700 hover:bg-violet-800" data-final-ai-generate>Analizar relato final</button>
+                                </div>
+                                <p class="mt-4 hidden text-xs font-bold text-red-700" data-final-ai-error role="alert"></p>
+                                <p class="mt-4 hidden text-xs font-bold text-violet-800" data-final-ai-loading role="status">Analizando hechos y factores causales con LM Studio…</p>
+                            </div>
+
+                            <!-- Propuesta generada / habilitada -->
+                            <div class="hidden space-y-6" data-final-ai-result>
+                                <fieldset class="rounded-2xl border border-slate-200 p-5">
+                                    <legend class="px-2 font-black text-blue-950">Hechos detectados</legend>
+                                    <div class="mt-3 space-y-2.5 text-xs" data-ai-facts>
+                                        @foreach(['H-01 · La trabajadora trasladaba insumos hacia la bodega clínica.','H-02 · El piso se encontraba húmedo por lavado matinal.','H-03 · La zona no contaba con señalización preventiva de piso húmedo.','H-04 · Pérdida de estabilidad y caída con apoyo en rodilla derecha.'] as $fact)
+                                            <input class="input" name="ai_facts[]" value="{{ $fact }}" disabled>
+                                        @endforeach
+                                    </div>
+                                </fieldset>
+
+                                <fieldset class="rounded-2xl border border-slate-200 p-5">
+                                    <legend class="px-2 font-black text-blue-950">Árbol de causas propuesto</legend>
+                                    <div class="mt-3 grid gap-4 md:grid-cols-2 text-xs">
+                                        <label><span class="label">Hecho final</span><input class="input" name="ai_tree_final" value="H-04 · Caída con apoyo en rodilla derecha" disabled></label>
+                                        <label><span class="label">Antecedente principal</span><input class="input" name="ai_tree_origin" value="H-01 · Traslado de insumos" disabled></label>
+                                        <label><span class="label">Causa 1</span><input class="input" name="ai_tree_cause[]" value="H-02 · Piso húmedo por aseo reciente" disabled></label>
+                                        <label><span class="label">Causa 2</span><input class="input" name="ai_tree_cause[]" value="H-03 · Falta de señalización preventiva" disabled></label>
+                                    </div>
+                                </fieldset>
+
+                                <fieldset class="rounded-2xl border border-sky-200 bg-sky-50/60 p-5">
+                                    <legend class="px-2 font-black text-blue-950">Factores de la matriz sugeridos</legend>
+                                    <p class="text-xs text-slate-600">La IA selecciona factores de la matriz oficial de 222 causas. Revise y desmarque los que no correspondan.</p>
+                                    <div class="mt-3 grid gap-3 text-xs" data-ai-factors>
+                                        <div class="rounded-xl border border-sky-200 bg-white p-3 font-semibold text-slate-800">
+                                            <strong>Código 1202b:</strong> Mantenimiento preventivo inexistente o inadecuado de vías interiores.
+                                        </div>
+                                        <div class="rounded-xl border border-sky-200 bg-white p-3 font-semibold text-slate-800">
+                                            <strong>Código 1107:</strong> Inexistencia o deficiencia de Procedimiento de Trabajo Seguro (PTS).
+                                        </div>
+                                    </div>
+                                </fieldset>
+
+                                <fieldset class="rounded-2xl border border-slate-200 p-5">
+                                    <legend class="px-2 font-black text-blue-950">Medidas propuestas</legend>
+                                    <div class="mt-3 space-y-4" data-ai-measures>
+                                        @foreach([
+                                            ['Instalar señalización inmediata tipo cono ante labores de limpieza o derrames.', 'Administrativa', 'Jefatura de Servicios Generales', '2026-10-20'],
+                                            ['Revisar el procedimiento de secado rápido y tránsito seguro en pasillos clínicos.', 'Administrativa', 'Prevención de riesgos', '2026-10-25']
+                                        ] as [$meas, $cat, $own, $due])
+                                            <div class="grid gap-3 rounded-xl bg-slate-50 p-4 lg:grid-cols-[1fr_11rem_12rem_11rem]" data-ai-measure>
+                                                <label><span class="label">Medida</span><textarea class="input text-xs" name="ai_measure_description[]" rows="2" disabled>{{ $meas }}</textarea></label>
+                                                <label><span class="label">Categoría</span><input class="input text-xs" name="ai_measure_category[]" value="{{ $cat }}" disabled></label>
+                                                <label><span class="label">Responsable</span><input class="input text-xs" name="ai_measure_owner[]" value="{{ $own }}" disabled></label>
+                                                <label><span class="label">Plazo</span><input type="date" class="input text-xs" name="ai_measure_due[]" value="{{ $due }}" disabled></label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </fieldset>
+
+                                <div class="flex justify-between items-center pt-3 border-t">
+                                    <p class="text-xs text-slate-500">Revise y edite toda la propuesta antes de incorporarla a la investigación.</p>
+                                    <button type="button" class="btn-primary" data-save-ai-proposal>Guardar propuesta</button>
+                                </div>
+                                <p class="hidden rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-bold text-emerald-900" data-ai-saved-status role="status">
+                                    Propuesta incorporada. Se habilitaron los apartados correspondientes.
+                                </p>
+                            </div>
+                        </section>
+
+                        <!-- Sección 4: Hechos Constatados -->
+                        <section data-section="inv-4" class="hidden space-y-4">
+                            <h3 class="section-title">5. Hechos Constatados (Cronología Verificada)</h3>
+                            <div class="space-y-3" data-derived-facts>
+                                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 font-semibold text-slate-800">
+                                    <span class="rounded bg-sky-700 px-2 py-0.5 text-xs text-white mr-2">H-01</span>
+                                    La trabajadora trasladaba insumos hacia la bodega clínica.
+                                </div>
+                                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 font-semibold text-slate-800">
+                                    <span class="rounded bg-sky-700 px-2 py-0.5 text-xs text-white mr-2">H-02</span>
+                                    El piso del pasillo se encontraba húmedo tras el lavado matinal.
+                                </div>
+                                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 font-semibold text-slate-800">
+                                    <span class="rounded bg-sky-700 px-2 py-0.5 text-xs text-white mr-2">H-03</span>
+                                    La zona no contaba con señalización preventiva de piso húmedo.
+                                </div>
+                                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 font-semibold text-slate-800">
+                                    <span class="rounded bg-sky-700 px-2 py-0.5 text-xs text-white mr-2">H-04</span>
+                                    Al pisar la superficie húmeda, la funcionaria perdió estabilidad y cayó sobre su rodilla derecha.
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Sección 5: Árbol de Causas Visual -->
+                        <section data-section="inv-5" class="hidden space-y-6">
+                            <div class="flex items-center justify-between border-b pb-4">
+                                <div>
+                                    <h3 class="section-title mb-1">6. Árbol de Causas Técnico</h3>
+                                    <p class="text-xs text-slate-600">Diagrama causal retrospectivo desde el hecho final (lesión) hacia las causas inmediatas y de gestión.</p>
+                                </div>
+                                <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-900">Método Oficial DCS</span>
+                            </div>
+
+                            <!-- Gráfico Visual del Árbol de Causas -->
+                            <div class="rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:p-10 space-y-8" data-derived-tree>
+                                <!-- Nivel 1: Hecho Final -->
+                                <div class="text-center">
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-red-700">Hecho Final (Lesión / Suceso)</span>
+                                    <div class="cause-node cause-final mt-2 shadow-md">
+                                        <p class="text-sm font-black text-red-950">Caída a mismo nivel con contusión en rodilla derecha</p>
+                                        <span class="mt-1 block text-[10px] text-red-700 font-semibold">Hecho probado verificado</span>
+                                    </div>
+                                    <div class="cause-connector">↑</div>
+                                </div>
+
+                                <!-- Nivel 2: Causas Inmediatas -->
+                                <div>
+                                    <p class="text-center text-[10px] font-black uppercase tracking-widest text-sky-800 mb-3">Causas Inmediatas (Condiciones y Acciones)</p>
+                                    <div class="grid gap-4 sm:grid-cols-2 max-w-2xl mx-auto">
+                                        <div class="cause-node">
+                                            <span class="rounded bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-900">Condición Insegura</span>
+                                            <p class="mt-2 text-xs font-bold text-slate-900">Piso húmedo por lavado matinal reciente</p>
+                                            <span class="mt-1 block text-[10px] text-slate-500">Factor 1202b (Matriz)</span>
+                                        </div>
+                                        <div class="cause-node">
+                                            <span class="rounded bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900">Falta de Advertencia</span>
+                                            <p class="mt-2 text-xs font-bold text-slate-900">Ausencia de señalización preventiva</p>
+                                            <span class="mt-1 block text-[10px] text-slate-500">Factor 1107 (Matriz)</span>
+                                        </div>
+                                    </div>
+                                    <div class="cause-connector text-center">↑</div>
+                                </div>
+
+                                <!-- Nivel 3: Causa Raíz / Gestión -->
+                                <div>
+                                    <p class="text-center text-[10px] font-black uppercase tracking-widest text-slate-600 mb-3">Causa Básica / Gestión Preventiva (Origen)</p>
+                                    <div class="max-w-md mx-auto">
+                                        <div class="cause-node border-slate-300 bg-white">
+                                            <span class="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700">Falla de Organización</span>
+                                            <p class="mt-2 text-xs font-bold text-slate-900">Falta de coordinación entre horario de aseo y horario de tránsito clínico</p>
+                                            <span class="mt-1 block text-[10px] text-slate-500">Gestión de SST Dirección Comunal</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Sección 6: Matriz y Medidas -->
+                        <section data-section="inv-6" class="hidden space-y-6">
+                            <h3 class="section-title">7. Matriz de Medidas de Control y Plan de Acción</h3>
+                            <div class="card table-card shadow-none">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Medida Propuesta</th>
+                                            <th>Jerarquía de Control</th>
+                                            <th>Responsable Institucional</th>
+                                            <th>Plazo</th>
+                                            <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody data-derived-measures>
+                                        @foreach($demo['measures']->where('case_id', $selected['case_id']) as $m)
+                                            <tr>
+                                                <td class="font-bold text-slate-900">{{ $m['description'] }}</td>
+                                                <td><span class="rounded bg-sky-50 px-2 py-0.5 text-xs font-bold text-sky-800">{{ $m['category'] }}</span></td>
+                                                <td>{{ $m['owner'] }}</td>
+                                                <td>{{ $m['due'] }}</td>
+                                                <td><span class="status {{ $statusClass($m['status']) }}">{{ $m['status'] }}</span></td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <!-- Sección 7: Participantes -->
+                        <section data-section="inv-7" class="hidden space-y-6">
+                            <h3 class="section-title">8. Participantes y Validación de la Comisión</h3>
+                            <div class="card table-card shadow-none">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Integrante</th>
+                                            <th>Rol en la Investigación</th>
+                                            <th>Establecimiento</th>
+                                            <th>Estado de Firma</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="font-bold">Paula Contreras</td>
+                                            <td>Prevencionista de Riesgos (Coordinadora)</td>
+                                            <td>Dirección Comunal de Salud</td>
+                                            <td><span class="status status-approved">Firmado Electrónicamente</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="font-bold">Representante CPHS</td>
+                                            <td>Comité Paritario de Higiene y Seguridad</td>
+                                            <td>{{ $case['establishment'] ?? 'CESFAM Nororiente' }}</td>
+                                            <td><span class="status status-approved">Firmado Electrónicamente</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="font-bold">Delegado de Seguridad</td>
+                                            <td>Delegado de Seguridad del Centro</td>
+                                            <td>{{ $case['establishment'] ?? 'CESFAM Nororiente' }}</td>
+                                            <td><span class="status status-pending">Pendiente de Firma</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <!-- Sección 8: Dictamen y Cierre -->
+                        <section data-section="inv-8" class="hidden space-y-6">
+                            <h3 class="section-title">9. Dictamen Final y Cierre de Expediente</h3>
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6 space-y-4">
+                                <div class="grid gap-4 sm:grid-cols-3 text-xs">
+                                    <div><dt>Estado del Expediente:</dt><dd class="text-sm font-bold">{{ $selected['status'] }}</dd></div>
+                                    <div><dt>Avance General:</dt><dd class="text-sm font-bold text-sky-700">{{ $selected['progress'] }}%</dd></div>
+                                    <div><dt>Pendiente:</dt><dd class="text-sm font-bold text-slate-800">{{ $selected['pending'] }}</dd></div>
+                                </div>
+                                <div class="border-t pt-4">
+                                    <label class="label">Dictamen de Conclusión Técnica</label>
+                                    <textarea class="input text-xs leading-relaxed" rows="4">Se determina que el accidente corresponde a un suceso laboral tipificado según Ley 16.744. Se aprueban las medidas preventivas y se remite copia a la Dirección Comunal de Salud y ACHS.</textarea>
+                                </div>
+                                @if(auth()->user()->hasRole('cphs') || auth()->user()->hasRole('delegado') || auth()->user()->hasRole('prevencion'))
+                                    <div class="flex justify-end pt-3">
+                                        <button type="submit" name="action" value="Investigación concluida formalmente" class="btn-primary bg-emerald-700 hover:bg-emerald-800">
+                                            ✓ Concluir y Cerrar Expediente de Investigación
+                                        </button>
+                                    </div>
+                                @endif
+                            </div>
+                        </section>
+                    </div>
+
+                    <footer class="flex flex-wrap justify-between gap-3 border-t bg-slate-50/90 p-5">
+                        <button class="btn-secondary" name="action" value="Borrador de investigación guardado">Guardar Borrador</button>
+                        <div class="flex gap-2">
+                            <button name="action" value="Correcciones guardadas" class="btn-secondary">Guardar Correcciones</button>
+                            <button name="action" value="Investigación enviada a revisión" class="btn-primary">Enviar a Revisión Formal</button>
+                        </div>
+                    </footer>
+                </form>
+            </div>
         @else
-            <div class="filter-bar"><input class="input" placeholder="Buscar folio o caso" data-table-search><select class="input" data-table-filter="status"><option value="">Todos los estados</option>@foreach($demo['investigations']->pluck('status')->unique() as $state)<option>{{ $state }}</option>@endforeach</select><select class="input"><option>Todos los responsables</option><option>Paula Contreras</option><option>Andrés Muñoz</option></select></div><div class="card table-card"><table class="data-table"><thead><tr><th>Investigación</th><th>Caso</th><th>Tipo</th><th>Responsable</th><th>Avance</th><th>Estado</th><th></th></tr></thead><tbody>@foreach($demo['investigations'] as $item)<tr data-table-row data-status="{{ $item['status'] }}"><td class="font-bold">{{ $item['id'] }}</td><td>{{ $item['case_id'] }}</td><td>{{ $item['kind'] }}</td><td>{{ $item['owner'] }}</td><td><div class="progress"><span style="width:{{ $item['progress'] }}%"></span></div><small>{{ $item['progress'] }}%</small></td><td><span class="status {{ $statusClass($item['status']) }}">{{ $item['status'] }}</span></td><td><a class="text-link" href="{{ route('demo.show',['module'=>'investigations','id'=>$item['id']]) }}">Abrir</a></td></tr>@endforeach</tbody></table></div>
+            <!-- Listado de Investigaciones -->
+            <div class="filter-bar">
+                <input class="input" placeholder="Buscar por código o trabajador" data-table-search>
+                <select class="input" data-table-filter="status">
+                    <option value="">Todos los estados</option>
+                    @foreach($demo['investigations']->pluck('status')->unique() as $st)
+                        <option>{{ $st }}</option>
+                    @endforeach
+                </select>
+                <select class="input">
+                    <option value="">Todos los centros de salud</option>
+                    @foreach($demo['establishments'] as $est)
+                        <option>{{ $est }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="card table-card shadow-sm">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Expediente</th>
+                            <th>Caso Vinculado</th>
+                            <th>Trabajador Afectado</th>
+                            <th>Centro de Salud</th>
+                            <th>Responsable Técnico</th>
+                            <th>Avance</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($demo['investigations'] as $inv)
+                            <tr data-table-row data-status="{{ $inv['status'] }}">
+                                <td class="font-bold text-blue-950">{{ $inv['id'] }}</td>
+                                <td><span class="rounded bg-slate-100 px-2 py-0.5 text-xs font-bold">{{ $inv['case_id'] }}</span></td>
+                                <td>{{ $inv['worker'] ?? 'Funcionario/a' }}</td>
+                                <td>{{ $inv['establishment'] ?? 'APS Los Ángeles' }}</td>
+                                <td>{{ $inv['owner'] }}</td>
+                                <td>
+                                    <div class="flex items-center gap-2">
+                                        <div class="progress"><span style="width:{{ $inv['progress'] }}%"></span></div>
+                                        <small class="font-bold">{{ $inv['progress'] }}%</small>
+                                    </div>
+                                </td>
+                                <td><span class="status {{ $statusClass($inv['status']) }}">{{ $inv['status'] }}</span></td>
+                                <td><a class="text-link" href="{{ route('demo.show', ['module'=>'investigations','id'=>$inv['id']]) }}">Abrir Expediente</a></td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         @endif
-    @elseif($module === 'reviews')
-        @php $review = $selected ?: $demo['investigations']->whereIn('status',['Borrador','Con observaciones'])->first(); @endphp
-        <div class="grid gap-6 xl:grid-cols-[1fr_25rem]"><section class="card table-card"><div class="border-b p-5"><h2 class="font-black">Bandeja de pendientes</h2></div><table class="data-table"><thead><tr><th>Expediente</th><th>Caso</th><th>Responsable</th><th>Pendiente</th><th>Estado</th><th></th></tr></thead><tbody>@foreach($demo['investigations']->whereIn('status',['Borrador','Con observaciones']) as $item)<tr><td class="font-bold">{{ $item['id'] }}</td><td>{{ $item['case_id'] }}</td><td>{{ $item['owner'] }}</td><td>{{ $item['pending'] }}</td><td><span class="status {{ $statusClass($item['status']) }}">{{ $item['status'] }}</span></td><td><a class="text-link" href="{{ route('demo.show',['module'=>'reviews','id'=>$item['id']]) }}">Revisar</a></td></tr>@endforeach</tbody></table></section><aside class="card p-6"><p class="eyebrow">Expediente seleccionado</p><h2 class="mt-2 text-2xl font-black">{{ $review['id'] }}</h2><p class="mt-2 text-sm text-slate-600">{{ $review['pending'] }}</p><form class="mt-6 space-y-4" method="POST" action="{{ route('demo.action','reviews') }}">@csrf<input type="hidden" name="return_to" value="{{ url()->current() }}"><label class="label">Resultado</label><select class="input" name="action"><option>Correcciones solicitadas</option><option>Resultado de revisión registrado</option><option>Validación técnica registrada</option><option>Toma de conocimiento registrada</option></select><label class="label">Motivo u observación</label><textarea class="input" name="note" rows="5" required></textarea><button class="btn-primary w-full">Registrar decisión</button></form><div class="mt-6 border-t pt-5"><h3 class="font-bold">Historial</h3><ul class="timeline mt-3"><li><strong>Enviado a revisión</strong><span>Paula Contreras · Prevencionista · 01/10/2026</span></li><li><strong>Revisión asignada</strong><span>María José Fuentes · Prevencionista · 02/10/2026</span></li></ul></div><p class="mt-5 rounded-lg bg-amber-50 p-3 text-xs text-amber-900">La validación técnica depende del permiso del rol; no se concede automáticamente al administrador.</p></aside></div>
+
+    <!-- ==================== MÓDULO: OBSERVACIONES ==================== -->
     @elseif($module === 'observations')
         @php $observation = $selected ?: $demo['observations']->first(); @endphp
-        <div class="filter-bar"><input class="input" placeholder="Caso o investigación" data-table-search><select class="input"><option>Todos los estados</option><option>Pendiente</option><option>Respondida</option><option>Resuelta</option></select><input type="date" class="input"></div><div class="grid gap-6 xl:grid-cols-[1fr_24rem]"><div class="card table-card"><table class="data-table"><thead><tr><th>Folio</th><th>Caso / investigación</th><th>Sección</th><th>Autor</th><th>Fecha</th><th>Estado</th><th></th></tr></thead><tbody>@foreach($demo['observations'] as $item)<tr><td class="font-bold">{{ $item['id'] }}</td><td>{{ $item['case_id'] }}<small>{{ $item['investigation_id'] }}</small></td><td>{{ $item['section'] }}</td><td>{{ $item['author'] }}<small>{{ $item['role'] }}</small></td><td>{{ $item['date'] }}</td><td><span class="status {{ $statusClass($item['status']) }}">{{ $item['status'] }}</span></td><td><a class="text-link" href="{{ route('demo.show',['module'=>'observations','id'=>$item['id']]) }}">Ver</a></td></tr>@endforeach</tbody></table></div><aside class="card p-6"><p class="eyebrow">{{ $observation['id'] }}</p><h2 class="mt-2 text-xl font-black">{{ $observation['section'] }}</h2><p class="mt-4 text-slate-700">{{ $observation['description'] }}</p><p class="mt-3 text-xs text-slate-500">{{ $observation['author'] }} · {{ $observation['role'] }} · {{ $observation['date'] }}</p><form method="POST" action="{{ route('demo.action','observations') }}" class="mt-6">@csrf<input type="hidden" name="action" value="Respuesta a observación registrada"><input type="hidden" name="return_to" value="{{ url()->current() }}"><label class="label">Respuesta o corrección realizada</label><textarea class="input" name="note" rows="5" required></textarea><button class="btn-primary mt-3 w-full">Responder observación</button></form></aside></div>
+        @if($demo['observations']->isEmpty())
+            <section class="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-xs">
+                <div class="mx-auto grid size-14 place-items-center rounded-2xl bg-sky-100 text-2xl font-black text-sky-800">0</div>
+                <h2 class="mt-5 text-2xl font-black text-slate-950">No hay observaciones registradas</h2>
+                <p class="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">Las observaciones técnicas aparecerán cuando una investigación o medida sea enviada a revisión.</p>
+                @if(auth()->user()->hasPermission('investigations.read'))
+                    <a href="{{ route('modules.investigations.index') }}" class="btn-primary mt-6">Ir a Investigación</a>
+                @endif
+            </section>
+        @else
+        <div class="filter-bar">
+            <input class="input" placeholder="Buscar caso o investigación" data-table-search>
+            <select class="input">
+                <option>Todas las secciones observadas</option>
+                <option>Investigación / Hechos</option>
+                <option>Medidas de control</option>
+                <option>Plan de acción</option>
+            </select>
+            <select class="input">
+                <option>Todos los estados</option>
+                <option>Pendiente</option>
+                <option>Respondida</option>
+                <option>Resuelta</option>
+            </select>
+        </div>
+
+        <div class="grid gap-6 xl:grid-cols-[1fr_26rem]">
+            <div class="card table-card shadow-sm">
+                <div class="border-b p-4 flex items-center justify-between">
+                    <h3 class="font-black text-slate-900">Bandeja de Observaciones Técnicas</h3>
+                    <span class="text-xs text-slate-500">Jefatura Directa, Alta Dirección y Prevención</span>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Folio</th>
+                            <th>Caso / Investigación</th>
+                            <th>Sección Observada</th>
+                            <th>Autor y Rol</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($demo['observations'] as $obs)
+                            <tr>
+                                <td class="font-bold text-blue-950">{{ $obs['id'] }}</td>
+                                <td>{{ $obs['case_id'] }}<small>{{ $obs['investigation_id'] }}</small></td>
+                                <td><span class="rounded bg-slate-100 px-2 py-0.5 text-xs font-bold">{{ $obs['section'] }}</span></td>
+                                <td><strong>{{ $obs['author'] }}</strong><small>{{ $obs['role'] }}</small></td>
+                                <td>{{ $obs['date'] }}</td>
+                                <td><span class="status {{ $statusClass($obs['status']) }}">{{ $obs['status'] }}</span></td>
+                                <td><a class="text-link" href="{{ route('demo.show', ['module'=>'observations','id'=>$obs['id']]) }}">Ver Detalle</a></td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <aside class="card p-6 shadow-sm space-y-4">
+                <div class="border-b pb-4">
+                    <span class="eyebrow">{{ $observation['id'] }} · {{ $observation['case_id'] }}</span>
+                    <h3 class="mt-1 text-xl font-black text-slate-900">{{ $observation['section'] }}</h3>
+                    <p class="mt-2 text-xs font-semibold text-slate-500">
+                        Emitida por: <strong>{{ $observation['author'] }}</strong> ({{ $observation['role'] }}) el {{ $observation['date'] }}
+                    </p>
+                </div>
+
+                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs leading-relaxed text-slate-800">
+                    {{ $observation['description'] }}
+                </div>
+
+                <form method="POST" action="{{ route('demo.action', 'observations') }}" class="space-y-4">
+                    @csrf
+                    <input type="hidden" name="action" value="Respuesta a observación registrada">
+                    <input type="hidden" name="return_to" value="{{ url()->current() }}">
+                    <label>
+                        <span class="label">Respuesta o Corrección Efectuada</span>
+                        <textarea class="input text-xs" name="note" rows="5" placeholder="Indique las medidas adoptadas o justificación técnica para atender esta observación." required></textarea>
+                    </label>
+                    <button class="btn-primary w-full" type="submit">Enviar Respuesta a Observación</button>
+                </form>
+            </aside>
+        </div>
+        @endif
+
+    <!-- ==================== MÓDULO: MEDIDAS Y PLANES DE ACCIÓN ==================== -->
     @elseif($module === 'measures')
         @php $measure = $selected ?: $demo['measures']->first(); @endphp
-        <div class="grid gap-4 sm:grid-cols-3"><div class="metric"><span>Pendientes</span><strong>{{ $demo['measures']->where('status','Pendiente')->count() }}</strong></div><div class="metric"><span>En ejecución</span><strong>{{ $demo['measures']->where('status','En ejecución')->count() }}</strong></div><div class="metric metric-danger"><span>Vencidas</span><strong>{{ $demo['measures']->where('status','Vencida')->count() }}</strong></div></div><div class="filter-bar"><input class="input" placeholder="Buscar medida o caso" data-table-search><select class="input"><option>Todos los estados</option><option>Pendiente</option><option>En ejecución</option><option>Implementada</option><option>Vencida</option></select><select class="input"><option>Todas las categorías</option><option>Ingeniería</option><option>Sustitución</option><option>Administrativa</option></select></div><div class="grid gap-6 xl:grid-cols-[1fr_25rem]"><div class="card table-card"><table class="data-table"><thead><tr><th>Medida</th><th>Caso</th><th>Descripción</th><th>Responsable</th><th>Plazo</th><th>Avance</th><th></th></tr></thead><tbody>@foreach($demo['measures'] as $item)<tr><td class="font-bold">{{ $item['id'] }}</td><td>{{ $item['case_id'] }}<small>{{ $item['investigation_id'] }}</small></td><td>{{ $item['description'] }}<small>{{ $item['category'] }}</small></td><td>{{ $item['owner'] }}</td><td>{{ $item['due'] }}<br><span class="status {{ $statusClass($item['status']) }}">{{ $item['status'] }}</span></td><td>{{ $item['progress'] }}%</td><td><a class="text-link" href="{{ route('demo.show',['module'=>'measures','id'=>$item['id']]) }}">Editar</a></td></tr>@endforeach</tbody></table></div><aside class="card p-6"><p class="eyebrow">{{ $measure['id'] }} · {{ $measure['case_id'] }}</p><h2 class="mt-2 text-xl font-black">{{ $measure['description'] }}</h2><form method="POST" action="{{ route('demo.action','measures') }}" class="mt-6 space-y-4">@csrf<input type="hidden" name="return_to" value="{{ url()->current() }}"><label class="label">Avance</label><input type="range" min="0" max="100" value="{{ $measure['progress'] }}" class="w-full"><label class="label">Estado</label><select class="input" name="action"><option>Avance de medida registrado</option><option>Implementación simulada</option><option>Observación de medida registrada</option></select><label class="label">Observación</label><textarea class="input" name="note" rows="4"></textarea><label class="label">Evidencia local</label><input type="file" class="input" data-local-file><p class="hint">Vista previa local; no se almacena.</p><button class="btn-primary w-full">Guardar cambios</button></form></aside></div>
+        @if($demo['measures']->isEmpty())
+            <section class="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-xs">
+                <div class="mx-auto grid size-14 place-items-center rounded-2xl bg-sky-100 text-2xl font-black text-sky-800">0</div>
+                <h2 class="mt-5 text-2xl font-black text-slate-950">No hay medidas registradas</h2>
+                <p class="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">Las medidas y sus planes de acción aparecerán cuando se identifiquen causas dentro de una investigación.</p>
+                @if(auth()->user()->hasPermission('investigations.read'))
+                    <a href="{{ route('modules.investigations.index') }}" class="btn-primary mt-6">Ir a Investigación</a>
+                @endif
+            </section>
+        @else
+        <div class="grid gap-4 sm:grid-cols-4">
+            <div class="metric"><span class="text-xs font-bold uppercase text-slate-500">Total Medidas</span><strong class="text-3xl font-black text-slate-950">{{ $demo['measures']->count() }}</strong></div>
+            <div class="metric"><span class="text-xs font-bold uppercase text-slate-500">En Ejecución</span><strong class="text-3xl font-black text-blue-700">{{ $demo['measures']->where('status','En ejecución')->count() }}</strong></div>
+            <div class="metric"><span class="text-xs font-bold uppercase text-slate-500">Implementadas</span><strong class="text-3xl font-black text-emerald-700">{{ $demo['measures']->where('status','Implementada')->count() }}</strong></div>
+            <div class="metric metric-danger"><span class="text-xs font-bold uppercase text-red-700">Vencidas</span><strong class="text-3xl font-black text-red-800">{{ $demo['measures']->where('status','Vencida')->count() }}</strong></div>
+        </div>
+
+        <div class="filter-bar">
+            <input class="input" placeholder="Buscar por medida, caso o responsable" data-table-search>
+            <select class="input">
+                <option value="">Todas las categorías</option>
+                <option>Ingeniería</option>
+                <option>Administrativa</option>
+                <option>Equipos de protección personal</option>
+                <option>Sustitución</option>
+            </select>
+            <select class="input">
+                <option value="">Todos los estados</option>
+                <option>Pendiente</option>
+                <option>En ejecución</option>
+                <option>Implementada</option>
+                <option>Vencida</option>
+            </select>
+        </div>
+
+        <div class="grid gap-6 xl:grid-cols-[1fr_26rem]">
+            <div class="card table-card shadow-sm">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Caso</th>
+                            <th>Medida de Control</th>
+                            <th>Responsable</th>
+                            <th>Plazo</th>
+                            <th>Avance</th>
+                            <th>Estado</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($demo['measures'] as $m)
+                            <tr>
+                                <td class="font-bold text-blue-950">{{ $m['id'] }}</td>
+                                <td><span class="rounded bg-slate-100 px-2 py-0.5 text-xs font-bold">{{ $m['case_id'] }}</span></td>
+                                <td>
+                                    <strong class="text-slate-900">{{ $m['description'] }}</strong>
+                                    <small>{{ $m['category'] }}</small>
+                                </td>
+                                <td>{{ $m['owner'] }}</td>
+                                <td>{{ $m['due'] }}</td>
+                                <td>
+                                    <div class="flex items-center gap-2">
+                                        <div class="progress"><span style="width:{{ $m['progress'] }}%"></span></div>
+                                        <small class="font-bold">{{ $m['progress'] }}%</small>
+                                    </div>
+                                </td>
+                                <td><span class="status {{ $statusClass($m['status']) }}">{{ $m['status'] }}</span></td>
+                                <td><a class="text-link" href="{{ route('demo.show', ['module'=>'measures','id'=>$m['id']]) }}">Editar</a></td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <aside class="card p-6 shadow-sm space-y-4">
+                <div class="border-b pb-4">
+                    <span class="eyebrow">{{ $measure['id'] }} · {{ $measure['case_id'] }}</span>
+                    <h3 class="mt-1 text-lg font-black text-slate-900">{{ $measure['description'] }}</h3>
+                    <p class="mt-1 text-xs text-slate-500">Causa: {{ $measure['cause'] }}</p>
+                </div>
+
+                <form method="POST" action="{{ route('demo.action', 'measures') }}" class="space-y-4">
+                    @csrf
+                    <input type="hidden" name="return_to" value="{{ url()->current() }}">
+                    <label>
+                        <span class="label">Porcentaje de Avance ({{ $measure['progress'] }}%)</span>
+                        <input type="range" min="0" max="100" value="{{ $measure['progress'] }}" class="w-full accent-sky-600">
+                    </label>
+                    <label>
+                        <span class="label">Estado de la Medida</span>
+                        <select class="input" name="action">
+                            <option>Avance de medida registrado</option>
+                            <option>Medida marcada como implementada</option>
+                            <option>Observación de seguimiento registrada</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span class="label">Evidencia o Justificación</span>
+                        <textarea class="input text-xs" name="note" rows="3" placeholder="Detalle las acciones realizadas para el cumplimiento de esta medida."></textarea>
+                    </label>
+                    <button class="btn-primary w-full" type="submit">Actualizar Seguimiento</button>
+                </form>
+            </aside>
+        </div>
+        @endif
+
+    <!-- ==================== MÓDULO: ESTADÍSTICAS Y DASHBOARD ==================== -->
     @elseif($module === 'statistics')
-        <div class="filter-bar" data-stat-filters><select class="input"><option>Todos los establecimientos</option>@foreach($demo['establishments'] as $item)<option>{{ $item }}</option>@endforeach</select><select class="input"><option>Últimos 12 meses</option><option>2026</option><option>Últimos 90 días</option></select><select class="input"><option>Todos los tipos</option><option>Accidente del trabajo</option><option>Enfermedad profesional</option></select><button class="btn-primary" type="button" data-refresh-stats>Actualizar resultados</button></div><div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><div class="metric"><span>Casos del período</span><strong data-stat-number>6</strong></div><div class="metric"><span>Investigaciones activas</span><strong data-stat-number>3</strong></div><div class="metric"><span>Medidas implementadas</span><strong data-stat-number>2</strong></div><div class="metric metric-danger"><span>Medidas vencidas</span><strong>1</strong></div></div><div class="grid gap-6 lg:grid-cols-2"><div class="card p-6"><h2 class="font-black">Casos por establecimiento</h2><div class="bar-chart mt-6">@foreach(['CESFAM Los Aromos'=>2,'SAR Central'=>2,'CECOSF Norte'=>1,'Posta Rural El Molino'=>1] as $label=>$value)<div><span>{{ $label }}</span><div><i style="width:{{ $value*35 }}%"></i></div><strong>{{ $value }}</strong></div>@endforeach</div></div><div class="card p-6"><h2 class="font-black">Distribución por tipo</h2><div class="donut-wrap mt-6"><div class="donut"></div><ul><li><i class="bg-sky-700"></i>Accidentes <strong>5</strong></li><li><i class="bg-amber-500"></i>Enfermedades <strong>1</strong></li></ul></div></div><div class="card p-6"><h2 class="font-black">Investigaciones por estado</h2><div class="bar-chart mt-6">@foreach($demo['investigations']->groupBy('status') as $state=>$items)<div><span>{{ $state }}</span><div><i style="width:{{ $items->count()*35 }}%"></i></div><strong>{{ $items->count() }}</strong></div>@endforeach</div></div><div class="card p-6"><h2 class="font-black">Lesiones o partes más frecuentes</h2><ol class="mt-5 space-y-3">@foreach(['Manos y dedos','Extremidades inferiores','Zona lumbar','Piel'] as $i=>$label)<li class="flex items-center gap-3"><span class="rank">{{ $i+1 }}</span><span class="flex-1">{{ $label }}</span><strong>{{ max(1,3-$i) }}</strong></li>@endforeach</ol></div></div><div class="empty-state hidden" data-stats-empty>No existen datos para la combinación seleccionada.</div>
+        @if($demo['cases']->isEmpty())
+            <section class="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-xs">
+                <div class="mx-auto grid size-14 place-items-center rounded-2xl bg-sky-100 text-2xl font-black text-sky-800">0</div>
+                <h2 class="mt-5 text-2xl font-black text-slate-950">No hay información para mostrar</h2>
+                <p class="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">Los indicadores y gráficos se generarán automáticamente cuando existan casos registrados.</p>
+                @if(auth()->user()->hasPermission('cases.create'))
+                    <a href="{{ route('modules.cases.create') }}" class="btn-primary mt-6">Registrar el primer caso</a>
+                @endif
+            </section>
+        @else
+        <div class="filter-bar" data-stat-filters>
+            <select class="input">
+                <option>Todos los establecimientos APS Los Ángeles</option>
+                @foreach($demo['establishments'] as $est)
+                    <option>{{ $est }}</option>
+                @endforeach
+            </select>
+            <select class="input">
+                <option>Año 2026 completo</option>
+                <option>Últimos 6 meses</option>
+                <option>Últimos 90 días</option>
+            </select>
+            <button class="btn-primary" type="button" data-refresh-stats>Filtrar Indicadores</button>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="metric"><span class="text-xs font-bold uppercase text-slate-500">Total Casos Registrados</span><strong class="text-3xl font-black text-slate-950" data-stat-number>6</strong><small>Red APS Los Ángeles</small></div>
+            <div class="metric"><span class="text-xs font-bold uppercase text-slate-500">Investigaciones en Curso</span><strong class="text-3xl font-black text-amber-600" data-stat-number>4</strong><small>Con Árbol de Causas</small></div>
+            <div class="metric"><span class="text-xs font-bold uppercase text-slate-500">Medidas Implementadas</span><strong class="text-3xl font-black text-emerald-600" data-stat-number>3</strong><small>De 8 medidas totales</small></div>
+            <div class="metric metric-danger"><span class="text-xs font-bold uppercase text-red-700">Tasa de Cierre</span><strong class="text-3xl font-black text-slate-950">25%</strong><small class="text-slate-600">Casos regularizados</small></div>
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-2">
+            <div class="card p-6 shadow-sm">
+                <h3 class="font-black text-slate-950">Casos por Centro de Salud Comunal</h3>
+                <div class="bar-chart mt-6">
+                    @foreach(['CESFAM Nororiente' => 2, 'SAR Central' => 2, 'CESFAM Los Aromos' => 1, 'CESFAM Nuevo Horizonte' => 1] as $label => $val)
+                        <div>
+                            <span class="font-bold text-slate-700 text-xs">{{ $label }}</span>
+                            <div><i style="width: {{ $val * 45 }}%"></i></div>
+                            <strong class="text-xs">{{ $val }}</strong>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="card p-6 shadow-sm">
+                <h3 class="font-black text-slate-950">Distribución por Tipo de Denuncia</h3>
+                <div class="donut-wrap mt-6">
+                    <div class="donut"></div>
+                    <ul class="text-xs space-y-2.5">
+                        <li class="flex items-center gap-2"><i class="bg-sky-700 size-3 rounded-full"></i>Accidentes del Trabajo: <strong>4 casos</strong></li>
+                        <li class="flex items-center gap-2"><i class="bg-indigo-600 size-3 rounded-full"></i>Accidentes de Trayecto: <strong>1 caso</strong></li>
+                        <li class="flex items-center gap-2"><i class="bg-amber-500 size-3 rounded-full"></i>Enfermedades Profesionales: <strong>1 caso</strong></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        @endif
+
+    <!-- ==================== MÓDULO: REPORTES ==================== -->
     @elseif($module === 'reports')
-        @php $reports=['Resumen de casos'=>'Listado consolidado por estado, tipo y establecimiento.','Informe de investigación'=>'Expediente con antecedentes, hechos, análisis y participantes.','Seguimiento de medidas'=>'Avances, vencimientos y evidencias declaradas.','Resumen por establecimiento'=>'Vista ejecutiva del alcance seleccionado.']; @endphp
-        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">@foreach($reports as $name=>$detail)<button type="button" class="report-card {{ $loop->first?'report-card-active':'' }}" data-report-type="{{ $name }}"><span>Informe</span><strong>{{ $name }}</strong><small>{{ $detail }}</small></button>@endforeach</div><div class="grid gap-6 lg:grid-cols-[20rem_1fr]"><aside class="card p-5"><h2 class="font-black">Configurar reporte</h2><div class="mt-5 space-y-4"><label class="label">Establecimiento</label><select class="input"><option>Todos</option>@foreach($demo['establishments'] as $item)<option>{{ $item }}</option>@endforeach</select><label class="label">Desde</label><input type="date" class="input" value="2026-01-01"><label class="label">Hasta</label><input type="date" class="input" value="2026-10-03"><button class="btn-primary w-full" type="button" data-report-preview>Actualizar vista previa</button><button class="btn-secondary w-full" type="button" onclick="window.print()">Imprimir / guardar como PDF</button><button class="btn-secondary w-full" disabled title="Pendiente de integración real">Exportar Excel · Pendiente</button></div></aside><section class="card p-6 print-card" data-report-output><div class="border-b pb-5"><p class="eyebrow">Vista previa · Datos de demostración</p><h2 class="mt-2 text-2xl font-black" data-report-title>Resumen de casos</h2><p class="mt-1 text-sm text-slate-500">Período 01/01/2026 al 03/10/2026 · Todos los establecimientos</p></div><div class="mt-6 grid gap-4 sm:grid-cols-3"><div class="metric"><span>Total</span><strong>6</strong></div><div class="metric"><span>Activos</span><strong>5</strong></div><div class="metric"><span>Cerrados</span><strong>1</strong></div></div><table class="data-table mt-6"><thead><tr><th>Folio</th><th>Tipo</th><th>Establecimiento</th><th>Estado</th></tr></thead><tbody>@foreach($demo['cases']->take(4) as $case)<tr><td>{{ $case['id'] }}</td><td>{{ $case['type'] }}</td><td>{{ $case['establishment'] }}</td><td>{{ $case['status'] }}</td></tr>@endforeach</tbody></table></section></div>
+        @if($demo['cases']->isEmpty())
+            <section class="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-xs">
+                <div class="mx-auto grid size-14 place-items-center rounded-2xl bg-sky-100 text-2xl font-black text-sky-800">0</div>
+                <h2 class="mt-5 text-2xl font-black text-slate-950">No hay reportes disponibles</h2>
+                <p class="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">Los informes DIAT, DIEP, Árbol de Causas y planes de acción estarán disponibles cuando existan expedientes registrados.</p>
+                @if(auth()->user()->hasPermission('cases.create'))
+                    <a href="{{ route('modules.cases.create') }}" class="btn-primary mt-6">Registrar el primer caso</a>
+                @endif
+            </section>
+        @else
+        @php
+        $reports = [
+            'Ficha Oficial DIAT / DIEP' => 'Denuncia individual estandarizada para organismo administrador (ACHS).',
+            'Informe Técnico Árbol de Causas' => 'Expediente formal IMLA-DCS-F-IDA-1-24 con hechos, causas y medidas.',
+            'Plan de Acción y Medidas Preventivas' => 'Consolidado de medidas de ingeniería, administrativas y EPP con responsables.',
+            'Informe Ejecutivo Alta Dirección' => 'Resumen de tasa de accidentalidad, causas recurrentes y plazos vencidos.',
+        ];
+        @endphp
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            @foreach($reports as $name => $detail)
+                <button type="button" class="report-card {{ $loop->first ? 'report-card-active' : '' }}" data-report-type="{{ $name }}">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-sky-700">Informe Técnico</span>
+                    <strong class="text-base text-slate-950">{{ $name }}</strong>
+                    <small class="text-slate-500">{{ $detail }}</small>
+                </button>
+            @endforeach
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-[20rem_1fr]">
+            <aside class="card p-5 shadow-sm space-y-4">
+                <h3 class="font-black text-slate-900">Parámetros del Informe</h3>
+                <div><label class="label">Establecimiento</label><select class="input"><option>Todos los Centros APS</option>@foreach($demo['establishments'] as $e)<option>{{ $e }}</option>@endforeach</select></div>
+                <div><label class="label">Fecha Inicio</label><input type="date" class="input" value="2026-01-01"></div>
+                <div><label class="label">Fecha Término</label><input type="date" class="input" value="2026-10-14"></div>
+                <button class="btn-primary w-full" type="button" data-report-preview>Actualizar Vista Previa</button>
+                <button class="btn-secondary w-full" type="button" onclick="window.print()">Imprimir / Exportar PDF</button>
+            </aside>
+
+            <section class="card p-6 shadow-sm print-card" data-report-output>
+                <div class="border-b border-slate-200 pb-5">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Documento Oficial DCS Los Ángeles</span>
+                            <h2 class="mt-1 text-2xl font-black text-slate-950" data-report-title>Ficha Oficial DIAT / DIEP</h2>
+                        </div>
+                        <span class="rounded bg-sky-100 px-3 py-1 text-xs font-bold text-sky-900">Convenio ACHS</span>
+                    </div>
+                </div>
+                <div class="mt-6 space-y-4 text-xs">
+                    <p class="text-slate-600">Este informe consolida los expedientes formalmente tramitados en los centros de salud APS de la comuna.</p>
+                    <table class="data-table">
+                        <thead><tr><th>Folio</th><th>Trabajador</th><th>Centro</th><th>Tipo</th><th>Estado</th></tr></thead>
+                        <tbody>
+                            @foreach($demo['cases'] as $c)
+                                <tr>
+                                    <td class="font-bold">{{ $c['id'] }}</td>
+                                    <td>{{ $c['worker'] }}</td>
+                                    <td>{{ $c['establishment'] }}</td>
+                                    <td>{{ $c['type'] }}</td>
+                                    <td><span class="status {{ $statusClass($c['status']) }}">{{ $c['status'] }}</span></td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+        @endif
+
+    <!-- ==================== MÓDULO: PERFIL ==================== -->
     @elseif($module === 'profile')
-        <div class="grid gap-6 lg:grid-cols-[1fr_22rem]"><section class="card p-6 sm:p-8"><h2 class="text-xl font-black">Datos personales</h2><dl class="mt-6 grid gap-6 sm:grid-cols-2"><div><dt>Nombre</dt><dd>{{ auth()->user()->name }}</dd></div><div><dt>RUT</dt><dd>{{ auth()->user()->rut }}</dd></div><div><dt>Correo</dt><dd>{{ auth()->user()->email }}</dd></div><div><dt>Cargo</dt><dd>{{ auth()->user()->job_title ?: 'Sin información' }}</dd></div><div><dt>Roles</dt><dd>{{ auth()->user()->roles->pluck('name')->join(' · ') }}</dd></div><div><dt>Establecimientos</dt><dd>{{ auth()->user()->establishments->pluck('name')->join(' · ') ?: 'Sin establecimiento asignado' }}</dd></div></dl><p class="mt-6 rounded-xl bg-sky-50 p-4 text-sm text-sky-900">Los datos de cuenta son solo de consulta en este prototipo.</p></section><aside class="card p-6"><h2 class="font-black">Preferencias visuales</h2><form class="mt-5 space-y-4" method="POST" action="{{ route('demo.action','profile') }}">@csrf<input type="hidden" name="action" value="Preferencias visuales guardadas"><label class="flex items-center justify-between gap-4">Vista compacta<input type="checkbox" class="h-5 w-5"></label><label class="flex items-center justify-between gap-4">Reducir animaciones<input type="checkbox" class="h-5 w-5"></label><label class="label">Densidad de tablas</label><select class="input"><option>Cómoda</option><option>Compacta</option></select><button class="btn-primary w-full">Guardar en demostración</button></form></aside></div>
-    @elseif(in_array($module,['users','roles','establishments','settings']))
+        <div class="grid gap-6 lg:grid-cols-[1fr_22rem]">
+            <section class="card p-6 sm:p-8 shadow-sm">
+                <h3 class="text-xl font-black text-slate-950 border-b pb-4">Antecedentes del Funcionario</h3>
+                <dl class="mt-6 grid gap-6 sm:grid-cols-2 text-xs">
+                    <div><dt>Nombre Completo</dt><dd class="text-sm font-bold text-slate-900">{{ auth()->user()->name }}</dd></div>
+                    <div><dt>RUT</dt><dd class="text-sm font-bold text-slate-900">{{ auth()->user()->rut }}</dd></div>
+                    <div><dt>Correo Institucional</dt><dd class="text-sm font-bold text-slate-900">{{ auth()->user()->email }}</dd></div>
+                    <div><dt>Cargo Funcional</dt><dd class="text-sm font-bold text-slate-900">{{ auth()->user()->job_title ?: 'Funcionario de Salud' }}</dd></div>
+                    <div><dt>Roles Activos en GIATEP</dt><dd class="text-sm font-bold text-sky-800">{{ auth()->user()->roles->pluck('name')->join(' · ') }}</dd></div>
+                    <div><dt>Establecimientos Autorizados</dt><dd class="text-sm font-bold text-slate-900">{{ auth()->user()->establishments->pluck('name')->join(' · ') ?: 'Toda la Red Comunal APS' }}</dd></div>
+                </dl>
+            </section>
+
+            <aside class="card p-6 shadow-sm space-y-4">
+                <h3 class="font-black text-slate-900 border-b pb-3">Información del Perfil</h3>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Las credenciales operativas de Prevención, Jefatura y Alta Dirección son provistas automáticamente mediante la API institucional de la Dirección Comunal de Salud.
+                </p>
+                <div class="rounded-xl border border-sky-200 bg-sky-50 p-4 text-xs font-semibold text-sky-900">
+                    Comité Paritario y Delegados de Seguridad pueden solicitar la actualización de su establecimiento comunicándose con la Unidad de Prevención de Riesgos (UPRSO).
+                </div>
+            </aside>
+        </div>
+
+    <!-- ==================== MÓDULOS DE ADMINISTRACIÓN ==================== -->
+    @elseif(in_array($module, ['users','roles','establishments','settings']))
         @php
         $adminData = [
-          'users'=>[['Carolina Medina','Prevencionista','CESFAM Los Aromos','Activo'],['Pedro Arancibia','Comité Paritario','SAR Central','Activo'],['Natalia Bustos','Jefatura Directa','CECOSF Norte','Suspendido']],
-          'roles'=>[['Administrador','6 permisos','3 usuarios','Activo'],['Prevencionista','8 permisos','5 usuarios','Activo'],['Comité Paritario','6 permisos','12 usuarios','Activo']],
-          'establishments'=>[['CESFAM Los Aromos','CESFAM','Av. Los Aromos 125','contacto@demo.test'],['SAR Central','SAR','Av. Central 980','sar@demo.test'],['CECOSF Norte','CECOSF','Pasaje Norte 44','norte@demo.test']],
-          'settings'=>[['Tipos de caso','2 valores','Accidente · Enfermedad profesional','Activo'],['Categorías de control','5 valores','Eliminación · Sustitución · Ingeniería…','Activo'],['Estados de investigación','5 valores','Borrador · Revisión · Concluida…','Activo']],
+            'users' => [
+                ['Daniela Araya', 'Prevencionista (UPRSO)', 'CESFAM Nororiente', 'Activo'],
+                ['Marcelo Fuentes', 'Comité Paritario (CPHS)', 'SAR Central', 'Activo'],
+                ['Niza Gallo Ibáñez', 'Jefatura Directa', 'CESFAM Nororiente', 'Activo'],
+                ['Paula Contreras', 'Alta Dirección', 'Dirección Comunal de Salud', 'Activo'],
+            ],
+            'roles' => [
+                ['Prevencionista (UPRSO)', '10 permisos', 'Acceso total operativo y revisión', 'Activo'],
+                ['Comité Paritario (CPHS)', '7 permisos', 'Investigación, registro y cierre', 'Activo'],
+                ['Delegado de Seguridad', '7 permisos', 'Investigación, registro y cierre', 'Activo'],
+                ['Jefatura Directa', '5 permisos', 'Observaciones y consulta', 'Activo'],
+                ['Alta Dirección', '7 permisos', 'Observaciones, DIAT/DIEP y dashboards', 'Activo'],
+                ['Administrador', '6 permisos', 'Gestión de solicitudes y usuarios', 'Activo'],
+            ],
+            'establishments' => [
+                ['CESFAM Nororiente', 'CESFAM', 'Avenida Los Ángeles 450', 'nororiente@dcs.cl'],
+                ['CESFAM Los Aromos', 'CESFAM', 'Los Aromos 120', 'losaromos@dcs.cl'],
+                ['CESFAM Nuevo Horizonte', 'CESFAM', 'Av. Oriente 780', 'nuevohorizonte@dcs.cl'],
+                ['SAR Central', 'SAR', 'Avenida Central 980', 'sarcentral@dcs.cl'],
+                ['Dirección Comunal de Salud', 'Oficina Administrativa', 'Calle Valdivia #150', 'contacto@dcslosangeles.cl'],
+            ],
+            'settings' => [
+                ['Tipos de Denuncia', '2 formularios oficiales', 'DIAT (Accidentes) y DIEP (Enfermedades)', 'Activo'],
+                ['Matriz de Factores Causales', '222 códigos normativos', 'Clasificación oficial estandarizada', 'Activo'],
+                ['Jerarquía de Control de Riesgos', '5 niveles', 'Eliminación, Sustitución, Ingeniería, Administrativa, EPP', 'Activo'],
+            ],
         ][$module];
         @endphp
-        <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><strong>Administración simulada:</strong> estas acciones no crean ni modifican usuarios, roles, establecimientos o parámetros reales.</div><div class="filter-bar"><input class="input" placeholder="Buscar" data-table-search><select class="input"><option>Todos los estados</option><option>Activo</option><option>Suspendido</option></select><button class="btn-primary" type="button" data-open-demo-modal>+ Nuevo registro</button></div><div class="card table-card"><table class="data-table"><thead><tr><th>Nombre</th><th>Tipo / rol</th><th>Alcance / detalle</th><th>Estado</th><th></th></tr></thead><tbody>@foreach($adminData as $row)<tr data-table-row><td class="font-bold">{{ $row[0] }}</td><td>{{ $row[1] }}</td><td>{{ $row[2] }}</td><td><span class="status {{ $row[3]==='Activo'?'status-approved':'status-pending' }}">{{ $row[3] }}</span></td><td><button class="text-link" type="button" data-open-demo-modal data-record="{{ $row[0] }}">Ver / editar</button></td></tr>@endforeach</tbody></table></div>
-        @if($module==='roles')<div class="card p-6"><h2 class="font-black">Matriz visual de permisos</h2><div class="table-card mt-5"><table class="data-table"><thead><tr><th>Permiso</th><th>Administrador</th><th>Prevencionista</th><th>Comité Paritario</th></tr></thead><tbody>@foreach(['Ver casos','Investigar','Revisar expedientes','Gestionar medidas','Ver estadísticas','Administrar usuarios'] as $i=>$permission)<tr><td>{{ $permission }}</td><td><input type="checkbox" @checked($i===5)></td><td><input type="checkbox" @checked($i<5)></td><td><input type="checkbox" @checked(in_array($i,[0,1,3]))></td></tr>@endforeach</tbody></table></div></div>@endif
-        <dialog class="demo-dialog" data-demo-modal><form method="POST" action="{{ route('demo.action',$module) }}" class="card p-6">@csrf<input type="hidden" name="action" value="Registro administrativo simulado guardado"><div class="flex items-start justify-between"><div><p class="eyebrow">Datos ficticios</p><h2 class="mt-1 text-xl font-black" data-modal-title>Nuevo registro</h2></div><button type="button" class="btn-secondary" data-close-demo-modal>×</button></div><div class="mt-6 grid gap-4"><label class="label">Nombre</label><input class="input" required><label class="label">Tipo o rol</label><select class="input"><option>Activo</option><option>En revisión</option></select><label class="label">Detalle</label><textarea class="input" rows="4"></textarea></div><button class="btn-primary mt-6 w-full">Guardar en demostración</button></form></dialog>
+
+        <div class="flex items-center justify-between border-b pb-4">
+            <div>
+                <h3 class="text-xl font-black text-slate-900">{{ $titles[$module][0] }}</h3>
+                <p class="text-xs text-slate-500">Catálogo oficial de configuración de la plataforma GIATEP.</p>
+            </div>
+            <button class="btn-primary" type="button" data-open-demo-modal>+ Agregar Registro</button>
+        </div>
+
+        <div class="card table-card shadow-sm">
+            <table class="data-table">
+                <thead><tr><th>Nombre / Registro</th><th>Tipo / Detalle</th><th>Alcance Institucional</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <tbody>
+                    @foreach($adminData as $row)
+                        <tr>
+                            <td class="font-bold text-slate-900">{{ $row[0] }}</td>
+                            <td><span class="rounded bg-slate-100 px-2 py-0.5 text-xs font-bold">{{ $row[1] }}</span></td>
+                            <td>{{ $row[2] }}</td>
+                            <td><span class="status status-approved">{{ $row[3] }}</span></td>
+                            <td><button class="text-link" type="button" data-open-demo-modal data-record="{{ $row[0] }}">Editar</button></td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     @endif
 </div>
 </x-layouts.app>

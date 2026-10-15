@@ -35,6 +35,11 @@ class User extends Authenticatable
         return in_array($permission, RolePermissionMap::forRoles($this->roles->pluck('slug')), true);
     }
 
+    public function hasRole(string $slug): bool
+    {
+        return $this->roles->contains('slug', $slug);
+    }
+
     /**
      * Get the attributes that should be cast.
      *
