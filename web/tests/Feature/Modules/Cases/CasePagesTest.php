@@ -7,6 +7,7 @@ use App\Models\Investigation;
 use App\Models\OccupationalCase;
 use App\Models\Role;
 use App\Models\User;
+use Database\Seeders\CaseCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -14,6 +15,13 @@ use Tests\TestCase;
 class CasePagesTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(CaseCatalogSeeder::class);
+    }
 
     /** @return array<string, array{string, string}> */
     public static function caseCreatorRoles(): array
@@ -65,6 +73,9 @@ class CasePagesTest extends TestCase
             ->assertSee('Evidencias del caso')
             ->assertSee('data-evidence-dropzone', false)
             ->assertSee('data-evidence-list', false)
+            ->assertSee('Así quedará registrado en el sistema')
+            ->assertSee('Registro real · no solo vista previa')
+            ->assertSee("name='establishment_id'", false)
             ->assertDontSee('Agregar medida inicial')
             ->assertDontSee('Propuesta de análisis con IA')
             ->assertSee('Recopilación del caso')
@@ -184,12 +195,13 @@ class CasePagesTest extends TestCase
     public function test_authorized_user_can_store_a_case_in_the_database(): void
     {
         $user = $this->userWithRole('prevencion', 'Prevencionista');
+        $establishment = Establishment::factory()->create(['name' => 'CESFAM Norte']);
 
         $response = $this->actingAs($user)->post(route('modules.cases.store'), [
             'employer_name' => 'Dirección Comunal de Salud', 'employer_rut' => '69.170.102-6',
             'employer_address' => 'Avenida Central 1250', 'employer_commune' => 'Los Ángeles',
             'economic_activity' => 'Salud pública', 'company_type' => 'Principal', 'administrator' => 'ACHS',
-            'establishment' => 'CESFAM Norte', 'worker_name' => 'Camila Soto Rojas',
+            'establishment_id' => $establishment->id, 'worker_name' => 'Camila Soto Rojas',
             'worker_rut' => '17.456.321-8', 'job_title' => 'Técnica en enfermería', 'workplace' => 'Bodega clínica',
             'case_type' => 'Accidente de trabajo', 'event_date' => now()->toDateString(), 'event_time' => '09:15',
             'event_location' => 'Pasillo de acceso', 'narrative' => 'La trabajadora informó una caída durante el traslado de insumos.',

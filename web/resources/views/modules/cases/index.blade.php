@@ -23,23 +23,18 @@
                     <span class='label text-xs font-bold uppercase tracking-wider text-slate-500'>Tipo de caso</span>
                     <select class='input text-sm py-2' data-filter-type>
                         <option value=''>Todos los tipos</option>
-                        <option>Accidente de trabajo</option>
-                        <option>Accidente del trabajo</option>
-                        <option>Accidente de trayecto</option>
-                        <option>Enfermedad profesional</option>
-                        <option>Accidente grave</option>
-                        <option>Accidente fatal</option>
+                        @foreach($caseTypes as $type)
+                            <option value='{{ $type->value }}'>{{ $type->label }}</option>
+                        @endforeach
                     </select>
                 </label>
                 <label>
                     <span class='label text-xs font-bold uppercase tracking-wider text-slate-500'>Estado</span>
                     <select class='input text-sm py-2' data-filter-status>
                         <option value=''>Todos los estados</option>
-                        <option>Registrado</option>
-                        <option>En investigación</option>
-                        <option>Con observaciones</option>
-                        <option>Seguimiento de medidas</option>
-                        <option>Cerrado</option>
+                        @foreach($caseStatuses as $status)
+                            <option value='{{ $status->value }}'>{{ $status->label }}</option>
+                        @endforeach
                     </select>
                 </label>
             </div>
@@ -204,8 +199,8 @@
             <label>
                 <span class='label'>Nuevo tipo de caso</span>
                 <select class='input text-sm' data-new-case-type>
-                    @foreach(['Accidente de trabajo','Accidente de trayecto','Enfermedad profesional','Accidente grave','Accidente fatal','Accidente de trabajo sin días perdidos','Incidente o suceso peligroso','Accidente o enfermedad común'] as $type)
-                        <option>{{ $type }}</option>
+                    @foreach($caseTypes as $type)
+                        <option value='{{ $type->value }}'>{{ $type->label }}</option>
                     @endforeach
                 </select>
             </label>

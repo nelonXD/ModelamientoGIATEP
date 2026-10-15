@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreOccupationalCaseRequest;
+use App\Models\CatalogOption;
 use App\Models\Establishment;
 use App\Models\OccupationalCase;
 use Illuminate\Http\RedirectResponse;
@@ -28,30 +29,35 @@ class CaseController extends Controller
             'evidenceFiles' => $case->evidences->map(fn ($file): array => ['name' => $file->original_name, 'type' => $file->mime_type, 'size' => $file->size])->all(),
             'has_investigation' => $case->investigation !== null || in_array($case->status, ['En investigación', 'Con observaciones', 'Seguimiento de medidas', 'Cerrado']),
             'investigation_id' => $case->investigation?->folio,
-            'requires_investigation' => !in_array($case->case_type, ['Accidente o enfermedad común', 'Accidente común', 'Enfermedad común']),
+            'requires_investigation' => ! in_array($case->case_type, ['Accidente o enfermedad común', 'Accidente común', 'Enfermedad común']),
         ]);
 
-        return view('modules.cases.index', compact('cases'));
+        $caseTypes = CatalogOption::query()->where('category', 'case_type')->where('is_active', true)->orderBy('sort_order')->get();
+        $caseStatuses = CatalogOption::query()->where('category', 'case_status')->where('is_active', true)->orderBy('sort_order')->get();
+
+        return view('modules.cases.index', compact('cases', 'caseTypes', 'caseStatuses'));
     }
 
     public function create(Request $request): View
     {
         abort_unless($request->user()->hasPermission('cases.create'), 403);
 
-        return view('modules.cases.create', ['establishments' => Establishment::query()->where('is_active', true)->orderBy('name')->get()]);
+        $catalogs = CatalogOption::query()->where('is_active', true)->orderBy('sort_order')->get()->groupBy('category');
+
+        return view('modules.cases.create', [
+            'establishments' => Establishment::query()->where('is_active', true)->orderBy('name')->get(),
+            'catalogs' => $catalogs,
+        ]);
     }
 
     public function store(StoreOccupationalCaseRequest $request): RedirectResponse
     {
         $case = DB::transaction(function () use ($request): OccupationalCase {
             $data = $request->validated();
-            $establishment = Establishment::query()->firstOrCreate(
-                ['name' => $data['establishment']],
-                ['type' => 'Centro de trabajo', 'is_active' => true],
-            );
+            $establishment = Establishment::query()->whereKey($data['establishment_id'])->where('is_active', true)->firstOrFail();
 
             $case = OccupationalCase::create([
-                ...collect($data)->except(['establishment', 'evidence_files', 'phone'])->all(),
+                ...collect($data)->except(['establishment_id', 'evidence_files', 'phone'])->all(),
                 'folio' => $this->nextFolio(), 'created_by' => $request->user()->id,
                 'establishment_id' => $establishment->id, 'worker_phone' => $data['phone'] ?? null,
                 'details' => collect($request->all())->only(['company_tenure', 'income_type', 'indigenous_people', 'work_schedule', 'activity_before_event', 'usual_job_description', 'doing_usual_job', 'accident_severity', 'accident_scope', 'route_type', 'proof_types', 'proof_detail', 'affected_body_part', 'symptom_duration', 'previous_symptoms', 'activity_when_symptoms_began', 'symptom_job_position', 'coworkers_same_symptoms', 'suspected_work_agents', 'exposure_duration'])->all(),
