@@ -2,7 +2,7 @@
     <div class='space-y-6'>
         <div class='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-5'>
             <div>
-                <p class='text-xs font-bold uppercase tracking-wider text-sky-700'>Seguridad y Salud en el Trabajo · Ley 16.744</p>
+                <p class='text-xs font-bold uppercase tracking-wider text-sky-700'>Sistema Institucional GIATEP · Ley 16.744</p>
                 <h1 class='mt-1 text-2xl sm:text-3xl font-black tracking-tight text-slate-950'>Casos registrados</h1>
                 <p class='mt-1 text-sm text-slate-600'>Expedientes y notificaciones de accidentes y enfermedades profesionales de la Red Comunal de Salud.</p>
             </div>
@@ -57,7 +57,7 @@
                         </tr>
                     </thead>
                     <tbody class='divide-y divide-slate-100 bg-white' data-case-list>
-                        @foreach($cases as $case)
+                        @forelse($cases as $case)
                             <tr class='transition hover:bg-slate-50/80' data-case-row data-case-folio='{{ $case['folio'] }}' data-case-type='{{ $case['type'] }}' data-case-status='{{ $case['status'] }}' data-has-investigation='{{ $case['has_investigation'] ? 'true' : 'false' }}'>
                                 <td class='whitespace-nowrap py-4 px-4 font-bold text-slate-950'>
                                     <span class='text-blue-950 font-black text-sm'>{{ $case['folio'] }}</span>
@@ -172,7 +172,14 @@
                                     @endif
                                 </div>
                             </dialog>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan='7' class='py-12 px-4 text-center text-slate-500'>
+                                    <p class='font-bold text-slate-700'>No hay casos registrados en el sistema.</p>
+                                    <p class='mt-1 text-xs text-slate-400'>Utilice el botón "Registrar caso" para ingresar el primer expediente.</p>
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

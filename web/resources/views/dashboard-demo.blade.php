@@ -78,6 +78,18 @@
         </section>
 
         <!-- Bloque Analítico y Actividad Reciente -->
+        @php
+            $totalCases = $metrics['cases'];
+            $workAccidents = $demo['cases']->filter(fn($c) => in_array($c['type'], ['Accidente de trabajo', 'Accidente del trabajo', 'Accidente grave', 'Accidente fatal']))->count();
+            $commuteAccidents = $demo['cases']->filter(fn($c) => $c['type'] === 'Accidente de trayecto')->count();
+            $diseases = $demo['cases']->filter(fn($c) => $c['type'] === 'Enfermedad profesional')->count();
+            
+            $workPct = $totalCases > 0 ? round(($workAccidents / $totalCases) * 100) : 0;
+            $commutePct = $totalCases > 0 ? round(($commuteAccidents / $totalCases) * 100) : 0;
+            $diseasePct = $totalCases > 0 ? round(($diseases / $totalCases) * 100) : 0;
+
+            $casesByEst = $demo['cases']->groupBy('establishment')->map->count()->sortDesc()->take(5);
+        @endphp
         <section class="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
             <div class="card p-6">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-4">
@@ -85,57 +97,49 @@
                         <p class="eyebrow">Distribución de Accidentes y Enfermedades</p>
                         <h3 class="mt-1 text-lg font-black text-slate-950">Estadísticas de Casos en Los Ángeles</h3>
                     </div>
-                    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">Período 2026</span>
+                    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">Período {{ date('Y') }}</span>
                 </div>
                 <div class="mt-6 grid gap-6 sm:grid-cols-2 items-center">
                     <div class="space-y-4">
                         <div>
                             <div class="flex justify-between text-xs font-bold">
                                 <span class="text-slate-700">Accidentes del Trabajo (DIAT)</span>
-                                <span class="text-sky-800">4 casos (67%)</span>
+                                <span class="text-sky-800">{{ $workAccidents }} {{ $workAccidents === 1 ? 'caso' : 'casos' }} ({{ $workPct }}%)</span>
                             </div>
                             <div class="mt-1.5 h-3 rounded-full bg-slate-100 overflow-hidden">
-                                <div class="h-full bg-sky-600 rounded-full" style="width: 67%"></div>
+                                <div class="h-full bg-sky-600 rounded-full" style="width: {{ $workPct }}%"></div>
                             </div>
                         </div>
                         <div>
                             <div class="flex justify-between text-xs font-bold">
                                 <span class="text-slate-700">Accidentes de Trayecto (DIAT)</span>
-                                <span class="text-indigo-800">1 caso (16%)</span>
+                                <span class="text-indigo-800">{{ $commuteAccidents }} {{ $commuteAccidents === 1 ? 'caso' : 'casos' }} ({{ $commutePct }}%)</span>
                             </div>
                             <div class="mt-1.5 h-3 rounded-full bg-slate-100 overflow-hidden">
-                                <div class="h-full bg-indigo-500 rounded-full" style="width: 16%"></div>
+                                <div class="h-full bg-indigo-500 rounded-full" style="width: {{ $commutePct }}%"></div>
                             </div>
                         </div>
                         <div>
                             <div class="flex justify-between text-xs font-bold">
                                 <span class="text-slate-700">Enfermedades Profesionales (DIEP)</span>
-                                <span class="text-amber-800">1 caso (16%)</span>
+                                <span class="text-amber-800">{{ $diseases }} {{ $diseases === 1 ? 'caso' : 'casos' }} ({{ $diseasePct }}%)</span>
                             </div>
                             <div class="mt-1.5 h-3 rounded-full bg-slate-100 overflow-hidden">
-                                <div class="h-full bg-amber-500 rounded-full" style="width: 16%"></div>
+                                <div class="h-full bg-amber-500 rounded-full" style="width: {{ $diseasePct }}%"></div>
                             </div>
                         </div>
                     </div>
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                         <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Centros con Mayor Actividad</p>
                         <ul class="mt-3 space-y-2.5 text-xs font-semibold">
-                            <li class="flex items-center justify-between border-b border-slate-200/60 pb-2">
-                                <span class="text-slate-800">CESFAM Nororiente</span>
-                                <span class="rounded bg-sky-100 px-2 py-0.5 font-bold text-sky-800">2 casos</span>
-                            </li>
-                            <li class="flex items-center justify-between border-b border-slate-200/60 pb-2">
-                                <span class="text-slate-800">SAR Central</span>
-                                <span class="rounded bg-sky-100 px-2 py-0.5 font-bold text-sky-800">2 casos</span>
-                            </li>
-                            <li class="flex items-center justify-between border-b border-slate-200/60 pb-2">
-                                <span class="text-slate-800">CESFAM Los Aromos</span>
-                                <span class="rounded bg-sky-100 px-2 py-0.5 font-bold text-sky-800">1 caso</span>
-                            </li>
-                            <li class="flex items-center justify-between">
-                                <span class="text-slate-800">CESFAM Nuevo Horizonte</span>
-                                <span class="rounded bg-sky-100 px-2 py-0.5 font-bold text-sky-800">1 caso</span>
-                            </li>
+                            @forelse($casesByEst as $estName => $estCount)
+                                <li class="flex items-center justify-between border-b border-slate-200/60 pb-2 last:border-b-0 last:pb-0">
+                                    <span class="text-slate-800">{{ $estName }}</span>
+                                    <span class="rounded bg-sky-100 px-2 py-0.5 font-bold text-sky-800">{{ $estCount }} {{ $estCount === 1 ? 'caso' : 'casos' }}</span>
+                                </li>
+                            @empty
+                                <li class="text-xs text-slate-500 italic">No hay casos registrados por establecimiento.</li>
+                            @endforelse
                         </ul>
                     </div>
                 </div>
@@ -147,15 +151,17 @@
                         <p class="eyebrow">Trazabilidad de la Red</p>
                         <h3 class="mt-1 text-lg font-black text-slate-950">Bitácora de Actividad Reciente</h3>
                     </div>
-                    <span class="size-2 rounded-full bg-emerald-500 animate-ping"></span>
+                    <span class="size-2 rounded-full bg-emerald-500"></span>
                 </div>
                 <ul class="timeline mt-6">
-                    @foreach($demo['activity'] as $item)
+                    @forelse($demo['activity'] as $item)
                         <li>
                             <strong class="text-slate-900 leading-snug">{{ $item['text'] }}</strong>
                             <span class="text-xs font-semibold text-slate-400">{{ $item['time'] }}</span>
                         </li>
-                    @endforeach
+                    @empty
+                        <li class="text-xs text-slate-500 italic">No hay actividad reciente registrada en la plataforma.</li>
+                    @endforelse
                 </ul>
             </div>
         </section>

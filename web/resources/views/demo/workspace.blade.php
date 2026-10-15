@@ -27,19 +27,17 @@ $statusClass = fn ($status) => match ($status) {
     <!-- Migas de pan y encabezado -->
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-            @unless(in_array($module, ['cases', 'investigations', 'reviews', 'observations', 'measures', 'statistics', 'reports']))
-                <nav class="mb-2 text-xs font-bold text-slate-500" aria-label="Migas de pan">
-                    <a href="{{ route('dashboard') }}" class="text-sky-700 hover:underline">Inicio</a>
-                    <span class="mx-2 text-slate-300">/</span>
-                    <span class="text-slate-800">{{ $pageTitle }}</span>
-                </nav>
-                <p class="text-xs font-bold uppercase tracking-wider text-sky-700">Sistema Institucional GIATEP · Ley 16.744</p>
-                <div class="mt-1 flex flex-wrap items-center gap-2">
-                    <span class="rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-blue-900">Módulo Oficial</span>
-                    <span class="text-xs font-semibold text-slate-500">Dirección Comunal de Salud de Los Ángeles</span>
-                </div>
-            @endunless
-            <h1 class="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl {{ in_array($module, ['cases', 'investigations', 'reviews', 'observations', 'measures', 'statistics', 'reports']) ? '' : 'mt-2' }}">{{ $pageTitle }}</h1>
+            <nav class="mb-2 text-xs font-bold text-slate-500" aria-label="Migas de pan">
+                <a href="{{ route('dashboard') }}" class="text-sky-700 hover:underline">Inicio</a>
+                <span class="mx-2 text-slate-300">/</span>
+                <span class="text-slate-800">{{ $pageTitle }}</span>
+            </nav>
+            <p class="text-xs font-bold uppercase tracking-wider text-sky-700">Sistema Institucional GIATEP · Ley 16.744</p>
+            <div class="mt-1 flex flex-wrap items-center gap-2">
+                <span class="rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-blue-900">Módulo Oficial</span>
+                <span class="text-xs font-semibold text-slate-500">Dirección Comunal de Salud de Los Ángeles</span>
+            </div>
+            <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{{ $pageTitle }}</h1>
             <p class="mt-1 max-w-3xl text-sm leading-relaxed text-slate-600">{{ $pageDescription }}</p>
         </div>
         <div class="flex flex-wrap gap-2.5">
@@ -94,19 +92,19 @@ $statusClass = fn ($status) => match ($status) {
                         <div class="grid gap-5 md:grid-cols-2">
                             <div>
                                 <label class="label">RUT del trabajador o funcionario</label>
-                                <input class="input" value="{{ $selected['rut'] ?? '17.456.321-8' }}" required placeholder="12.345.678-9">
+                                <input class="input" value="{{ $selected['rut'] ?? '' }}" required placeholder="12.345.678-9">
                             </div>
                             <div>
                                 <label class="label">Nombre completo</label>
-                                <input class="input" value="{{ $selected['worker'] ?? 'Daniela Araya Soto' }}" required placeholder="Nombres y Apellidos">
+                                <input class="input" value="{{ $selected['worker'] ?? '' }}" required placeholder="Nombres y Apellidos">
                             </div>
                             <div>
                                 <label class="label">Cargo u oficio habitual</label>
-                                <input class="input" value="{{ $selected['job_title'] ?? 'Técnica en enfermería (TENS)' }}" placeholder="Ej. TENS, Odontólogo, Chofer">
+                                <input class="input" value="{{ $selected['job_title'] ?? '' }}" placeholder="Ej. TENS, Odontólogo, Chofer">
                             </div>
                             <div>
                                 <label class="label">Teléfono de contacto</label>
-                                <input class="input" value="{{ $selected['phone'] ?? '+56 9 8123 4567' }}" placeholder="+56 9 ...">
+                                <input class="input" value="{{ $selected['phone'] ?? '' }}" placeholder="+56 9 ...">
                             </div>
                         </div>
                     </section>
@@ -134,7 +132,7 @@ $statusClass = fn ($status) => match ($status) {
                             </div>
                             <div class="md:col-span-2">
                                 <label class="label">Lugar específico o dependencia interna</label>
-                                <input class="input" value="{{ $selected['location'] ?? 'Pasillo de acceso a bodega clínica' }}" placeholder="Ej. Box dental N° 3, Central de esterilización, Pasillo">
+                                <input class="input" value="{{ $selected['location'] ?? '' }}" placeholder="Ej. Box dental N° 3, Central de esterilización, Pasillo">
                             </div>
                         </div>
                     </section>
@@ -152,11 +150,11 @@ $statusClass = fn ($status) => match ($status) {
                             </div>
                             <div>
                                 <label class="label">Fecha del evento o inicio de síntomas</label>
-                                <input type="date" class="input" value="{{ $selected['date'] ?? '2026-10-02' }}">
+                                <input type="date" class="input" value="{{ $selected['date'] ?? date('Y-m-d') }}">
                             </div>
                             <div data-accident-field>
                                 <label class="label">Hora del accidente</label>
-                                <input type="time" class="input" value="{{ $selected['time'] ?? '09:15' }}">
+                                <input type="time" class="input" value="{{ $selected['time'] ?? date('H:i') }}">
                             </div>
                             <div data-accident-field>
                                 <label class="label">¿La tarea realizada era habitual?</label>
@@ -185,7 +183,7 @@ $statusClass = fn ($status) => match ($status) {
                     <!-- Paso 4: Relato -->
                     <section data-step="3" class="hidden space-y-4">
                         <label class="label">Relato circunstanciado inicial del evento o sintomatología</label>
-                        <textarea class="input text-slate-800 leading-relaxed" rows="8">{{ $selected['story'] ?? 'Durante el traslado de insumos clínicos hacia la bodega, la trabajadora resbaló sobre una zona húmeda del pasillo y cayó apoyando la rodilla derecha contra el suelo.' }}</textarea>
+                        <textarea class="input text-slate-800 leading-relaxed" rows="8" placeholder="Describa detalladamente las circunstancias, lugar, actividades y personas presentes en el momento del suceso.">{{ $selected['story'] ?? '' }}</textarea>
                         <p class="hint">Describa qué hacía la persona, cómo ocurrió el hecho y quiénes presenciaron el evento. Este relato servirá de base para la posterior investigación formal.</p>
                     </section>
 
@@ -194,7 +192,7 @@ $statusClass = fn ($status) => match ($status) {
                         <div class="grid gap-5 md:grid-cols-2">
                             <div>
                                 <label class="label">Parte del cuerpo afectada</label>
-                                <input class="input" value="{{ $selected['body_part'] ?? 'Rodilla derecha' }}" placeholder="Ej. Rodilla derecha, Dedo índice, Zona lumbar">
+                                <input class="input" value="{{ $selected['body_part'] ?? '' }}" placeholder="Ej. Rodilla derecha, Dedo índice, Zona lumbar">
                             </div>
                             <div>
                                 <label class="label">Gravedad preliminar (según criterio ACHS)</label>
@@ -230,9 +228,9 @@ $statusClass = fn ($status) => match ($status) {
                             <dl class="mt-4 grid gap-4 text-xs sm:grid-cols-3">
                                 <div><dt>Empleador:</dt><dd>Dirección Comunal de Salud (RUT: 69.170.102-6)</dd></div>
                                 <div><dt>Organismo Administrador:</dt><dd>Asociación Chilena de Seguridad (ACHS)</dd></div>
-                                <div><dt>Funcionario/a:</dt><dd>{{ $selected['worker'] ?? 'Daniela Araya Soto' }}</dd></div>
-                                <div><dt>Establecimiento:</dt><dd>{{ $selected['establishment'] ?? 'CESFAM Nororiente' }}</dd></div>
-                                <div><dt>Fecha del caso:</dt><dd>2026-10-02</dd></div>
+                                <div><dt>Funcionario/a:</dt><dd>{{ $selected['worker'] ?? '—' }}</dd></div>
+                                <div><dt>Establecimiento:</dt><dd>{{ $selected['establishment'] ?? '—' }}</dd></div>
+                                <div><dt>Fecha del caso:</dt><dd>{{ $selected['date'] ?? date('Y-m-d') }}</dd></div>
                                 <div><dt>Estado al registrar:</dt><dd><span class="status status-pending">Registrado</span></dd></div>
                             </dl>
                         </div>
@@ -485,7 +483,7 @@ $statusClass = fn ($status) => match ($status) {
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($demo['cases'] as $case)
+                        @forelse($demo['cases'] as $case)
                             <tr data-table-row data-type="{{ $case['type'] }}" data-status="{{ $case['status'] }}">
                                 <td>
                                     <span class="font-black text-blue-950">{{ $case['id'] }}</span>
@@ -523,7 +521,14 @@ $statusClass = fn ($status) => match ($status) {
                                     </div>
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="7" class="p-8 text-center text-slate-500">
+                                    <p class="font-bold text-slate-700">No hay casos registrados en el sistema.</p>
+                                    <p class="mt-1 text-xs text-slate-400">Utilice el botón "Registrar Caso" para crear el primer formulario formal DIAT o DIEP.</p>
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
                 <div class="empty-state m-5 hidden" data-filter-empty>No hay casos registrados para los filtros seleccionados.</div>
@@ -555,11 +560,11 @@ $statusClass = fn ($status) => match ($status) {
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div class="max-w-3xl">
                         <div class="flex flex-wrap items-center gap-2">
-                            <span class="rounded-full bg-sky-700 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white">Entorno de pruebas guiado</span>
+                            <span class="rounded-full bg-sky-700 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white">Expediente Oficial · Entorno de pruebas guiado</span>
                             <span class="text-xs font-bold text-sky-900">Guía ISP · Metodología Árbol de Causas</span>
                         </div>
-                        <h2 id="training-mode-title" class="mt-3 text-xl font-black text-slate-950">Práctica de investigación con controles del manual</h2>
-                        <p class="mt-1 text-sm leading-relaxed text-slate-600">Los datos son demostrativos. El expediente guía la recopilación, la construcción causal y el plan de acción, pero ninguna propuesta de IA queda validada sin revisión humana.</p>
+                        <h2 id="training-mode-title" class="mt-3 text-xl font-black text-slate-950">Investigación Técnica de Accidente / Enfermedad</h2>
+                        <p class="mt-1 text-sm leading-relaxed text-slate-600">Expediente formal según la metodología del Árbol de Causas (Ley 16.744 / Guía Técnica ISP). La investigación guía la recopilación, la construcción causal y el plan de acción preventivo.</p>
                     </div>
                     <div class="min-w-52 rounded-xl border border-sky-200 bg-white p-4">
                         <div class="flex items-end justify-between gap-4">
@@ -949,19 +954,14 @@ $statusClass = fn ($status) => match ($status) {
                                 <fieldset class="rounded-2xl border border-slate-200 p-5">
                                     <legend class="px-2 font-black text-blue-950">Hechos detectados</legend>
                                     <div class="mt-3 space-y-2.5 text-xs" data-ai-facts>
-                                        @foreach(['H-01 · La trabajadora trasladaba insumos hacia la bodega clínica.','H-02 · El piso se encontraba húmedo por lavado matinal.','H-03 · La zona no contaba con señalización preventiva de piso húmedo.','H-04 · Pérdida de estabilidad y caída con apoyo en rodilla derecha.'] as $fact)
-                                            <input class="input" name="ai_facts[]" value="{{ $fact }}" disabled>
-                                        @endforeach
                                     </div>
                                 </fieldset>
 
                                 <fieldset class="rounded-2xl border border-slate-200 p-5">
                                     <legend class="px-2 font-black text-blue-950">Árbol de causas propuesto</legend>
                                     <div class="mt-3 grid gap-4 md:grid-cols-2 text-xs">
-                                        <label><span class="label">Hecho final</span><input class="input" name="ai_tree_final" value="H-04 · Caída con apoyo en rodilla derecha" disabled></label>
-                                        <label><span class="label">Antecedente principal</span><input class="input" name="ai_tree_origin" value="H-01 · Traslado de insumos" disabled></label>
-                                        <label><span class="label">Causa 1</span><input class="input" name="ai_tree_cause[]" value="H-02 · Piso húmedo por aseo reciente" disabled></label>
-                                        <label><span class="label">Causa 2</span><input class="input" name="ai_tree_cause[]" value="H-03 · Falta de señalización preventiva" disabled></label>
+                                        <label><span class="label">Hecho final</span><input class="input" name="ai_tree_final" value="" placeholder="Se generará con el análisis IA" disabled></label>
+                                        <label><span class="label">Antecedente principal</span><input class="input" name="ai_tree_origin" value="" placeholder="Se generará con el análisis IA" disabled></label>
                                     </div>
                                 </fieldset>
 
@@ -969,29 +969,12 @@ $statusClass = fn ($status) => match ($status) {
                                     <legend class="px-2 font-black text-blue-950">Factores de la matriz sugeridos</legend>
                                     <p class="text-xs text-slate-600">La IA selecciona factores de la matriz oficial de 222 causas. Revise y desmarque los que no correspondan.</p>
                                     <div class="mt-3 grid gap-3 text-xs" data-ai-factors>
-                                        <div class="rounded-xl border border-sky-200 bg-white p-3 font-semibold text-slate-800">
-                                            <strong>Código 1202b:</strong> Mantenimiento preventivo inexistente o inadecuado de vías interiores.
-                                        </div>
-                                        <div class="rounded-xl border border-sky-200 bg-white p-3 font-semibold text-slate-800">
-                                            <strong>Código 1107:</strong> Inexistencia o deficiencia de Procedimiento de Trabajo Seguro (PTS).
-                                        </div>
                                     </div>
                                 </fieldset>
 
                                 <fieldset class="rounded-2xl border border-slate-200 p-5">
                                     <legend class="px-2 font-black text-blue-950">Medidas propuestas</legend>
                                     <div class="mt-3 space-y-4" data-ai-measures>
-                                        @foreach([
-                                            ['Instalar señalización inmediata tipo cono ante labores de limpieza o derrames.', 'Administrativa', 'Jefatura de Servicios Generales', '2026-10-20'],
-                                            ['Revisar el procedimiento de secado rápido y tránsito seguro en pasillos clínicos.', 'Administrativa', 'Prevención de riesgos', '2026-10-25']
-                                        ] as [$meas, $cat, $own, $due])
-                                            <div class="grid gap-3 rounded-xl bg-slate-50 p-4 lg:grid-cols-[1fr_11rem_12rem_11rem]" data-ai-measure>
-                                                <label><span class="label">Medida</span><textarea class="input text-xs" name="ai_measure_description[]" rows="2" disabled>{{ $meas }}</textarea></label>
-                                                <label><span class="label">Categoría</span><input class="input text-xs" name="ai_measure_category[]" value="{{ $cat }}" disabled></label>
-                                                <label><span class="label">Responsable</span><input class="input text-xs" name="ai_measure_owner[]" value="{{ $own }}" disabled></label>
-                                                <label><span class="label">Plazo</span><input type="date" class="input text-xs" name="ai_measure_due[]" value="{{ $due }}" disabled></label>
-                                            </div>
-                                        @endforeach
                                     </div>
                                 </fieldset>
 
@@ -1006,29 +989,52 @@ $statusClass = fn ($status) => match ($status) {
                         </section>
 
                         <!-- Sección 4: Hechos Constatados -->
+                        @php
+                            $dbFacts = collect();
+                            if (!empty($selected['id']) && $selected['id'] !== 'INV-NUEVA') {
+                                $invFactsModel = \App\Models\Investigation::where('folio', $selected['id'])->with('facts')->first();
+                                if ($invFactsModel) {
+                                    $dbFacts = $invFactsModel->facts;
+                                }
+                            } elseif (!empty($selected['case_id'])) {
+                                $caseFactsModel = \App\Models\OccupationalCase::where('folio', $selected['case_id'])->with('investigation.facts')->first();
+                                if ($caseFactsModel && $caseFactsModel->investigation) {
+                                    $dbFacts = $caseFactsModel->investigation->facts;
+                                }
+                            }
+                        @endphp
                         <section data-section="inv-4" class="hidden space-y-4">
                             <h3 class="section-title">5. Hechos Constatados (Cronología Verificada)</h3>
                             <div class="space-y-3" data-derived-facts>
-                                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 font-semibold text-slate-800">
-                                    <span class="rounded bg-sky-700 px-2 py-0.5 text-xs text-white mr-2">H-01</span>
-                                    La trabajadora trasladaba insumos hacia la bodega clínica.
-                                </div>
-                                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 font-semibold text-slate-800">
-                                    <span class="rounded bg-sky-700 px-2 py-0.5 text-xs text-white mr-2">H-02</span>
-                                    El piso del pasillo se encontraba húmedo tras el lavado matinal.
-                                </div>
-                                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 font-semibold text-slate-800">
-                                    <span class="rounded bg-sky-700 px-2 py-0.5 text-xs text-white mr-2">H-03</span>
-                                    La zona no contaba con señalización preventiva de piso húmedo.
-                                </div>
-                                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 font-semibold text-slate-800">
-                                    <span class="rounded bg-sky-700 px-2 py-0.5 text-xs text-white mr-2">H-04</span>
-                                    Al pisar la superficie húmeda, la funcionaria perdió estabilidad y cayó sobre su rodilla derecha.
-                                </div>
+                                @forelse($dbFacts as $fact)
+                                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 font-semibold text-slate-800">
+                                        <span class="rounded bg-sky-700 px-2 py-0.5 text-xs text-white mr-2">H-{{ str_pad((string)$fact->position, 2, '0', STR_PAD_LEFT) }}</span>
+                                        {{ $fact->description }}
+                                    </div>
+                                @empty
+                                    <div class="empty-state text-center py-6">
+                                        <p class="font-bold text-slate-700">Aún no se han constatado hechos para esta investigación.</p>
+                                        <p class="mt-1 text-xs text-slate-500">Analice el relato cronológico con IA o agregue los hechos verificados de la investigación.</p>
+                                    </div>
+                                @endforelse
                             </div>
                         </section>
 
                         <!-- Sección 5: Árbol de Causas Visual -->
+                        @php
+                            $dbNodes = collect();
+                            if (!empty($selected['id']) && $selected['id'] !== 'INV-NUEVA') {
+                                $invTreeModel = \App\Models\Investigation::where('folio', $selected['id'])->with('causalNodes')->first();
+                                if ($invTreeModel) {
+                                    $dbNodes = $invTreeModel->causalNodes;
+                                }
+                            } elseif (!empty($selected['case_id'])) {
+                                $caseTreeModel = \App\Models\OccupationalCase::where('folio', $selected['case_id'])->with('investigation.causalNodes')->first();
+                                if ($caseTreeModel && $caseTreeModel->investigation) {
+                                    $dbNodes = $caseTreeModel->investigation->causalNodes;
+                                }
+                            }
+                        @endphp
                         <section data-section="inv-5" class="hidden space-y-6">
                             <div class="flex items-center justify-between border-b pb-4">
                                 <div>
@@ -1040,45 +1046,57 @@ $statusClass = fn ($status) => match ($status) {
 
                             <!-- Gráfico Visual del Árbol de Causas -->
                             <div class="rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:p-10 space-y-8" data-derived-tree>
-                                <!-- Nivel 1: Hecho Final -->
-                                <div class="text-center">
-                                    <span class="text-[10px] font-black uppercase tracking-widest text-red-700">Hecho Final (Lesión / Suceso)</span>
-                                    <div class="cause-node cause-final mt-2 shadow-md">
-                                        <p class="text-sm font-black text-red-950">Caída a mismo nivel con contusión en rodilla derecha</p>
-                                        <span class="mt-1 block text-[10px] text-red-700 font-semibold">Hecho probado verificado</span>
-                                    </div>
-                                    <div class="cause-connector">↑</div>
-                                </div>
+                                @if($dbNodes->isNotEmpty())
+                                    @php $finalNodes = $dbNodes->where('type', 'final'); @endphp
+                                    @if($finalNodes->isNotEmpty())
+                                        <div class="text-center">
+                                            <span class="text-[10px] font-black uppercase tracking-widest text-red-700">Hecho Final (Lesión / Suceso)</span>
+                                            @foreach($finalNodes as $fNode)
+                                                <div class="cause-node cause-final mt-2 shadow-md">
+                                                    <p class="text-sm font-black text-red-950">{{ $fNode->description }}</p>
+                                                    <span class="mt-1 block text-[10px] text-red-700 font-semibold">Hecho probado verificado</span>
+                                                </div>
+                                            @endforeach
+                                            <div class="cause-connector">↑</div>
+                                        </div>
+                                    @endif
 
-                                <!-- Nivel 2: Causas Inmediatas -->
-                                <div>
-                                    <p class="text-center text-[10px] font-black uppercase tracking-widest text-sky-800 mb-3">Causas Inmediatas (Condiciones y Acciones)</p>
-                                    <div class="grid gap-4 sm:grid-cols-2 max-w-2xl mx-auto">
-                                        <div class="cause-node">
-                                            <span class="rounded bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-900">Condición Insegura</span>
-                                            <p class="mt-2 text-xs font-bold text-slate-900">Piso húmedo por lavado matinal reciente</p>
-                                            <span class="mt-1 block text-[10px] text-slate-500">Factor 1202b (Matriz)</span>
+                                    @php $causeNodes = $dbNodes->where('type', 'cause'); @endphp
+                                    @if($causeNodes->isNotEmpty())
+                                        <div>
+                                            <p class="text-center text-[10px] font-black uppercase tracking-widest text-sky-800 mb-3">Causas Inmediatas (Condiciones y Acciones)</p>
+                                            <div class="grid gap-4 sm:grid-cols-2 max-w-2xl mx-auto">
+                                                @foreach($causeNodes as $cNode)
+                                                    <div class="cause-node">
+                                                        <span class="rounded bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-900">Causa Identificada</span>
+                                                        <p class="mt-2 text-xs font-bold text-slate-900">{{ $cNode->description }}</p>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                            <div class="cause-connector text-center">↑</div>
                                         </div>
-                                        <div class="cause-node">
-                                            <span class="rounded bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900">Falta de Advertencia</span>
-                                            <p class="mt-2 text-xs font-bold text-slate-900">Ausencia de señalización preventiva</p>
-                                            <span class="mt-1 block text-[10px] text-slate-500">Factor 1107 (Matriz)</span>
-                                        </div>
-                                    </div>
-                                    <div class="cause-connector text-center">↑</div>
-                                </div>
+                                    @endif
 
-                                <!-- Nivel 3: Causa Raíz / Gestión -->
-                                <div>
-                                    <p class="text-center text-[10px] font-black uppercase tracking-widest text-slate-600 mb-3">Causa Básica / Gestión Preventiva (Origen)</p>
-                                    <div class="max-w-md mx-auto">
-                                        <div class="cause-node border-slate-300 bg-white">
-                                            <span class="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700">Falla de Organización</span>
-                                            <p class="mt-2 text-xs font-bold text-slate-900">Falta de coordinación entre horario de aseo y horario de tránsito clínico</p>
-                                            <span class="mt-1 block text-[10px] text-slate-500">Gestión de SST Dirección Comunal</span>
+                                    @php $originNodes = $dbNodes->where('type', 'origin'); @endphp
+                                    @if($originNodes->isNotEmpty())
+                                        <div>
+                                            <p class="text-center text-[10px] font-black uppercase tracking-widest text-slate-600 mb-3">Causa Básica / Gestión Preventiva (Origen)</p>
+                                            <div class="max-w-md mx-auto">
+                                                @foreach($originNodes as $oNode)
+                                                    <div class="cause-node border-slate-300 bg-white">
+                                                        <span class="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700">Falla de Organización</span>
+                                                        <p class="mt-2 text-xs font-bold text-slate-900">{{ $oNode->description }}</p>
+                                                    </div>
+                                                @endforeach
+                                            </div>
                                         </div>
+                                    @endif
+                                @else
+                                    <div class="empty-state text-center py-8">
+                                        <p class="font-bold text-slate-700">Aún no se ha estructurado el árbol causal para esta investigación.</p>
+                                        <p class="mt-1 text-xs text-slate-500">El árbol de causas se construirá al ejecutar el análisis causal o validar las causas técnicas.</p>
                                     </div>
-                                </div>
+                                @endif
                             </div>
                         </section>
 
@@ -1097,7 +1115,7 @@ $statusClass = fn ($status) => match ($status) {
                                         </tr>
                                     </thead>
                                     <tbody data-derived-measures>
-                                        @foreach($demo['measures']->where('case_id', $selected['case_id']) as $m)
+                                        @forelse($demo['measures']->where('case_id', $selected['case_id']) as $m)
                                             <tr>
                                                 <td class="font-bold text-slate-900">{{ $m['description'] }}</td>
                                                 <td><span class="rounded bg-sky-50 px-2 py-0.5 text-xs font-bold text-sky-800">{{ $m['category'] }}</span></td>
@@ -1105,7 +1123,9 @@ $statusClass = fn ($status) => match ($status) {
                                                 <td>{{ $m['due'] }}</td>
                                                 <td><span class="status {{ $statusClass($m['status']) }}">{{ $m['status'] }}</span></td>
                                             </tr>
-                                        @endforeach
+                                        @empty
+                                            <tr><td colspan="5" class="p-6 text-center text-slate-500">Aún no hay medidas registradas para esta investigación.</td></tr>
+                                        @endforelse
                                     </tbody>
                                 </table>
                             </div>
@@ -1126,21 +1146,21 @@ $statusClass = fn ($status) => match ($status) {
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td class="font-bold">Paula Contreras</td>
-                                            <td>Prevencionista de Riesgos (Coordinadora)</td>
-                                            <td>Dirección Comunal de Salud</td>
-                                            <td><span class="status status-approved">Firmado Electrónicamente</span></td>
+                                            <td class="font-bold">{{ auth()->user()->name }}</td>
+                                            <td>{{ auth()->user()->roles->pluck('name')->first() ?? 'Investigador / Prevención' }}</td>
+                                            <td>{{ $case['establishment'] ?? 'Dirección Comunal de Salud' }}</td>
+                                            <td><span class="status status-approved">Activo</span></td>
                                         </tr>
                                         <tr>
                                             <td class="font-bold">Representante CPHS</td>
                                             <td>Comité Paritario de Higiene y Seguridad</td>
-                                            <td>{{ $case['establishment'] ?? 'CESFAM Nororiente' }}</td>
-                                            <td><span class="status status-approved">Firmado Electrónicamente</span></td>
+                                            <td>{{ $case['establishment'] ?? 'Establecimiento APS' }}</td>
+                                            <td><span class="status status-pending">Pendiente de Firma</span></td>
                                         </tr>
                                         <tr>
                                             <td class="font-bold">Delegado de Seguridad</td>
                                             <td>Delegado de Seguridad del Centro</td>
-                                            <td>{{ $case['establishment'] ?? 'CESFAM Nororiente' }}</td>
+                                            <td>{{ $case['establishment'] ?? 'Establecimiento APS' }}</td>
                                             <td><span class="status status-pending">Pendiente de Firma</span></td>
                                         </tr>
                                     </tbody>
@@ -1159,12 +1179,12 @@ $statusClass = fn ($status) => match ($status) {
                                 </div>
                                 <div class="border-t pt-4">
                                     <label class="label">Dictamen de Conclusión Técnica</label>
-                                    <textarea class="input text-xs leading-relaxed" rows="4">Se determina que el accidente corresponde a un suceso laboral tipificado según Ley 16.744. Se aprueban las medidas preventivas y se remite copia a la Dirección Comunal de Salud y ACHS.</textarea>
+                                    <textarea class="input text-xs leading-relaxed" rows="4" placeholder="Ingrese el dictamen de conclusión técnica y recomendaciones de la comisión investigadora..."></textarea>
                                 </div>
                                 @if(auth()->user()->hasRole('cphs') || auth()->user()->hasRole('delegado') || auth()->user()->hasRole('prevencion'))
                                     <div class="flex justify-end pt-3">
                                         <button type="submit" name="action" value="Investigación concluida formalmente" class="btn-primary bg-emerald-700 hover:bg-emerald-800">
-                                            ✓ Concluir y Cerrar Expediente de Investigación
+                                             Concluir y Cerrar Expediente de Investigación
                                         </button>
                                     </div>
                                 @endif
@@ -1214,7 +1234,7 @@ $statusClass = fn ($status) => match ($status) {
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($demo['investigations'] as $inv)
+                        @forelse($demo['investigations'] as $inv)
                             <tr data-table-row data-status="{{ $inv['status'] }}">
                                 <td class="font-bold text-blue-950">{{ $inv['id'] }}</td>
                                 <td><span class="rounded bg-slate-100 px-2 py-0.5 text-xs font-bold">{{ $inv['case_id'] }}</span></td>
@@ -1229,6 +1249,58 @@ $statusClass = fn ($status) => match ($status) {
                                 </td>
                                 <td><span class="status {{ $statusClass($inv['status']) }}">{{ $inv['status'] }}</span></td>
                                 <td><a class="text-link" href="{{ route('demo.show', ['module'=>'investigations','id'=>$inv['id']]) }}">Abrir Expediente</a></td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="p-8 text-center text-slate-500">
+                                    <p class="font-bold text-slate-700">No hay investigaciones registradas en el sistema.</p>
+                                    <p class="mt-1 text-xs text-slate-400">Las investigaciones aparecerán cuando se inicien desde un caso registrado.</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        @endif
+
+    <!-- ==================== MÓDULO: REVISIONES Y VALIDACIONES ==================== -->
+    @elseif($module === 'reviews')
+        @php
+            $pendingReviews = $demo['investigations']->whereIn('status', ['En desarrollo', 'Con observaciones']);
+        @endphp
+        @if($pendingReviews->isEmpty())
+            <section class="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-xs">
+                <div class="mx-auto grid size-14 place-items-center rounded-2xl bg-sky-100 text-2xl font-black text-sky-800">0</div>
+                <h2 class="mt-5 text-2xl font-black text-slate-950">No hay expedientes pendientes de validación</h2>
+                <p class="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">La bandeja técnica de revisión mostrará los expedientes enviados por el Comité Paritario, Delegados o Prevención cuando requieran validación.</p>
+                @if(auth()->user()->hasPermission('investigations.read'))
+                    <a href="{{ route('modules.investigations.index') }}" class="btn-primary mt-6">Ir a Investigaciones</a>
+                @endif
+            </section>
+        @else
+            <div class="card table-card shadow-sm">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Expediente</th>
+                            <th>Caso Vinculado</th>
+                            <th>Trabajador Afectado</th>
+                            <th>Centro de Salud</th>
+                            <th>Responsable</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($pendingReviews as $rev)
+                            <tr>
+                                <td class="font-bold text-blue-950">{{ $rev['id'] }}</td>
+                                <td>{{ $rev['case_id'] }}</td>
+                                <td>{{ $rev['worker'] ?? 'Funcionario/a' }}</td>
+                                <td>{{ $rev['establishment'] ?? 'APS Los Ángeles' }}</td>
+                                <td>{{ $rev['owner'] }}</td>
+                                <td><span class="status {{ $statusClass($rev['status']) }}">{{ $rev['status'] }}</span></td>
+                                <td><a class="text-link" href="{{ route('demo.show', ['module'=>'investigations','id'=>$rev['id']]) }}">Revisar Expediente</a></td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -1463,24 +1535,39 @@ $statusClass = fn ($status) => match ($status) {
             <button class="btn-primary" type="button" data-refresh-stats>Filtrar Indicadores</button>
         </div>
 
+        @php
+            $totalCases = $demo['cases']->count();
+            $inProgressInv = $demo['investigations']->whereIn('status', ['En curso', 'En desarrollo'])->count();
+            $implementedMeasures = $demo['measures']->where('status', 'Implementada')->count();
+            $totalMeasures = $demo['measures']->count();
+            $closedCases = $demo['cases']->where('status', 'Cerrado')->count();
+            $closeRate = $totalCases > 0 ? round(($closedCases / $totalCases) * 100) : 0;
+            $byEstablishment = $demo['cases']->groupBy('establishment')->map->count();
+            $workAccidents = $demo['cases']->where('type', 'Accidente del trabajo')->count();
+            $commuteAccidents = $demo['cases']->where('type', 'Accidente de trayecto')->count();
+            $occupationalDiseases = $demo['cases']->where('type', 'Enfermedad profesional')->count();
+        @endphp
+
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div class="metric"><span class="text-xs font-bold uppercase text-slate-500">Total Casos Registrados</span><strong class="text-3xl font-black text-slate-950" data-stat-number>6</strong><small>Red APS Los Ángeles</small></div>
-            <div class="metric"><span class="text-xs font-bold uppercase text-slate-500">Investigaciones en Curso</span><strong class="text-3xl font-black text-amber-600" data-stat-number>4</strong><small>Con Árbol de Causas</small></div>
-            <div class="metric"><span class="text-xs font-bold uppercase text-slate-500">Medidas Implementadas</span><strong class="text-3xl font-black text-emerald-600" data-stat-number>3</strong><small>De 8 medidas totales</small></div>
-            <div class="metric metric-danger"><span class="text-xs font-bold uppercase text-red-700">Tasa de Cierre</span><strong class="text-3xl font-black text-slate-950">25%</strong><small class="text-slate-600">Casos regularizados</small></div>
+            <div class="metric"><span class="text-xs font-bold uppercase text-slate-500">Total Casos Registrados</span><strong class="text-3xl font-black text-slate-950" data-stat-number>{{ $totalCases }}</strong><small>Red APS Los Ángeles</small></div>
+            <div class="metric"><span class="text-xs font-bold uppercase text-slate-500">Investigaciones en Curso</span><strong class="text-3xl font-black text-amber-600" data-stat-number>{{ $inProgressInv }}</strong><small>Con Árbol de Causas</small></div>
+            <div class="metric"><span class="text-xs font-bold uppercase text-slate-500">Medidas Implementadas</span><strong class="text-3xl font-black text-emerald-600" data-stat-number>{{ $implementedMeasures }}</strong><small>De {{ $totalMeasures }} medidas totales</small></div>
+            <div class="metric metric-danger"><span class="text-xs font-bold uppercase text-red-700">Tasa de Cierre</span><strong class="text-3xl font-black text-slate-950">{{ $closeRate }}%</strong><small class="text-slate-600">Casos regularizados</small></div>
         </div>
 
         <div class="grid gap-6 lg:grid-cols-2">
             <div class="card p-6 shadow-sm">
                 <h3 class="font-black text-slate-950">Casos por Centro de Salud Comunal</h3>
                 <div class="bar-chart mt-6">
-                    @foreach(['CESFAM Nororiente' => 2, 'SAR Central' => 2, 'CESFAM Los Aromos' => 1, 'CESFAM Nuevo Horizonte' => 1] as $label => $val)
+                    @forelse($byEstablishment as $label => $val)
                         <div>
                             <span class="font-bold text-slate-700 text-xs">{{ $label }}</span>
-                            <div><i style="width: {{ $val * 45 }}%"></i></div>
+                            <div><i style="width: {{ min(100, round(($val / max(1, $totalCases)) * 100)) }}%"></i></div>
                             <strong class="text-xs">{{ $val }}</strong>
                         </div>
-                    @endforeach
+                    @empty
+                        <p class="text-xs text-slate-400">Sin datos de distribución por establecimiento.</p>
+                    @endforelse
                 </div>
             </div>
 
@@ -1489,9 +1576,9 @@ $statusClass = fn ($status) => match ($status) {
                 <div class="donut-wrap mt-6">
                     <div class="donut"></div>
                     <ul class="text-xs space-y-2.5">
-                        <li class="flex items-center gap-2"><i class="bg-sky-700 size-3 rounded-full"></i>Accidentes del Trabajo: <strong>4 casos</strong></li>
-                        <li class="flex items-center gap-2"><i class="bg-indigo-600 size-3 rounded-full"></i>Accidentes de Trayecto: <strong>1 caso</strong></li>
-                        <li class="flex items-center gap-2"><i class="bg-amber-500 size-3 rounded-full"></i>Enfermedades Profesionales: <strong>1 caso</strong></li>
+                        <li class="flex items-center gap-2"><i class="bg-sky-700 size-3 rounded-full"></i>Accidentes del Trabajo: <strong>{{ $workAccidents }} {{ $workAccidents === 1 ? 'caso' : 'casos' }}</strong></li>
+                        <li class="flex items-center gap-2"><i class="bg-indigo-600 size-3 rounded-full"></i>Accidentes de Trayecto: <strong>{{ $commuteAccidents }} {{ $commuteAccidents === 1 ? 'caso' : 'casos' }}</strong></li>
+                        <li class="flex items-center gap-2"><i class="bg-amber-500 size-3 rounded-full"></i>Enfermedades Profesionales: <strong>{{ $occupationalDiseases }} {{ $occupationalDiseases === 1 ? 'caso' : 'casos' }}</strong></li>
                     </ul>
                 </div>
             </div>
@@ -1598,34 +1685,32 @@ $statusClass = fn ($status) => match ($status) {
     <!-- ==================== MÓDULOS DE ADMINISTRACIÓN ==================== -->
     @elseif(in_array($module, ['users','roles','establishments','settings']))
         @php
-        $adminData = [
-            'users' => [
-                ['Daniela Araya', 'Prevencionista (UPRSO)', 'CESFAM Nororiente', 'Activo'],
-                ['Marcelo Fuentes', 'Comité Paritario (CPHS)', 'SAR Central', 'Activo'],
-                ['Niza Gallo Ibáñez', 'Jefatura Directa', 'CESFAM Nororiente', 'Activo'],
-                ['Paula Contreras', 'Alta Dirección', 'Dirección Comunal de Salud', 'Activo'],
-            ],
-            'roles' => [
-                ['Prevencionista (UPRSO)', '10 permisos', 'Acceso total operativo y revisión', 'Activo'],
-                ['Comité Paritario (CPHS)', '7 permisos', 'Investigación, registro y cierre', 'Activo'],
-                ['Delegado de Seguridad', '7 permisos', 'Investigación, registro y cierre', 'Activo'],
-                ['Jefatura Directa', '5 permisos', 'Observaciones y consulta', 'Activo'],
-                ['Alta Dirección', '7 permisos', 'Observaciones, DIAT/DIEP y dashboards', 'Activo'],
-                ['Administrador', '6 permisos', 'Gestión de solicitudes y usuarios', 'Activo'],
-            ],
-            'establishments' => [
-                ['CESFAM Nororiente', 'CESFAM', 'Avenida Los Ángeles 450', 'nororiente@dcs.cl'],
-                ['CESFAM Los Aromos', 'CESFAM', 'Los Aromos 120', 'losaromos@dcs.cl'],
-                ['CESFAM Nuevo Horizonte', 'CESFAM', 'Av. Oriente 780', 'nuevohorizonte@dcs.cl'],
-                ['SAR Central', 'SAR', 'Avenida Central 980', 'sarcentral@dcs.cl'],
-                ['Dirección Comunal de Salud', 'Oficina Administrativa', 'Calle Valdivia #150', 'contacto@dcslosangeles.cl'],
-            ],
-            'settings' => [
-                ['Tipos de Denuncia', '2 formularios oficiales', 'DIAT (Accidentes) y DIEP (Enfermedades)', 'Activo'],
-                ['Matriz de Factores Causales', '222 códigos normativos', 'Clasificación oficial estandarizada', 'Activo'],
-                ['Jerarquía de Control de Riesgos', '5 niveles', 'Eliminación, Sustitución, Ingeniería, Administrativa, EPP', 'Activo'],
-            ],
-        ][$module];
+        $adminData = match($module) {
+            'users' => \App\Models\User::with(['roles', 'establishments'])->get()->map(fn($u) => [
+                $u->name,
+                $u->roles->pluck('name')->join(', ') ?: 'Sin rol',
+                $u->establishments->pluck('name')->join(', ') ?: 'Red Comunal APS',
+                $u->status === 'active' ? 'Activo' : ($u->status ?? 'Activo'),
+            ]),
+            'roles' => \App\Models\Role::withCount('users')->get()->map(fn($r) => [
+                $r->name,
+                $r->slug,
+                $r->users_count . ' usuario(s) asignado(s)',
+                'Activo',
+            ]),
+            'establishments' => \App\Models\Establishment::all()->map(fn($e) => [
+                $e->name,
+                $e->type,
+                $e->address ?? 'Comuna de Los Ángeles',
+                $e->is_active ? 'Activo' : 'Inactivo',
+            ]),
+            'settings' => collect([
+                ['Tipos de Denuncia', '2 formularios normativos', 'DIAT (Accidentes Ley 16.744) y DIEP (Enfermedades profesionales)', 'Activo'],
+                ['Matriz de Factores Causales', '222 códigos normativos', 'Clasificación oficial ISP estandarizada', 'Activo'],
+                ['Jerarquía de Control de Riesgos', '5 niveles preventivos', 'Eliminación, Sustitución, Ingeniería, Administrativa, EPP', 'Activo'],
+            ]),
+            default => collect(),
+        };
         @endphp
 
         <div class="flex items-center justify-between border-b pb-4">
@@ -1640,7 +1725,7 @@ $statusClass = fn ($status) => match ($status) {
             <table class="data-table">
                 <thead><tr><th>Nombre / Registro</th><th>Tipo / Detalle</th><th>Alcance Institucional</th><th>Estado</th><th>Acciones</th></tr></thead>
                 <tbody>
-                    @foreach($adminData as $row)
+                    @forelse($adminData as $row)
                         <tr>
                             <td class="font-bold text-slate-900">{{ $row[0] }}</td>
                             <td><span class="rounded bg-slate-100 px-2 py-0.5 text-xs font-bold">{{ $row[1] }}</span></td>
@@ -1648,7 +1733,9 @@ $statusClass = fn ($status) => match ($status) {
                             <td><span class="status status-approved">{{ $row[3] }}</span></td>
                             <td><button class="text-link" type="button" data-open-demo-modal data-record="{{ $row[0] }}">Editar</button></td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr><td colspan="5" class="p-8 text-center text-slate-500">No hay registros configurados en este catálogo.</td></tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

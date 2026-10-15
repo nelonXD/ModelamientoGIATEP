@@ -16,6 +16,7 @@ class DemoWorkspaceTest extends TestCase
     {
         $user = User::factory()->create();
         $user->roles()->attach(Role::factory()->create(['slug' => 'delegado', 'name' => 'Delegado']));
+        $this->createDemoCaseAndInvestigation($user);
 
         $this->actingAs($user)
             ->get(route('demo.show', ['module' => 'cases', 'id' => 'CAS-2026-017']))
@@ -42,6 +43,7 @@ class DemoWorkspaceTest extends TestCase
     {
         $user = User::factory()->create();
         $user->roles()->attach(Role::factory()->create(['slug' => 'delegado', 'name' => 'Delegado']));
+        $this->createDemoCaseAndInvestigation($user);
 
         $this->actingAs($user)
             ->get(route('demo.show', ['module' => 'investigations', 'id' => 'INV-2026-011']))
@@ -53,6 +55,46 @@ class DemoWorkspaceTest extends TestCase
             ->assertSee('7. Equipos de protección personal')
             ->assertSee('8. Información y capacitación')
             ->assertSee('No aplica');
+    }
+
+    private function createDemoCaseAndInvestigation(User $user): void
+    {
+        $establishment = \App\Models\Establishment::firstOrCreate(
+            ['name' => 'CESFAM Nororiente'],
+            ['type' => 'CESFAM', 'is_active' => true]
+        );
+
+        $case = \App\Models\OccupationalCase::create([
+            'folio' => 'CAS-2026-017',
+            'created_by' => $user->id,
+            'establishment_id' => $establishment->id,
+            'status' => 'En investigación',
+            'case_type' => 'Accidente del trabajo',
+            'employer_name' => 'Dirección Comunal de Salud de Los Ángeles',
+            'employer_rut' => '69.170.102-6',
+            'employer_address' => 'Calle Valdivia #150, Los Ángeles',
+            'employer_commune' => 'Los Ángeles',
+            'economic_activity' => 'Salud pública',
+            'company_type' => 'Principal',
+            'administrator' => 'ACHS',
+            'worker_name' => 'Camila Soto Rojas',
+            'worker_rut' => '17.456.321-8',
+            'job_title' => 'Técnica en enfermería',
+            'workplace' => 'Bodega clínica',
+            'event_date' => '2026-10-02',
+            'event_time' => '09:15',
+            'event_location' => 'Pasillo de acceso',
+            'narrative' => 'Durante el traslado de insumos, la trabajadora sufrió una caída.',
+            'witnesses' => 'Juan Pérez (Testigo directo)',
+        ]);
+
+        \App\Models\Investigation::create([
+            'folio' => 'INV-2026-011',
+            'occupational_case_id' => $case->id,
+            'owner_id' => $user->id,
+            'status' => 'En desarrollo',
+            'final_story' => 'Relato final de la investigación',
+        ]);
     }
 
     public function test_user_cannot_open_demo_module_without_permission(): void
