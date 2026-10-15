@@ -33,16 +33,12 @@
             setReportState(accidentReport, Boolean(type) && ! isDisease);
             setReportState(diseaseReport, isDisease);
             classificationError.classList.add('hidden');
-            if (type === 'Accidente de trayecto') {
-                const route = form.querySelector('[name="accident_scope"][value="Trayecto"]');
-                route.checked = true;
-            }
-            const showRoute = type === 'Accidente de trayecto' || form.querySelector('[name="accident_scope"]:checked')?.value === 'Trayecto';
-            routeType.classList.toggle('hidden', ! showRoute);
-            routeType.querySelectorAll('input').forEach((field) => { field.disabled = ! showRoute; });
+
+            const isRoute = type === 'Accidente de trayecto';
+            routeType.classList.toggle('hidden', ! isRoute);
+            routeType.querySelectorAll('input').forEach((field) => { field.disabled = ! isRoute; });
         };
         classificationFields.forEach((field) => field.addEventListener('change', updateCaseQuestions));
-        form.querySelectorAll('[name="accident_scope"]').forEach((field) => field.addEventListener('change', updateCaseQuestions));
         updateCaseQuestions();
 
         const birthDate = form.querySelector('[data-worker-birth-date]');
@@ -212,6 +208,11 @@
         evidenceDropzone?.addEventListener('drop', (event) => addEvidenceFiles(event.dataTransfer.files));
 
         form.addEventListener('submit', (event) => {
+            if (form.method.toLowerCase() === 'post') {
+                finishButton.disabled = true;
+                wizard.querySelector('[data-prototype-message]').classList.remove('hidden');
+                return;
+            }
             event.preventDefault();
 
             const now = new Date();
@@ -255,7 +256,7 @@
                 const message = wizard.querySelector('[data-prototype-message]');
                 message.classList.remove('hidden', 'border-emerald-200', 'bg-emerald-50', 'text-emerald-800');
                 message.classList.add('border-red-200', 'bg-red-50', 'text-red-800');
-                message.textContent = 'No fue posible guardar el caso en este navegador. Revisa si el almacenamiento local está habilitado.';
+                message.textContent = 'No fue posible registrar el caso. Verifique los datos ingresados y vuelva a intentarlo.';
             }
         });
 

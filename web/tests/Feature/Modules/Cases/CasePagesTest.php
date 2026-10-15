@@ -2,6 +2,9 @@
 
 namespace Tests\Feature\Modules\Cases;
 
+use App\Models\Establishment;
+use App\Models\Investigation;
+use App\Models\OccupationalCase;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,6 +29,7 @@ class CasePagesTest extends TestCase
     public function test_authorized_operational_role_can_open_case_list_and_creation_form(string $roleSlug, string $roleName): void
     {
         $user = $this->userWithRole($roleSlug, $roleName);
+        $this->occupationalCase($user);
 
         $this->actingAs($user)
             ->get(route('modules.cases.index'))
@@ -33,7 +37,9 @@ class CasePagesTest extends TestCase
             ->assertSee('Casos registrados')
             ->assertSee('Registrar caso')
             ->assertSee('Ver antecedentes')
-            ->assertSee('Cambiar tipo')
+            ->assertSee('Editar tipo de caso')
+            ->assertSee('Tipo de caso')
+            ->assertSee('¿Deseas continuar?')
             ->assertSee('Se debe actualizar el formulario del caso')
             ->assertSee('Formulario por actualizar')
             ->assertSee('Evidencias adjuntas')
@@ -74,15 +80,57 @@ class CasePagesTest extends TestCase
         $this->actingAs($user)->get(route('modules.cases.create'))->assertForbidden();
     }
 
+    public function test_observations_button_is_available_to_an_authorized_role(): void
+    {
+        $user = $this->userWithRole('delegado', 'Delegado de Seguridad');
+        $this->occupationalCase($user);
+
+        $this->actingAs($user)
+            ->get(route('modules.cases.index'))
+            ->assertOk()
+            ->assertSee('Observaciones')
+            ->assertSee(route('modules.observations.index', ['case' => 'GIATEP-2026-001']), false);
+    }
+
+    public function test_case_with_initiated_investigation_has_investigation_button_disabled(): void
+    {
+        $user = $this->userWithRole('delegado', 'Delegado de Seguridad');
+        $case = $this->occupationalCase($user);
+
+        Investigation::create([
+            'folio' => 'INV-2026-001',
+            'occupational_case_id' => $case->id,
+            'owner_id' => $user->id,
+            'status' => 'En investigación',
+            'final_story' => $case->narrative,
+        ]);
+        $case->update(['status' => 'En investigación']);
+
+        $this->actingAs($user)
+            ->get(route('modules.cases.index'))
+            ->assertOk()
+            ->assertSee('data-investigation-disabled', false)
+            ->assertSee('disabled', false)
+            ->assertSee('Ver expediente en curso (INV-2026-001)')
+            ->assertDontSee('href="'.route('modules.investigations.index', ['case' => 'GIATEP-2026-001', 'case_type' => 'Accidente del trabajo']).'"', false);
+    }
+
     public function test_start_investigation_opens_editable_form_for_selected_case(): void
     {
         $user = $this->userWithRole('delegado', 'Delegado de Seguridad');
+        $this->occupationalCase($user);
 
         $this->actingAs($user)
             ->get(route('modules.investigations.index', ['case' => 'GIATEP-2026-001']))
             ->assertOk()
             ->assertSee('INV-NUEVA')
             ->assertSee('Información recuperada del caso GIATEP-2026-001')
+            ->assertSee('Entorno de pruebas guiado')
+            ->assertSee('Completitud metodológica')
+            ->assertSee('Recopilación')
+            ->assertSee('Construcción del árbol')
+            ->assertSee('Administración')
+            ->assertSee('Evidencia testimonial registrada')
             ->assertSee('name="worker_name"', false)
             ->assertSee('value="Camila Soto Rojas"', false)
             ->assertSee('Entrevistas')
@@ -95,6 +143,9 @@ class CasePagesTest extends TestCase
             ->assertSee('Organización del trabajo')
             ->assertSee('Analizar relato final')
             ->assertSee('Debe ser redactado y revisado por el prevencionista')
+            ->assertSee('Control de calidad del relato')
+            ->assertSee('Por qué verificable')
+            ->assertSee('data-story-quality', false)
             ->assertSee('Hechos detectados')
             ->assertSee('Árbol de causas propuesto')
             ->assertSee('Medidas propuestas')
@@ -107,6 +158,7 @@ class CasePagesTest extends TestCase
     public function test_changed_case_type_is_forwarded_to_the_investigation(): void
     {
         $user = $this->userWithRole('prevencion', 'Prevencionista');
+        $this->occupationalCase($user);
 
         $this->actingAs($user)
             ->get(route('modules.investigations.index', [
@@ -117,7 +169,7 @@ class CasePagesTest extends TestCase
             ->assertSee('value="Enfermedad profesional"', false);
     }
 
-    public function test_browser_case_can_start_a_linked_investigation(): void
+    public function test_nonexistent_browser_demo_case_is_rejected(): void
     {
         $user = $this->userWithRole('prevencion', 'Prevencionista');
 
@@ -126,9 +178,32 @@ class CasePagesTest extends TestCase
                 'case' => 'GIATEP-DEMO-1234567',
                 'case_type' => 'Accidente de trabajo',
             ]))
+            ->assertNotFound();
+    }
+
+    public function test_authorized_user_can_store_a_case_in_the_database(): void
+    {
+        $user = $this->userWithRole('prevencion', 'Prevencionista');
+
+        $response = $this->actingAs($user)->post(route('modules.cases.store'), [
+            'employer_name' => 'Dirección Comunal de Salud', 'employer_rut' => '69.170.102-6',
+            'employer_address' => 'Avenida Central 1250', 'employer_commune' => 'Los Ángeles',
+            'economic_activity' => 'Salud pública', 'company_type' => 'Principal', 'administrator' => 'ACHS',
+            'establishment' => 'CESFAM Norte', 'worker_name' => 'Camila Soto Rojas',
+            'worker_rut' => '17.456.321-8', 'job_title' => 'Técnica en enfermería', 'workplace' => 'Bodega clínica',
+            'case_type' => 'Accidente de trabajo', 'event_date' => now()->toDateString(), 'event_time' => '09:15',
+            'event_location' => 'Pasillo de acceso', 'narrative' => 'La trabajadora informó una caída durante el traslado de insumos.',
+        ]);
+
+        $response->assertRedirect(route('modules.cases.index'));
+        $this->assertDatabaseHas('occupational_cases', [
+            'folio' => 'GIATEP-'.now()->year.'-001', 'worker_rut' => '17.456.321-8', 'created_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('modules.cases.index'))
             ->assertOk()
-            ->assertSee('Información recuperada del caso GIATEP-DEMO-1234567')
-            ->assertSee('value="Accidente de trabajo"', false);
+            ->assertSee('GIATEP-'.now()->year.'-001');
     }
 
     public function test_unauthenticated_user_is_redirected_from_case_pages(): void
@@ -143,5 +218,22 @@ class CasePagesTest extends TestCase
         $user->roles()->attach(Role::factory()->create(compact('slug', 'name')));
 
         return $user;
+    }
+
+    private function occupationalCase(User $user): OccupationalCase
+    {
+        $establishment = Establishment::factory()->create(['name' => 'CESFAM Norte']);
+
+        return OccupationalCase::create([
+            'folio' => 'GIATEP-2026-001', 'created_by' => $user->id, 'establishment_id' => $establishment->id,
+            'status' => 'Registrado', 'case_type' => 'Accidente del trabajo',
+            'employer_name' => 'Dirección Comunal de Salud', 'employer_rut' => '69.170.102-6',
+            'employer_address' => 'Avenida Central 1250', 'employer_commune' => 'Los Ángeles',
+            'economic_activity' => 'Salud pública', 'company_type' => 'Principal', 'administrator' => 'ACHS',
+            'worker_name' => 'Camila Soto Rojas', 'worker_rut' => '17.456.321-8',
+            'job_title' => 'Técnica en enfermería', 'workplace' => 'Bodega clínica',
+            'event_date' => '2026-10-02', 'event_time' => '09:15', 'event_location' => 'Pasillo de acceso',
+            'narrative' => 'Durante el traslado de insumos, la trabajadora informó una caída en una superficie húmeda.',
+        ]);
     }
 }

@@ -163,6 +163,40 @@ document.querySelectorAll('[data-section-target]').forEach((button) => button.ad
     workspace.querySelectorAll('[data-section]').forEach((section) => section.classList.toggle('hidden', section.dataset.section !== button.dataset.sectionTarget));
 }));
 
+document.querySelectorAll('[data-story-quality]').forEach((qualityPanel) => {
+    const workspace = qualityPanel.closest('[data-demo-workspace]');
+    const story = workspace?.querySelector('#final-investigation-story');
+    const criteria = [...qualityPanel.querySelectorAll('[data-story-criterion]')];
+    const status = qualityPanel.querySelector('[data-story-quality-status]');
+    const warning = qualityPanel.querySelector('[data-story-subjective-warning]');
+    const subjectiveTerms = [
+        'imprudente',
+        'irresponsable',
+        'descuidado',
+        'negligente',
+        'por culpa',
+        'obviamente',
+        'siempre',
+        'nunca',
+    ];
+
+    const updateStoryQuality = () => {
+        const value = story?.value.toLocaleLowerCase('es-CL') ?? '';
+        const completed = criteria.filter((criterion) => criterion.checked).length;
+        const hasSubjectiveTerm = subjectiveTerms.some((term) => value.includes(term));
+        const isReady = completed === criteria.length && value.trim().length >= 120 && ! hasSubjectiveTerm;
+
+        warning.classList.toggle('hidden', ! hasSubjectiveTerm);
+        status.textContent = isReady ? 'Listo para revisión humana' : `${completed}/${criteria.length} criterios confirmados`;
+        status.classList.toggle('status-approved', isReady);
+        status.classList.toggle('status-pending', ! isReady);
+    };
+
+    criteria.forEach((criterion) => criterion.addEventListener('change', updateStoryQuality));
+    story?.addEventListener('input', updateStoryQuality);
+    updateStoryQuality();
+});
+
 document.querySelectorAll('[data-interview-form]').forEach((form) => {
     const witnessType = form.querySelector('[data-witness-type]');
     const applicability = {
@@ -264,8 +298,29 @@ document.querySelectorAll('[data-interviews-workspace]').forEach((workspace) => 
         list.classList.remove('hidden');
     };
 
-    workspace.querySelectorAll('[data-create-interview]').forEach((button) => button.addEventListener('click', () => showEditor('adapted')));
-    workspace.querySelectorAll('[data-create-legacy-interview]').forEach((button) => button.addEventListener('click', () => showEditor('legacy')));
+    const clearFormForNew = () => {
+        const nameField = workspace.querySelector('[name="interviewee_name"]');
+        if (nameField) nameField.value = '';
+        const rutField = workspace.querySelector('[name="interviewee_rut"]');
+        if (rutField) rutField.value = '';
+        const roleField = workspace.querySelector('[name="interviewee_role"]');
+        if (roleField) roleField.value = '';
+        const dateField = workspace.querySelector('[name="interview_date"]');
+        if (dateField) dateField.value = new Date().toISOString().split('T')[0];
+        editor.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach((input) => { input.checked = false; });
+        editor.querySelectorAll('textarea').forEach((textarea) => { textarea.value = ''; });
+        const validation = workspace.querySelector('[data-interview-validation]');
+        if (validation) validation.classList.add('hidden');
+    };
+
+    workspace.querySelectorAll('[data-create-interview]').forEach((button) => button.addEventListener('click', () => {
+        if (! button.closest('tr')) clearFormForNew();
+        showEditor('adapted');
+    }));
+    workspace.querySelectorAll('[data-create-legacy-interview]').forEach((button) => button.addEventListener('click', () => {
+        clearFormForNew();
+        showEditor('legacy');
+    }));
     workspace.querySelectorAll('[data-cancel-interview]').forEach((button) => button.addEventListener('click', showList));
 
     const requiredRadioNames = [
@@ -436,7 +491,7 @@ document.querySelectorAll('[data-interviews-workspace]').forEach((workspace) => 
     workspace.querySelectorAll('[data-adapted-questionnaire] input[type="radio"]').forEach((radio) => radio.addEventListener('change', updateInterviewFlow));
     updateInterviewFlow();
 
-    workspace.querySelector('[data-save-interview]')?.addEventListener('click', () => {
+    workspace.querySelector('[data-save-interview]')?.addEventListener('click', async () => {
         const validation = workspace.querySelector('[data-interview-validation]');
         const missing = [];
         if (editor.dataset.interviewMode !== 'legacy') {
@@ -462,6 +517,33 @@ document.querySelectorAll('[data-interviews-workspace]').forEach((workspace) => 
         const witness = workspace.querySelector('[name="witness_type"]');
         const role = workspace.querySelector('[name="interviewee_role"]').value.trim() || 'Sin cargo informado';
         const dateValue = workspace.querySelector('[name="interview_date"]').value;
+        const answers = {};
+        editor.querySelectorAll('[name]:not([disabled])').forEach((field) => {
+            if (['interviewee_name', 'interviewee_rut', 'interviewee_role', 'interviewee_company', 'witness_type', 'interview_date', 'interview_start_time', 'interview_location'].includes(field.name)) return;
+            if ((field.type === 'radio' || field.type === 'checkbox') && ! field.checked) return;
+            const key = field.name.replace(/\[\]$/, '');
+            if (field.name.endsWith('[]')) answers[key] = [...(answers[key] || []), field.value];
+            else answers[key] = field.value;
+        });
+        const shell = workspace.closest('[data-demo-workspace]');
+        const response = await fetch(shell.dataset.interviewStoreUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+            body: JSON.stringify({
+                case_folio: shell.dataset.caseFolio, questionnaire_type: editor.dataset.interviewMode === 'legacy' ? 'legacy' : 'adapted',
+                interviewee_name: name, interviewee_rut: workspace.querySelector('[name="interviewee_rut"]')?.value || null,
+                interviewee_role: role, interviewee_company: workspace.querySelector('[name="interviewee_company"]')?.value || null,
+                witness_type: witness.value, interview_date: dateValue || null,
+                interview_start_time: workspace.querySelector('[name="interview_start_time"]')?.value || null,
+                interview_location: workspace.querySelector('[name="interview_location"]')?.value || null, answers,
+            }),
+        });
+        const stored = await response.json();
+        if (! response.ok) {
+            validation.textContent = stored.message || 'No fue posible guardar la entrevista.';
+            validation.classList.remove('hidden');
+            return;
+        }
         const row = document.createElement('tr');
         [name, witness.options[witness.selectedIndex].text, role, dateValue ? dateValue.split('-').reverse().join('/') : 'Sin fecha'].forEach((value, index) => {
             const cell = document.createElement('td');
@@ -481,7 +563,8 @@ document.querySelectorAll('[data-interviews-workspace]').forEach((workspace) => 
         action.textContent = 'Ver / editar';
         action.addEventListener('click', () => showEditor('adapted'));
         actionCell.append(action);
-        row.append(statusCell, actionCell);
+        const emptyRow = rows.querySelector('[data-empty-interview-row]');
+        if (emptyRow) emptyRow.remove();
         rows.prepend(row);
         showList();
     });
@@ -499,10 +582,40 @@ document.querySelectorAll('[data-final-story-ai]').forEach((section) => {
     const error = section.querySelector('[data-final-ai-error]');
     const result = section.querySelector('[data-final-ai-result]');
     const story = section.querySelector('[name="final_story"]');
+    const storySaveButton = section.querySelector('[data-save-final-story]');
+    const storySaved = section.querySelector('[data-final-story-saved]');
     const saveButton = result.querySelector('[data-save-ai-proposal]');
     const investigation = section.closest('form');
 
-    button.addEventListener('click', () => {
+    const saveFinalStory = async () => {
+        if (! story.value.trim()) throw new Error('Escriba el relato final antes de guardarlo.');
+        const workspace = section.closest('[data-demo-workspace]');
+        const response = await fetch(workspace.dataset.storyStoreUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+            body: JSON.stringify({ case_folio: workspace.dataset.caseFolio, story: story.value.trim() }),
+        });
+        const payload = await response.json();
+        if (! response.ok) throw new Error(payload.message || 'No fue posible guardar el relato final.');
+        storySaved.classList.remove('hidden');
+        return payload;
+    };
+
+    story.addEventListener('input', () => storySaved.classList.add('hidden'));
+    storySaveButton.addEventListener('click', async () => {
+        error.classList.add('hidden');
+        storySaveButton.disabled = true;
+        try {
+            await saveFinalStory();
+        } catch (exception) {
+            error.textContent = exception.message;
+            error.classList.remove('hidden');
+        } finally {
+            storySaveButton.disabled = false;
+        }
+    });
+
+    button.addEventListener('click', async () => {
         if (! story.value.trim()) {
             error.classList.remove('hidden');
             story.focus();
@@ -513,20 +626,86 @@ document.querySelectorAll('[data-final-story-ai]').forEach((section) => {
         button.disabled = true;
         button.textContent = 'Analizando…';
         loading.classList.remove('hidden');
+        let elapsedSeconds = 0;
+        loading.textContent = 'Analizando hechos y factores causales con LM Studio… (0s)';
+        const timer = setInterval(() => {
+            elapsedSeconds++;
+            loading.textContent = `Analizando hechos y factores causales con LM Studio… (${elapsedSeconds}s)`;
+        }, 1000);
         result.classList.add('hidden');
         result.querySelectorAll('input, textarea').forEach((field) => { field.disabled = true; });
 
-        window.setTimeout(() => {
-            loading.classList.add('hidden');
-            result.classList.remove('hidden');
+        const workspace = section.closest('[data-demo-workspace]');
+        try {
+            await saveFinalStory();
+        } catch (exception) {
+            clearInterval(timer);
+            loading.classList.add('hidden'); error.textContent = exception.message; error.classList.remove('hidden');
+            button.disabled = false; button.textContent = 'Analizar relato final';
+            return;
+        }
+        fetch(workspace.dataset.aiAnalyzeUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+            body: JSON.stringify({ story: story.value.trim() }),
+        }).then(async (response) => {
+            clearInterval(timer);
+            const payload = await response.json();
+            if (! response.ok) throw new Error(payload.message || 'No fue posible generar el análisis.');
+
+            result.dataset.model = payload.model;
+            const facts = result.querySelector('[data-ai-facts]');
+            facts.replaceChildren(...payload.facts.map((value) => {
+                const input = document.createElement('input');
+                input.className = 'input'; input.name = 'ai_facts[]'; input.value = value;
+                return input;
+            }));
+            result.querySelector('[name="ai_tree_final"]').value = payload.tree.final;
+            result.querySelector('[name="ai_tree_origin"]').value = payload.tree.origin;
+            const treeGrid = result.querySelector('[name="ai_tree_final"]').closest('.grid');
+            treeGrid.querySelectorAll('[name="ai_tree_cause[]"]').forEach((input) => input.closest('label').remove());
+            payload.tree.causes.forEach((value, index) => {
+                const label = document.createElement('label');
+                label.innerHTML = `<span class="label">Causa ${index + 1}</span><input class="input" name="ai_tree_cause[]">`;
+                label.querySelector('input').value = value; treeGrid.append(label);
+            });
+            const factors = result.querySelector('[data-ai-factors]');
+            factors.replaceChildren(...payload.factors.map((factor) => {
+                const label = document.createElement('label');
+                label.className = 'flex items-start gap-3 rounded-xl border border-sky-200 bg-white p-4';
+                label.innerHTML = '<input type="checkbox" class="mt-1 size-4 accent-blue-800" name="ai_factor_codes[]" checked><span><strong class="block text-blue-950"></strong><span class="mt-1 block text-sm text-slate-700"></span><small class="mt-1 block text-xs text-slate-500"></small></span>';
+                label.querySelector('input').value = factor.code;
+                label.querySelector('strong').textContent = `${factor.code} · ${factor.category}`;
+                label.querySelector('span span').textContent = factor.label;
+                label.querySelector('small').textContent = factor.explanation;
+                return label;
+            }));
+            if (! payload.factors.length) {
+                const empty = document.createElement('p'); empty.className = 'text-sm text-slate-600';
+                empty.textContent = 'El relato no respalda con claridad ningún factor de la matriz disponible.'; factors.append(empty);
+            }
+            const measures = result.querySelector('[data-ai-measures]');
+            measures.replaceChildren(...payload.measures.map((measure) => {
+                const row = document.createElement('div');
+                row.className = 'grid gap-3 rounded-xl bg-slate-50 p-4 lg:grid-cols-[1fr_11rem_12rem_11rem]'; row.dataset.aiMeasure = '';
+                row.innerHTML = '<label><span class="label">Medida</span><textarea class="input" name="ai_measure_description[]" rows="2"></textarea></label><label><span class="label">Categoría</span><input class="input" name="ai_measure_category[]"></label><label><span class="label">Responsable</span><input class="input" name="ai_measure_owner[]"></label><label><span class="label">Plazo</span><input type="date" class="input" name="ai_measure_due[]"></label>';
+                row.querySelector('[name="ai_measure_description[]"]').value = measure.description;
+                row.querySelector('[name="ai_measure_category[]"]').value = measure.category;
+                row.querySelector('[name="ai_measure_owner[]"]').value = measure.responsible;
+                row.querySelector('[name="ai_measure_due[]"]').value = measure.due_date || '';
+                return row;
+            }));
+            loading.classList.add('hidden'); result.classList.remove('hidden');
             result.querySelectorAll('input, textarea').forEach((field) => { field.disabled = false; });
-            button.disabled = false;
-            button.textContent = 'Volver a analizar';
-            result.querySelector('input, textarea')?.focus();
-        }, 700);
+            button.disabled = false; button.textContent = 'Volver a analizar'; result.querySelector('input, textarea')?.focus();
+        }).catch((exception) => {
+            clearInterval(timer);
+            loading.classList.add('hidden'); error.textContent = exception.message; error.classList.remove('hidden');
+            button.disabled = false; button.textContent = 'Analizar relato final';
+        });
     });
 
-    saveButton.addEventListener('click', () => {
+    saveButton.addEventListener('click', async () => {
         const factsTarget = investigation.querySelector('[data-derived-facts]');
         const treeTarget = investigation.querySelector('[data-derived-tree]');
         const measuresTarget = investigation.querySelector('[data-derived-measures]');
@@ -588,6 +767,20 @@ document.querySelectorAll('[data-final-story-ai]').forEach((section) => {
             });
             measuresTarget.append(row);
         });
+
+        const workspace = investigation.closest('[data-demo-workspace]');
+        const response = await fetch(workspace.dataset.aiStoreUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+            body: JSON.stringify({
+                case_folio: workspace.dataset.caseFolio, story: story.value.trim(), model: result.dataset.model || '',
+                facts: [...result.querySelectorAll('[name="ai_facts[]"]')].map((input) => input.value), tree: treeValues,
+                factor_codes: [...result.querySelectorAll('[name="ai_factor_codes[]"]:checked')].map((input) => input.value),
+                measures: [...result.querySelectorAll('[data-ai-measure]')].map((row) => ({ description: row.querySelector('[name="ai_measure_description[]"]').value, category: row.querySelector('[name="ai_measure_category[]"]').value, responsible: row.querySelector('[name="ai_measure_owner[]"]').value, due_date: row.querySelector('[name="ai_measure_due[]"]').value || null })),
+            }),
+        });
+        const payload = await response.json();
+        if (! response.ok) { error.textContent = payload.message || 'No fue posible guardar la propuesta.'; error.classList.remove('hidden'); return; }
 
         investigation.closest('[data-demo-workspace]').querySelectorAll('[data-ai-derived-nav]').forEach((nav) => nav.classList.remove('hidden'));
         result.querySelector('[data-ai-saved-status]').classList.remove('hidden');

@@ -34,7 +34,7 @@ class RoleMenuTest extends TestCase
 
     public function test_direct_management_dashboard_excludes_global_statistics(): void
     {
-        $user = $this->userWithRole('jefatura', 'Jefatura');
+        $user = $this->userWithRole('jefatura', 'Jefatura Directa');
 
         $this->actingAs($user)->get('/inicio')
             ->assertSee('Jefatura Directa')
