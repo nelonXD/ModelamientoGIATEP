@@ -157,6 +157,22 @@ class DemoWorkspace
             ];
         }
 
+        return [
+            'cases' => collect(),
+            'investigations' => collect(),
+            'measures' => collect(),
+            'observations' => collect(),
+            'establishments' => [
+                'CESFAM Nororiente',
+                'CESFAM Los Aromos',
+                'CESFAM Nuevo Horizonte',
+                'CESFAM 2 de Septiembre',
+                'SAR Central',
+                'Dirección Comunal de Salud',
+            ],
+            'activity' => [],
+        ];
+
         $cases = collect([
             ['id' => 'GIATEP-2026-001', 'type' => 'Accidente de trabajo', 'worker' => 'Daniela Araya Soto', 'rut' => '17.456.321-8', 'job_title' => 'Técnica en enfermería (TENS)', 'phone' => '+56 9 8123 4567', 'establishment' => 'CESFAM Nororiente', 'workplace' => 'Bodega clínica', 'employer_name' => 'Dirección Comunal de Salud de Los Ángeles', 'employer_rut' => '69.170.102-6', 'employer_address' => 'Calle Valdivia #150, Los Ángeles', 'administrator' => 'ACHS', 'economic_activity' => 'Salud Pública APS', 'date' => '2026-10-02', 'time' => '09:15', 'location' => 'Pasillo de acceso a bodega', 'status' => 'En investigación', 'qualification' => 'Pendiente', 'injury' => 'Rodilla derecha', 'body_part' => 'Rodilla derecha', 'story' => 'Durante el traslado de insumos, la trabajadora resbaló sobre una zona húmeda del pasillo y cayó apoyando la rodilla derecha.', 'witnesses' => 'Marcelo Fuentes Rojas', 'investigation_id' => 'INV-2026-001', 'evidence_count' => 1, 'form_type' => 'DIAT'],
             ['id' => 'GIATEP-2026-002', 'type' => 'Accidente de trayecto', 'worker' => 'Luis Morales Vera', 'rut' => '18.765.432-1', 'job_title' => 'Administrativo de Admisión', 'phone' => '+56 9 9345 6789', 'establishment' => 'SAR Central', 'workplace' => 'SAR Central', 'employer_name' => 'Dirección Comunal de Salud de Los Ángeles', 'employer_rut' => '69.170.102-6', 'employer_address' => 'Calle Valdivia #150, Los Ángeles', 'administrator' => 'ACHS', 'economic_activity' => 'Salud Pública APS', 'date' => '2026-10-08', 'time' => '08:05', 'location' => 'Vía pública - trayecto a SAR', 'status' => 'Registrado', 'qualification' => 'Pendiente', 'injury' => 'Tobillo izquierdo', 'body_part' => 'Tobillo izquierdo', 'story' => 'El trabajador informó una caída durante su trayecto habitual hacia el establecimiento.', 'witnesses' => 'Sin testigos', 'investigation_id' => null, 'evidence_count' => 0, 'form_type' => 'DIAT'],
