@@ -11,10 +11,10 @@
         <fieldset class='rounded-xl border border-slate-200 bg-slate-50/50 p-5'>
             <legend class='text-xs font-bold uppercase tracking-wider text-slate-500 mb-2'>Tipo de caso (Clasificación oficial) <span class='text-red-700'>*</span></legend>
             <div class='grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4'>
-                @foreach(['Accidente de trabajo', 'Accidente de trayecto', 'Enfermedad profesional', 'Accidente grave', 'Accidente fatal', 'Accidente de trabajo sin días perdidos', 'Incidente o suceso peligroso', 'Accidente o enfermedad común'] as $type)
+                @foreach($catalogs->get('case_type', collect()) as $type)
                     <label class='flex cursor-pointer items-center gap-2.5 rounded-lg border border-slate-300 bg-white p-3 text-xs font-bold text-slate-700 transition hover:border-slate-400 has-checked:border-blue-800 has-checked:bg-blue-50 has-checked:text-blue-950'>
-                        <input type='radio' name='case_type' value='{{ $type }}' class='accent-blue-800' data-case-classification required>
-                        <span>{{ $type }}</span>
+                        <input type='radio' name='case_type' value='{{ $type->value }}' class='accent-blue-800' data-case-classification required @checked(old('case_type') === $type->value)>
+                        <span>{{ $type->label }}</span>
                     </label>
                 @endforeach
             </div>
@@ -59,15 +59,16 @@
                 <fieldset>
                     <legend class='label text-xs'>¿Desarrollaba su trabajo habitual?</legend>
                     <div class='flex gap-2.5'>
-                        <label class='btn-secondary text-xs py-1.5 px-3 gap-2'><input type='radio' name='doing_usual_job' value='Sí' disabled> Sí</label>
-                        <label class='btn-secondary text-xs py-1.5 px-3 gap-2'><input type='radio' name='doing_usual_job' value='No' disabled> No</label>
+                        @foreach($catalogs->get('yes_no', collect()) as $answer)
+                            <label class='btn-secondary text-xs py-1.5 px-3 gap-2'><input type='radio' name='doing_usual_job' value='{{ $answer->value }}' disabled> {{ $answer->label }}</label>
+                        @endforeach
                     </div>
                 </fieldset>
                 <fieldset class='hidden md:col-span-2' data-route-type>
                     <legend class='label text-xs'>Tipo de accidente de trayecto <span class='text-red-700'>*</span></legend>
                     <div class='flex flex-wrap gap-3'>
-                        @foreach(['Domicilio - Trabajo','Trabajo - Domicilio','Entre dos trabajos'] as $route)
-                            <label class='btn-secondary text-xs py-1.5 px-3 gap-2'><input type='radio' name='route_type' value='{{ $route }}' disabled> {{ $route }}</label>
+                        @foreach($catalogs->get('route_type', collect()) as $route)
+                            <label class='btn-secondary text-xs py-1.5 px-3 gap-2'><input type='radio' name='route_type' value='{{ $route->value }}' disabled> {{ $route->label }}</label>
                         @endforeach
                     </div>
                 </fieldset>
@@ -96,8 +97,9 @@
                 <fieldset>
                     <legend class='label text-xs'>¿Había tenido estas molestias anteriormente?</legend>
                     <div class='flex gap-2.5'>
-                        <label class='btn-secondary text-xs py-1.5 px-3 gap-2'><input type='radio' name='previous_symptoms' value='Sí' disabled> Sí</label>
-                        <label class='btn-secondary text-xs py-1.5 px-3 gap-2'><input type='radio' name='previous_symptoms' value='No' disabled> No</label>
+                        @foreach($catalogs->get('yes_no', collect()) as $answer)
+                            <label class='btn-secondary text-xs py-1.5 px-3 gap-2'><input type='radio' name='previous_symptoms' value='{{ $answer->value }}' disabled> {{ $answer->label }}</label>
+                        @endforeach
                     </div>
                 </fieldset>
                 <label class='md:col-span-2'>
@@ -111,8 +113,9 @@
                 <fieldset>
                     <legend class='label text-xs'>¿Existen compañeros con los mismos síntomas?</legend>
                     <div class='flex gap-2.5'>
-                        <label class='btn-secondary text-xs py-1.5 px-3 gap-2'><input type='radio' name='coworkers_same_symptoms' value='Sí' disabled> Sí</label>
-                        <label class='btn-secondary text-xs py-1.5 px-3 gap-2'><input type='radio' name='coworkers_same_symptoms' value='No' disabled> No</label>
+                        @foreach($catalogs->get('yes_no', collect()) as $answer)
+                            <label class='btn-secondary text-xs py-1.5 px-3 gap-2'><input type='radio' name='coworkers_same_symptoms' value='{{ $answer->value }}' disabled> {{ $answer->label }}</label>
+                        @endforeach
                     </div>
                 </fieldset>
                 <label class='md:col-span-2'>
@@ -149,10 +152,10 @@
                 <fieldset>
                     <legend class='label text-xs mb-2'>Medios de prueba disponibles</legend>
                     <div class='flex flex-wrap gap-2.5 mb-2'>
-                        @foreach(['Parte de Carabineros','Declaración','Testigos','Fotografías','Otro'] as $proof)
+                        @foreach($catalogs->get('proof_type', collect()) as $proof)
                             <label class='flex items-center gap-2 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg cursor-pointer transition'>
-                                <input type='checkbox' name='proof_types[]' value='{{ $proof }}' class='accent-blue-800'>
-                                <span>{{ $proof }}</span>
+                                <input type='checkbox' name='proof_types[]' value='{{ $proof->value }}' class='accent-blue-800'>
+                                <span>{{ $proof->label }}</span>
                             </label>
                         @endforeach
                     </div>

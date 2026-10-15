@@ -15,7 +15,7 @@
                 <div><dt>RUT</dt><dd class='text-sm font-mono' data-review='employer_rut'>Sin informar</dd></div>
                 <div><dt>Actividad económica</dt><dd class='text-sm' data-review='economic_activity'>Sin informar</dd></div>
                 <div><dt>Administrador</dt><dd class='text-sm' data-review='administrator'>Sin informar</dd></div>
-                <div><dt>Establecimiento</dt><dd class='text-sm' data-review='establishment'>Sin informar</dd></div>
+                <div><dt>Establecimiento</dt><dd class='text-sm' data-review='establishment_id'>Sin informar</dd></div>
                 <div class='sm:col-span-2'><dt>Dirección</dt><dd class='text-sm' data-review='employer_address'>Sin informar</dd></div>
             </dl>
         </article>
@@ -46,6 +46,41 @@
         <article class='rounded-xl border border-slate-200 bg-slate-50/50 p-4 lg:col-span-2'>
             <h3 class='text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200 pb-2 mb-2'>Evidencias adjuntas</h3>
             <p class='text-xs text-slate-600' data-review-evidence>Sin archivos adjuntos.</p>
+        </article>
+        <article class='rounded-xl border border-blue-200 bg-blue-50/70 p-4 lg:col-span-2'>
+            <div class='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
+                <div>
+                    <h3 class='text-xs font-black uppercase tracking-wider text-blue-950'>Así quedará registrado en el sistema</h3>
+                    <p class='mt-1 text-xs text-blue-900'>Al confirmar, el boceto crea el caso y sus archivos con estas relaciones:</p>
+                </div>
+                <span class='inline-flex w-fit rounded-full border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-bold text-blue-900'>Registro real · no solo vista previa</span>
+            </div>
+            <dl class='mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
+                <div class='rounded-lg border border-blue-100 bg-white p-3'>
+                    <dt class='font-mono text-xs font-black text-slate-950'>CASO</dt>
+                    <dd class='mt-1 text-[11px] leading-relaxed text-slate-600'>Tabla <code>occupational_cases</code>: empleador, trabajador, tipo, fecha, lugar, relato y estado.</dd>
+                </div>
+                <div class='rounded-lg border border-blue-100 bg-white p-3'>
+                    <dt class='font-mono text-xs font-black text-slate-950'>EMPRESA_EMPLEADOR</dt>
+                    <dd class='mt-1 text-[11px] leading-relaxed text-slate-600'>Sus datos quedan como campos de <code>CASO</code>; todavía no existe una tabla independiente.</dd>
+                </div>
+                <div class='rounded-lg border border-blue-100 bg-white p-3'>
+                    <dt class='font-mono text-xs font-black text-slate-950'>TRABAJADOR_ACCIDENTADO/ENFERMO</dt>
+                    <dd class='mt-1 text-[11px] leading-relaxed text-slate-600'>Sus datos también quedan como campos de <code>CASO</code>, no como registro reutilizable de trabajador.</dd>
+                </div>
+                <div class='rounded-lg border border-blue-100 bg-white p-3'>
+                    <dt class='font-mono text-xs font-black text-slate-950'>EVIDENCIA</dt>
+                    <dd class='mt-1 text-[11px] leading-relaxed text-slate-600'>Cada archivo crea un registro en <code>case_evidences</code> asociado al caso.</dd>
+                </div>
+                <div class='rounded-lg border border-blue-100 bg-white p-3 sm:col-span-2'>
+                    <dt class='font-mono text-xs font-black text-slate-950'>DETALLE_ACCIDENTE / DETALLE_ENFERMEDAD</dt>
+                    <dd class='mt-1 text-[11px] leading-relaxed text-slate-600'>Los campos complementarios específicos se guardan dentro de <code>details</code> (JSON) en <code>occupational_cases</code>; aún no son tablas separadas ni catálogos.</dd>
+                </div>
+                <div class='rounded-lg border border-blue-100 bg-white p-3 sm:col-span-2'>
+                    <dt class='font-mono text-xs font-black text-slate-950'>INVESTIGACION</dt>
+                    <dd class='mt-1 text-[11px] leading-relaxed text-slate-600'>No se crea en este paso: se vincula después al caso al iniciar o guardar una entrevista/análisis. Actualmente hay como máximo una investigación por caso.</dd>
+                </div>
+            </dl>
         </article>
     </div>
     <label class='mt-6 flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs font-medium text-slate-800'>

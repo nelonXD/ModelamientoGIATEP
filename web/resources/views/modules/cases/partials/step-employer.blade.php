@@ -13,68 +13,62 @@
             <div class='grid gap-4 md:grid-cols-2'>
                 <label>
                     <span class='label text-xs'>Nombre o razón social <span class='text-red-700'>*</span></span>
-                    <input class='input text-sm' name='employer_name' value='Dirección Comunal de Salud de Los Ángeles' data-summary='employer_name' required>
+                    <input class='input text-sm' name='employer_name' value='{{ old('employer_name') }}' data-summary='employer_name' required>
                 </label>
                 <label>
                     <span class='label text-xs'>RUT de la empresa <span class='text-red-700'>*</span></span>
-                    <input class='input text-sm font-mono' name='employer_rut' value='69.170.102-6' placeholder='69.170.102-6' data-summary='employer_rut' required>
+                    <input class='input text-sm font-mono' name='employer_rut' value='{{ old('employer_rut') }}' placeholder='RUT del empleador' data-summary='employer_rut' required>
                 </label>
                 <label class='md:col-span-2'>
                     <span class='label text-xs'>Dirección de la empresa <span class='text-red-700'>*</span></span>
-                    <input class='input text-sm' name='employer_address' value='Calle Valdivia #150, Los Ángeles' placeholder='Calle, número, oficina' data-summary='employer_address' required>
+                    <input class='input text-sm' name='employer_address' value='{{ old('employer_address') }}' placeholder='Calle, número, oficina' data-summary='employer_address' required>
                 </label>
                 <label>
                     <span class='label text-xs'>Comuna <span class='text-red-700'>*</span></span>
                     <select class='input text-sm' name='employer_commune' required>
                         <option value=''>Seleccionar comuna</option>
-                        @foreach(['Alto Biobío','Antuco','Arauco','Cabrero','Cañete','Chiguayante','Concepción','Contulmo','Coronel','Curanilahue','Florida','Hualpén','Hualqui','Laja','Lebu','Los Álamos','Los Ángeles','Lota','Mulchén','Nacimiento','Negrete','Penco','Quilaco','Quilleco','San Pedro de la Paz','San Rosendo','Santa Bárbara','Santa Juana','Talcahuano','Tirúa','Tomé','Tucapel','Otra comuna'] as $commune)
-                            <option @selected($commune === 'Los Ángeles')>{{ $commune }}</option>
+                        @foreach($catalogs->get('commune', collect()) as $commune)
+                            <option value='{{ $commune->value }}' @selected(old('employer_commune') === $commune->value)>{{ $commune->label }}</option>
                         @endforeach
                     </select>
                 </label>
                 <label>
                     <span class='label text-xs'>Número de teléfono</span>
-                    <input class='input text-sm' type='tel' name='employer_phone' value='43 2321200' placeholder='43 2321200'>
+                    <input class='input text-sm' type='tel' name='employer_phone' value='{{ old('employer_phone') }}' placeholder='Teléfono del empleador'>
                 </label>
                 <label>
                     <span class='label text-xs'>Actividad económica <span class='text-red-700'>*</span></span>
-                    <input class='input text-sm' name='economic_activity' value='Servicios de Salud Pública Municipal (APS)' placeholder='Servicios de salud municipal' required>
+                    <input class='input text-sm' name='economic_activity' value='{{ old('economic_activity') }}' placeholder='Actividad económica' required>
                 </label>
                 <label>
                     <span class='label text-xs'>Tipo de empresa <span class='text-red-700'>*</span></span>
                     <select class='input text-sm' name='company_type' data-company-type required>
-                        <option>Principal</option>
-                        <option>Contratista</option>
-                        <option>Subcontratista</option>
-                        <option>Servicios transitorios</option>
+                        <option value=''>Seleccionar</option>
+                        @foreach($catalogs->get('company_type', collect()) as $option)
+                            <option value='{{ $option->value }}' @selected(old('company_type') === $option->value)>{{ $option->label }}</option>
+                        @endforeach
                     </select>
                 </label>
                 <label>
                     <span class='label text-xs'>Organismo administrador <span class='text-red-700'>*</span></span>
                     <select class='input text-sm' name='administrator' data-summary='administrator' required>
-                        <option @selected(true)>ACHS</option>
-                        <option>IST</option>
-                        <option>Mutual de Seguridad</option>
-                        <option>ISL</option>
+                        <option value=''>Seleccionar</option>
+                        @foreach($catalogs->get('administrator', collect()) as $option)
+                            <option value='{{ $option->value }}' @selected(old('administrator') === $option->value)>{{ $option->label }}</option>
+                        @endforeach
                     </select>
                 </label>
                 <label>
                     <span class='label text-xs'>Establecimiento o centro de trabajo <span class='text-red-700'>*</span></span>
-                    <select class='input text-sm' name='establishment' data-summary='establishment' required>
+                    <select class='input text-sm' name='establishment_id' data-summary='establishment_id' required>
                         <option value=''>Seleccionar establecimiento</option>
-                        @if(isset($establishments) && count($establishments))
-                            @foreach($establishments as $est)
-                                <option value='{{ $est->name }}'>{{ $est->name }} ({{ $est->type }})</option>
-                            @endforeach
-                        @else
-                            <option>CESFAM Norte</option>
-                            <option>CESFAM Dos de Septiembre</option>
-                            <option>CESFAM Nuevo Horizonte</option>
-                            <option>CESFAM Paillihue</option>
-                            <option>CESFAM Sur</option>
-                            <option>Dirección Comunal de Salud</option>
-                        @endif
+                        @foreach($establishments as $est)
+                            <option value='{{ $est->id }}' @selected((string) old('establishment_id') === (string) $est->id)>{{ $est->name }} ({{ $est->type }})</option>
+                        @endforeach
                     </select>
+                    @if($establishments->isEmpty())
+                        <span class='mt-1 block text-xs text-amber-800'>No hay establecimientos activos en la base de datos. Solicita que registren uno antes de crear el caso.</span>
+                    @endif
                 </label>
             </div>
         </div>

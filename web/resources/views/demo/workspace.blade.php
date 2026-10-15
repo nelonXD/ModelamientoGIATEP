@@ -24,34 +24,20 @@ $statusClass = fn ($status) => match ($status) {
 @endphp
 <x-layouts.app :title="$pageTitle.' · GIATEP Los Ángeles'">
 <div class="mx-auto max-w-[1600px] space-y-6" data-demo-workspace data-demo-module="{{ $module }}" data-case-folio="{{ $module === 'investigations' && $selected ? $selected['case_id'] : '' }}" data-story-store-url="{{ route('modules.investigations.story.store') }}" data-ai-analyze-url="{{ route('modules.investigations.ai.analyze') }}" data-ai-store-url="{{ route('modules.investigations.ai.store') }}" data-interview-store-url="{{ route('modules.investigations.interviews.store') }}">
-    <!-- Migas de pan y encabezado -->
+    <!-- Encabezado del módulo -->
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-            <nav class="mb-2 text-xs font-bold text-slate-500" aria-label="Migas de pan">
-                <a href="{{ route('dashboard') }}" class="text-sky-700 hover:underline">Inicio</a>
-                <span class="mx-2 text-slate-300">/</span>
-                <span class="text-slate-800">{{ $pageTitle }}</span>
-            </nav>
-            <p class="text-xs font-bold uppercase tracking-wider text-sky-700">Sistema Institucional GIATEP · Ley 16.744</p>
-            <div class="mt-1 flex flex-wrap items-center gap-2">
-                <span class="rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-blue-900">Módulo Oficial</span>
-                <span class="text-xs font-semibold text-slate-500">Dirección Comunal de Salud de Los Ángeles</span>
-            </div>
-            <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{{ $pageTitle }}</h1>
+            <h1 class="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{{ $pageTitle }}</h1>
             <p class="mt-1 max-w-3xl text-sm leading-relaxed text-slate-600">{{ $pageDescription }}</p>
         </div>
-        <div class="flex flex-wrap gap-2.5">
-            @if(in_array($module, ['cases','users','establishments']))
+        @if(in_array($module, ['cases','users','establishments']))
+            <div class="flex flex-wrap gap-2.5">
                 <a class="btn-primary inline-flex gap-2 shadow-sm" href="{{ route('demo.show', ['module' => $module, 'mode' => 'create']) }}">
                     <span class="text-base font-bold">+</span>
                     {{ $module === 'cases' ? 'Registrar Caso (DIAT / DIEP)' : ($module === 'users' ? 'Nuevo Usuario' : 'Nuevo Centro de Salud') }}
                 </a>
-            @endif
-            <form method="POST" action="{{ route('demo.reset') }}" data-confirm="¿Desea restablecer los datos al estado oficial inicial?">
-                @csrf
-                <button class="btn-secondary" type="submit">Restablecer datos iniciales</button>
-            </form>
-        </div>
+            </div>
+        @endif
     </div>
 
     @if($changes)

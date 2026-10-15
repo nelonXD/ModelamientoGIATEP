@@ -15,6 +15,10 @@
         const fieldValue = (name) => {
             const fields = [...form.querySelectorAll(`[name="${name}"]`)].filter((field) => ! field.disabled);
             const field = fields.find((item) => ! ['radio', 'checkbox'].includes(item.type) || item.checked);
+            if (field?.tagName === 'SELECT') {
+                return field.value ? field.selectedOptions[0]?.textContent?.trim() || '' : '';
+            }
+
             return field?.value?.trim() || '';
         };
         const classificationFields = [...form.querySelectorAll('[data-case-classification]')];
@@ -95,7 +99,7 @@
                 showStep(Number(trigger.dataset.stepTrigger));
             } else if (next) {
                 if (currentStep === 1) {
-                    const required = ['employer_name', 'employer_rut', 'employer_address', 'employer_commune', 'economic_activity', 'company_type', 'administrator', 'establishment'];
+                    const required = ['employer_name', 'employer_rut', 'employer_address', 'employer_commune', 'economic_activity', 'company_type', 'administrator', 'establishment_id'];
                     const missingName = required.find((name) => ! fieldValue(name));
                     if (missingName) {
                         form.querySelector(`[name="${missingName}"]`)?.focus();
@@ -227,7 +231,7 @@
                 employerName: fieldValue('employer_name'),
                 employerRut: fieldValue('employer_rut'),
                 administrator: fieldValue('administrator'),
-                establishment: fieldValue('establishment'),
+                establishment: fieldValue('establishment_id'),
                 employerAddress: fieldValue('employer_address'),
                 employerCommune: fieldValue('employer_commune'),
                 economicActivity: fieldValue('economic_activity'),

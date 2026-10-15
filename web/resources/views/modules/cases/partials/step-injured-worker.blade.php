@@ -27,8 +27,8 @@
                     <span class='label text-xs'>Comuna</span>
                     <select class='input text-sm' name='worker_commune'>
                         <option value=''>Seleccionar comuna</option>
-                        @foreach(['Alto Biobío','Antuco','Arauco','Cabrero','Cañete','Chiguayante','Concepción','Contulmo','Coronel','Curanilahue','Florida','Hualpén','Hualqui','Laja','Lebu','Los Álamos','Los Ángeles','Lota','Mulchén','Nacimiento','Negrete','Penco','Quilaco','Quilleco','San Pedro de la Paz','San Rosendo','Santa Bárbara','Santa Juana','Talcahuano','Tirúa','Tomé','Tucapel','Otra comuna'] as $commune)
-                            <option @selected($commune === 'Los Ángeles')>{{ $commune }}</option>
+                        @foreach($catalogs->get('commune', collect()) as $commune)
+                            <option value='{{ $commune->value }}' @selected(old('worker_commune') === $commune->value)>{{ $commune->label }}</option>
                         @endforeach
                     </select>
                 </label>
@@ -40,9 +40,9 @@
                     <span class='label text-xs'>Sexo</span>
                     <select class='input text-sm' name='worker_sex'>
                         <option value=''>Seleccionar</option>
-                        <option>Mujer</option>
-                        <option>Hombre</option>
-                        <option>Otro</option>
+                        @foreach($catalogs->get('worker_sex', collect()) as $option)
+                            <option value='{{ $option->value }}' @selected(old('worker_sex') === $option->value)>{{ $option->label }}</option>
+                        @endforeach
                     </select>
                 </label>
                 <label>
@@ -57,8 +57,8 @@
                     <span class='label text-xs'>Nacionalidad</span>
                     <select class='input text-sm' name='nationality'>
                         <option value=''>Seleccionar nacionalidad</option>
-                        @foreach(['Chilena','Argentina','Boliviana','Brasileña','Colombiana','Ecuatoriana','Paraguaya','Peruana','Uruguaya','Venezolana','Haitiana','Dominicana','Cubana','Mexicana','Otra nacionalidad'] as $nationality)
-                            <option @selected($nationality === 'Chilena')>{{ $nationality }}</option>
+                        @foreach($catalogs->get('nationality', collect()) as $nationality)
+                            <option value='{{ $nationality->value }}' @selected(old('nationality') === $nationality->value)>{{ $nationality->label }}</option>
                         @endforeach
                     </select>
                 </label>
@@ -72,8 +72,8 @@
                     <span class='label text-xs'>Pertenencia a pueblo originario</span>
                     <select class='input text-sm' name='indigenous_people'>
                         <option value=''>Seleccionar</option>
-                        @foreach(['Ninguno','Mapuche','Aimara','Rapanui','Atacameño','Quechua','Colla','Diaguita','Alacalufe','Yamana (Yagán)','Otro'] as $people)
-                            <option>{{ $people }}</option>
+                        @foreach($catalogs->get('indigenous_people', collect()) as $people)
+                            <option value='{{ $people->value }}' @selected(old('indigenous_people') === $people->value)>{{ $people->label }}</option>
                         @endforeach
                     </select>
                 </label>
@@ -97,8 +97,8 @@
                     <span class='label text-xs'>Tipo de contrato</span>
                     <select class='input text-sm' name='contract_type'>
                         <option value=''>Seleccionar</option>
-                        @foreach(['Indefinido','Plazo fijo','Honorarios','Contrata','Obra o faena','Reemplazo'] as $contract)
-                            <option>{{ $contract }}</option>
+                        @foreach($catalogs->get('contract_type', collect()) as $contract)
+                            <option value='{{ $contract->value }}' @selected(old('contract_type') === $contract->value)>{{ $contract->label }}</option>
                         @endforeach
                     </select>
                 </label>
@@ -106,8 +106,8 @@
                     <span class='label text-xs'>Tipo de ingreso</span>
                     <select class='input text-sm' name='income_type'>
                         <option value=''>Seleccionar</option>
-                        @foreach(['Remuneración fija','Remuneración variable','Honorarios'] as $income)
-                            <option>{{ $income }}</option>
+                        @foreach($catalogs->get('income_type', collect()) as $income)
+                            <option value='{{ $income->value }}' @selected(old('income_type') === $income->value)>{{ $income->label }}</option>
                         @endforeach
                     </select>
                 </label>
@@ -115,18 +115,17 @@
                     <span class='label text-xs'>Categoría ocupacional</span>
                     <select class='input text-sm' name='occupational_category'>
                         <option value=''>Seleccionar</option>
-                        @foreach(['Trabajador dependiente','Trabajador independiente','Familiar no remunerado','Trabajador voluntario'] as $category)
-                            <option @selected($category === 'Trabajador dependiente')>{{ $category }}</option>
+                        @foreach($catalogs->get('occupational_category', collect()) as $category)
+                            <option value='{{ $category->value }}' @selected(old('occupational_category') === $category->value)>{{ $category->label }}</option>
                         @endforeach
                     </select>
                 </label>
                 <label>
                     <span class='label text-xs'>Jornada</span>
                     <select class='input text-sm' name='work_schedule'>
-                        <option>Diurna</option>
-                        <option>Turnos rotativos</option>
-                        <option>Nocturna</option>
-                        <option>Otra</option>
+                        @foreach($catalogs->get('work_schedule', collect()) as $schedule)
+                            <option value='{{ $schedule->value }}' @selected(old('work_schedule') === $schedule->value)>{{ $schedule->label }}</option>
+                        @endforeach
                     </select>
                 </label>
             </div>
