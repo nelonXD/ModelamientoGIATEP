@@ -9,6 +9,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Support\DashboardData;
 use App\Support\DemoWorkspace;
+use App\Support\OriginalGiatepSchema;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -23,10 +24,12 @@ class DashboardController extends Controller
         $demo = $workspace->data();
         $metrics = $workspace->metrics();
         $adminMetrics = [
-            'pending_requests' => RegistrationRequest::query()->where('status', 'pending')->count(),
-            'active_users' => User::query()->where('status', 'active')->count(),
+            'pending_requests' => OriginalGiatepSchema::isActive() ? 0 : RegistrationRequest::query()->where('status', 'pending')->count(),
+            'active_users' => User::query()->where(User::columnFor('status'), 'active')->count(),
             'roles' => Role::query()->count(),
-            'active_establishments' => Establishment::query()->where('is_active', true)->count(),
+            'active_establishments' => OriginalGiatepSchema::isActive()
+                ? Establishment::query()->count()
+                : Establishment::query()->where('is_active', true)->count(),
         ];
 
         return view('dashboard-demo', compact('user', 'dashboardProfile', 'availableActions', 'demo', 'metrics', 'adminMetrics'));

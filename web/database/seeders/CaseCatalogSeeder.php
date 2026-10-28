@@ -3,7 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\CatalogOption;
+use App\Support\OriginalGiatepSchema;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class CaseCatalogSeeder extends Seeder
 {
@@ -26,6 +28,28 @@ class CaseCatalogSeeder extends Seeder
             'route_type' => ['Domicilio - Trabajo', 'Trabajo - Domicilio', 'Entre dos trabajos'],
             'proof_type' => ['Parte de Carabineros', 'Declaración', 'Testigos', 'Fotografías', 'Otro'],
         ];
+
+        if (OriginalGiatepSchema::isActive()) {
+            $regionId = DB::table('region')->where('Nombre_Region', 'Región del Biobío')->value('Id_Region');
+            if (! $regionId) {
+                $regionId = DB::table('region')->insertGetId(['Nombre_Region' => 'Región del Biobío'], 'Id_Region');
+            }
+
+            foreach ($catalogs['commune'] as $name) {
+                DB::table('comuna')->updateOrInsert(['Nombre_Comuna' => $name], ['Id_Region' => $regionId]);
+            }
+            foreach ($catalogs['case_type'] as $name) {
+                DB::table('tipo_caso')->updateOrInsert(['Nombre_Tipo_Caso' => $name], []);
+            }
+            foreach (['Ninguno', 'Mapuche', 'Aimara', 'Rapanui', 'Atacameño', 'Quechua', 'Colla', 'Diaguita', 'Alacalufe', 'Yamana (Yagán)', 'Otro'] as $name) {
+                DB::table('pueblos_originarios')->updateOrInsert(['Nombre_Pueblo' => $name], []);
+            }
+            foreach (['Condición insegura', 'Acto inseguro', 'Contacto con energía', 'Caída de personas', 'Exposición a agentes'] as $name) {
+                DB::table('evento_que_provoco_el_accidente')->updateOrInsert(['Nombre_Evento' => $name], []);
+            }
+
+            return;
+        }
 
         foreach ($catalogs as $category => $options) {
             foreach ($options as $index => $option) {

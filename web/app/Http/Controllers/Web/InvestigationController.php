@@ -3,13 +3,52 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\Investigation;
 use App\Models\OccupationalCase;
 use App\Support\DemoWorkspace;
+use App\Support\OriginalGiatepSchema;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class InvestigationController extends Controller
 {
+    public function start(Request $request, OccupationalCase $case): RedirectResponse
+    {
+        abort_unless($request->user()->hasPermission('investigations.read'), 403);
+
+        $investigation = DB::transaction(function () use ($case, $request) {
+            $lockedCase = OccupationalCase::query()->whereKey($case->getKey())->lockForUpdate()->firstOrFail();
+            $investigation = $lockedCase->investigation()->first();
+
+            if (! $investigation) {
+                $key = OriginalGiatepSchema::isActive() ? 'Codigo_Investigacion' : 'id';
+                $sequence = (int) Investigation::query()->lockForUpdate()->max($key) + 1;
+                $investigation = $lockedCase->investigation()->create([
+                    'folio' => 'INV-'.now()->year.'-'.str_pad((string) $sequence, 3, '0', STR_PAD_LEFT),
+                    'owner_id' => $request->user()->id,
+                    'status' => 'En investigación',
+                    'final_story' => $lockedCase->narrative,
+                    'created_at' => now(),
+                ]);
+            }
+
+            if (in_array($lockedCase->status, ['Registrado', 'Borrador'], true)) {
+                $lockedCase->update(['status' => 'En investigación']);
+            }
+
+            return $investigation;
+        });
+
+        $caseType = $request->string('case_type')->toString();
+
+        return to_route('modules.investigations.index', array_filter([
+            'case' => $case->folio,
+            'case_type' => $caseType !== '' ? $caseType : null,
+        ]))->with('demo_status', "Investigación {$investigation->folio} iniciada correctamente.");
+    }
+
     /**
      * Handle the incoming request.
      */
@@ -51,7 +90,7 @@ class InvestigationController extends Controller
                         'updated' => $inv->updated_at->toDateString(),
                         'kind' => 'Árbol de causas',
                         'final_story' => $inv->final_story ?: $dbCase->narrative,
-                        'has_facts' => $inv->facts()->exists(),
+                        'has_facts' => ! OriginalGiatepSchema::isActive() && $inv->facts()->exists(),
                         'pending' => 'Completar árbol de causas y validar medidas',
                     ];
                 } else {

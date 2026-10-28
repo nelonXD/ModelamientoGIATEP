@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\OriginalGiatepSchema;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -11,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (OriginalGiatepSchema::isActive()) {
+            return;
+        }
+
         Schema::create('personal_access_tokens', function (Blueprint $table) {
             $table->id();
             $table->morphs('tokenable');
@@ -28,6 +33,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (OriginalGiatepSchema::isActive()) {
+            return;
+        }
+
         Schema::dropIfExists('personal_access_tokens');
     }
 };

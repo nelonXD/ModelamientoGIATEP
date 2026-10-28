@@ -1,0 +1,1175 @@
+[
+  {
+    "id": 6001,
+    "tipo": "establecimiento",
+    "denominacion": "CESFAM DOS DE SEPTIEMBRE"
+  },
+  {
+    "id": 7001,
+    "tipo": "unidad",
+    "establecimiento_id": 6001,
+    "denominacion": "CESFAM DOS DE SEPTIEMBRE > Administración"
+  },
+  {
+    "id": 7002,
+    "tipo": "unidad",
+    "establecimiento_id": 6001,
+    "denominacion": "CESFAM DOS DE SEPTIEMBRE > Atención y Servicios"
+  },
+  {
+    "id": 7003,
+    "tipo": "unidad",
+    "establecimiento_id": 6001,
+    "denominacion": "CESFAM DOS DE SEPTIEMBRE > Prevención de Riesgos"
+  },
+  {
+    "id": 6002,
+    "tipo": "establecimiento",
+    "denominacion": "CCTC"
+  },
+  {
+    "id": 7004,
+    "tipo": "unidad",
+    "establecimiento_id": 6002,
+    "denominacion": "CCTC > Administración"
+  },
+  {
+    "id": 7005,
+    "tipo": "unidad",
+    "establecimiento_id": 6002,
+    "denominacion": "CCTC > Atención y Servicios"
+  },
+  {
+    "id": 7006,
+    "tipo": "unidad",
+    "establecimiento_id": 6002,
+    "denominacion": "CCTC > Prevención de Riesgos"
+  },
+  {
+    "id": 6003,
+    "tipo": "establecimiento",
+    "denominacion": "CESFAM ENTRE RIOS"
+  },
+  {
+    "id": 7007,
+    "tipo": "unidad",
+    "establecimiento_id": 6003,
+    "denominacion": "CESFAM ENTRE RIOS > Administración"
+  },
+  {
+    "id": 7008,
+    "tipo": "unidad",
+    "establecimiento_id": 6003,
+    "denominacion": "CESFAM ENTRE RIOS > Atención y Servicios"
+  },
+  {
+    "id": 7009,
+    "tipo": "unidad",
+    "establecimiento_id": 6003,
+    "denominacion": "CESFAM ENTRE RIOS > Prevención de Riesgos"
+  },
+  {
+    "id": 6004,
+    "tipo": "establecimiento",
+    "denominacion": "SAR ENTRE RIOS"
+  },
+  {
+    "id": 7010,
+    "tipo": "unidad",
+    "establecimiento_id": 6004,
+    "denominacion": "SAR ENTRE RIOS > Administración"
+  },
+  {
+    "id": 7011,
+    "tipo": "unidad",
+    "establecimiento_id": 6004,
+    "denominacion": "SAR ENTRE RIOS > Atención y Servicios"
+  },
+  {
+    "id": 7012,
+    "tipo": "unidad",
+    "establecimiento_id": 6004,
+    "denominacion": "SAR ENTRE RIOS > Prevención de Riesgos"
+  },
+  {
+    "id": 6005,
+    "tipo": "establecimiento",
+    "denominacion": "CECOSF VILLA LOS RIOS"
+  },
+  {
+    "id": 7013,
+    "tipo": "unidad",
+    "establecimiento_id": 6005,
+    "denominacion": "CECOSF VILLA LOS RIOS > Administración"
+  },
+  {
+    "id": 7014,
+    "tipo": "unidad",
+    "establecimiento_id": 6005,
+    "denominacion": "CECOSF VILLA LOS RIOS > Atención y Servicios"
+  },
+  {
+    "id": 7015,
+    "tipo": "unidad",
+    "establecimiento_id": 6005,
+    "denominacion": "CECOSF VILLA LOS RIOS > Prevención de Riesgos"
+  },
+  {
+    "id": 6006,
+    "tipo": "establecimiento",
+    "denominacion": "CESFAM NORORIENTE"
+  },
+  {
+    "id": 7016,
+    "tipo": "unidad",
+    "establecimiento_id": 6006,
+    "denominacion": "CESFAM NORORIENTE > Administración"
+  },
+  {
+    "id": 7017,
+    "tipo": "unidad",
+    "establecimiento_id": 6006,
+    "denominacion": "CESFAM NORORIENTE > Atención y Servicios"
+  },
+  {
+    "id": 7018,
+    "tipo": "unidad",
+    "establecimiento_id": 6006,
+    "denominacion": "CESFAM NORORIENTE > Prevención de Riesgos"
+  },
+  {
+    "id": 6007,
+    "tipo": "establecimiento",
+    "denominacion": "CECOSF GALVARINO"
+  },
+  {
+    "id": 7019,
+    "tipo": "unidad",
+    "establecimiento_id": 6007,
+    "denominacion": "CECOSF GALVARINO > Administración"
+  },
+  {
+    "id": 7020,
+    "tipo": "unidad",
+    "establecimiento_id": 6007,
+    "denominacion": "CECOSF GALVARINO > Atención y Servicios"
+  },
+  {
+    "id": 7021,
+    "tipo": "unidad",
+    "establecimiento_id": 6007,
+    "denominacion": "CECOSF GALVARINO > Prevención de Riesgos"
+  },
+  {
+    "id": 6008,
+    "tipo": "establecimiento",
+    "denominacion": "CRECIN"
+  },
+  {
+    "id": 7022,
+    "tipo": "unidad",
+    "establecimiento_id": 6008,
+    "denominacion": "CRECIN > Administración"
+  },
+  {
+    "id": 7023,
+    "tipo": "unidad",
+    "establecimiento_id": 6008,
+    "denominacion": "CRECIN > Atención y Servicios"
+  },
+  {
+    "id": 7024,
+    "tipo": "unidad",
+    "establecimiento_id": 6008,
+    "denominacion": "CRECIN > Prevención de Riesgos"
+  },
+  {
+    "id": 6009,
+    "tipo": "establecimiento",
+    "denominacion": "CESFAM NORTE"
+  },
+  {
+    "id": 7025,
+    "tipo": "unidad",
+    "establecimiento_id": 6009,
+    "denominacion": "CESFAM NORTE > Administración"
+  },
+  {
+    "id": 7026,
+    "tipo": "unidad",
+    "establecimiento_id": 6009,
+    "denominacion": "CESFAM NORTE > Atención y Servicios"
+  },
+  {
+    "id": 7027,
+    "tipo": "unidad",
+    "establecimiento_id": 6009,
+    "denominacion": "CESFAM NORTE > Prevención de Riesgos"
+  },
+  {
+    "id": 6010,
+    "tipo": "establecimiento",
+    "denominacion": "SAR NORTE"
+  },
+  {
+    "id": 7028,
+    "tipo": "unidad",
+    "establecimiento_id": 6010,
+    "denominacion": "SAR NORTE > Administración"
+  },
+  {
+    "id": 7029,
+    "tipo": "unidad",
+    "establecimiento_id": 6010,
+    "denominacion": "SAR NORTE > Atención y Servicios"
+  },
+  {
+    "id": 7030,
+    "tipo": "unidad",
+    "establecimiento_id": 6010,
+    "denominacion": "SAR NORTE > Prevención de Riesgos"
+  },
+  {
+    "id": 6011,
+    "tipo": "establecimiento",
+    "denominacion": "CECOSF LAS AZALEAS"
+  },
+  {
+    "id": 7031,
+    "tipo": "unidad",
+    "establecimiento_id": 6011,
+    "denominacion": "CECOSF LAS AZALEAS > Administración"
+  },
+  {
+    "id": 7032,
+    "tipo": "unidad",
+    "establecimiento_id": 6011,
+    "denominacion": "CECOSF LAS AZALEAS > Atención y Servicios"
+  },
+  {
+    "id": 7033,
+    "tipo": "unidad",
+    "establecimiento_id": 6011,
+    "denominacion": "CECOSF LAS AZALEAS > Prevención de Riesgos"
+  },
+  {
+    "id": 6012,
+    "tipo": "establecimiento",
+    "denominacion": "CESFAM NUEVO HORIZONTE"
+  },
+  {
+    "id": 7034,
+    "tipo": "unidad",
+    "establecimiento_id": 6012,
+    "denominacion": "CESFAM NUEVO HORIZONTE > Administración"
+  },
+  {
+    "id": 7035,
+    "tipo": "unidad",
+    "establecimiento_id": 6012,
+    "denominacion": "CESFAM NUEVO HORIZONTE > Atención y Servicios"
+  },
+  {
+    "id": 7036,
+    "tipo": "unidad",
+    "establecimiento_id": 6012,
+    "denominacion": "CESFAM NUEVO HORIZONTE > Prevención de Riesgos"
+  },
+  {
+    "id": 6013,
+    "tipo": "establecimiento",
+    "denominacion": "CECOSF LOS PIONEROS"
+  },
+  {
+    "id": 7037,
+    "tipo": "unidad",
+    "establecimiento_id": 6013,
+    "denominacion": "CECOSF LOS PIONEROS > Administración"
+  },
+  {
+    "id": 7038,
+    "tipo": "unidad",
+    "establecimiento_id": 6013,
+    "denominacion": "CECOSF LOS PIONEROS > Atención y Servicios"
+  },
+  {
+    "id": 7039,
+    "tipo": "unidad",
+    "establecimiento_id": 6013,
+    "denominacion": "CECOSF LOS PIONEROS > Prevención de Riesgos"
+  },
+  {
+    "id": 6014,
+    "tipo": "establecimiento",
+    "denominacion": "CECOSF VILLA GENESIS"
+  },
+  {
+    "id": 7040,
+    "tipo": "unidad",
+    "establecimiento_id": 6014,
+    "denominacion": "CECOSF VILLA GENESIS > Administración"
+  },
+  {
+    "id": 7041,
+    "tipo": "unidad",
+    "establecimiento_id": 6014,
+    "denominacion": "CECOSF VILLA GENESIS > Atención y Servicios"
+  },
+  {
+    "id": 7042,
+    "tipo": "unidad",
+    "establecimiento_id": 6014,
+    "denominacion": "CECOSF VILLA GENESIS > Prevención de Riesgos"
+  },
+  {
+    "id": 6015,
+    "tipo": "establecimiento",
+    "denominacion": "CESFAM SANTA FE"
+  },
+  {
+    "id": 7043,
+    "tipo": "unidad",
+    "establecimiento_id": 6015,
+    "denominacion": "CESFAM SANTA FE > Administración"
+  },
+  {
+    "id": 7044,
+    "tipo": "unidad",
+    "establecimiento_id": 6015,
+    "denominacion": "CESFAM SANTA FE > Atención y Servicios"
+  },
+  {
+    "id": 7045,
+    "tipo": "unidad",
+    "establecimiento_id": 6015,
+    "denominacion": "CESFAM SANTA FE > Prevención de Riesgos"
+  },
+  {
+    "id": 6016,
+    "tipo": "establecimiento",
+    "denominacion": "CESFAM SUR"
+  },
+  {
+    "id": 7046,
+    "tipo": "unidad",
+    "establecimiento_id": 6016,
+    "denominacion": "CESFAM SUR > Administración"
+  },
+  {
+    "id": 7047,
+    "tipo": "unidad",
+    "establecimiento_id": 6016,
+    "denominacion": "CESFAM SUR > Atención y Servicios"
+  },
+  {
+    "id": 7048,
+    "tipo": "unidad",
+    "establecimiento_id": 6016,
+    "denominacion": "CESFAM SUR > Prevención de Riesgos"
+  },
+  {
+    "id": 6017,
+    "tipo": "establecimiento",
+    "denominacion": "CECOSF EL PERAL"
+  },
+  {
+    "id": 7049,
+    "tipo": "unidad",
+    "establecimiento_id": 6017,
+    "denominacion": "CECOSF EL PERAL > Administración"
+  },
+  {
+    "id": 7050,
+    "tipo": "unidad",
+    "establecimiento_id": 6017,
+    "denominacion": "CECOSF EL PERAL > Atención y Servicios"
+  },
+  {
+    "id": 7051,
+    "tipo": "unidad",
+    "establecimiento_id": 6017,
+    "denominacion": "CECOSF EL PERAL > Prevención de Riesgos"
+  },
+  {
+    "id": 6018,
+    "tipo": "establecimiento",
+    "denominacion": "CECOSF LOS CARRERA"
+  },
+  {
+    "id": 7052,
+    "tipo": "unidad",
+    "establecimiento_id": 6018,
+    "denominacion": "CECOSF LOS CARRERA > Administración"
+  },
+  {
+    "id": 7053,
+    "tipo": "unidad",
+    "establecimiento_id": 6018,
+    "denominacion": "CECOSF LOS CARRERA > Atención y Servicios"
+  },
+  {
+    "id": 7054,
+    "tipo": "unidad",
+    "establecimiento_id": 6018,
+    "denominacion": "CECOSF LOS CARRERA > Prevención de Riesgos"
+  },
+  {
+    "id": 6019,
+    "tipo": "establecimiento",
+    "denominacion": "MODULO JUNAEB"
+  },
+  {
+    "id": 7055,
+    "tipo": "unidad",
+    "establecimiento_id": 6019,
+    "denominacion": "MODULO JUNAEB > Administración"
+  },
+  {
+    "id": 7056,
+    "tipo": "unidad",
+    "establecimiento_id": 6019,
+    "denominacion": "MODULO JUNAEB > Atención y Servicios"
+  },
+  {
+    "id": 7057,
+    "tipo": "unidad",
+    "establecimiento_id": 6019,
+    "denominacion": "MODULO JUNAEB > Prevención de Riesgos"
+  },
+  {
+    "id": 6020,
+    "tipo": "establecimiento",
+    "denominacion": "UNIDAD PSICOSOCIAL"
+  },
+  {
+    "id": 7058,
+    "tipo": "unidad",
+    "establecimiento_id": 6020,
+    "denominacion": "UNIDAD PSICOSOCIAL > Administración"
+  },
+  {
+    "id": 7059,
+    "tipo": "unidad",
+    "establecimiento_id": 6020,
+    "denominacion": "UNIDAD PSICOSOCIAL > Atención y Servicios"
+  },
+  {
+    "id": 7060,
+    "tipo": "unidad",
+    "establecimiento_id": 6020,
+    "denominacion": "UNIDAD PSICOSOCIAL > Prevención de Riesgos"
+  },
+  {
+    "id": 6021,
+    "tipo": "establecimiento",
+    "denominacion": "DIRECCION COMUNAL DE SALUD"
+  },
+  {
+    "id": 7061,
+    "tipo": "unidad",
+    "establecimiento_id": 6021,
+    "denominacion": "DIRECCION COMUNAL DE SALUD > Administración"
+  },
+  {
+    "id": 7062,
+    "tipo": "unidad",
+    "establecimiento_id": 6021,
+    "denominacion": "DIRECCION COMUNAL DE SALUD > Atención y Servicios"
+  },
+  {
+    "id": 7063,
+    "tipo": "unidad",
+    "establecimiento_id": 6021,
+    "denominacion": "DIRECCION COMUNAL DE SALUD > Prevención de Riesgos"
+  },
+  {
+    "id": 6022,
+    "tipo": "establecimiento",
+    "denominacion": "RESOLUTIVIDAD-DEPTO TECNICO"
+  },
+  {
+    "id": 7064,
+    "tipo": "unidad",
+    "establecimiento_id": 6022,
+    "denominacion": "RESOLUTIVIDAD-DEPTO TECNICO > Administración"
+  },
+  {
+    "id": 7065,
+    "tipo": "unidad",
+    "establecimiento_id": 6022,
+    "denominacion": "RESOLUTIVIDAD-DEPTO TECNICO > Atención y Servicios"
+  },
+  {
+    "id": 7066,
+    "tipo": "unidad",
+    "establecimiento_id": 6022,
+    "denominacion": "RESOLUTIVIDAD-DEPTO TECNICO > Prevención de Riesgos"
+  },
+  {
+    "id": 6023,
+    "tipo": "establecimiento",
+    "denominacion": "DROGUERIA BODECENTER"
+  },
+  {
+    "id": 7067,
+    "tipo": "unidad",
+    "establecimiento_id": 6023,
+    "denominacion": "DROGUERIA BODECENTER > Administración"
+  },
+  {
+    "id": 7068,
+    "tipo": "unidad",
+    "establecimiento_id": 6023,
+    "denominacion": "DROGUERIA BODECENTER > Atención y Servicios"
+  },
+  {
+    "id": 7069,
+    "tipo": "unidad",
+    "establecimiento_id": 6023,
+    "denominacion": "DROGUERIA BODECENTER > Prevención de Riesgos"
+  },
+  {
+    "id": 6024,
+    "tipo": "establecimiento",
+    "denominacion": "BODEGA INSUMOS CLINICOS"
+  },
+  {
+    "id": 7070,
+    "tipo": "unidad",
+    "establecimiento_id": 6024,
+    "denominacion": "BODEGA INSUMOS CLINICOS > Administración"
+  },
+  {
+    "id": 7071,
+    "tipo": "unidad",
+    "establecimiento_id": 6024,
+    "denominacion": "BODEGA INSUMOS CLINICOS > Atención y Servicios"
+  },
+  {
+    "id": 7072,
+    "tipo": "unidad",
+    "establecimiento_id": 6024,
+    "denominacion": "BODEGA INSUMOS CLINICOS > Prevención de Riesgos"
+  },
+  {
+    "id": 6025,
+    "tipo": "establecimiento",
+    "denominacion": "TALLER MAESTROS"
+  },
+  {
+    "id": 7073,
+    "tipo": "unidad",
+    "establecimiento_id": 6025,
+    "denominacion": "TALLER MAESTROS > Administración"
+  },
+  {
+    "id": 7074,
+    "tipo": "unidad",
+    "establecimiento_id": 6025,
+    "denominacion": "TALLER MAESTROS > Atención y Servicios"
+  },
+  {
+    "id": 7075,
+    "tipo": "unidad",
+    "establecimiento_id": 6025,
+    "denominacion": "TALLER MAESTROS > Prevención de Riesgos"
+  },
+  {
+    "id": 6026,
+    "tipo": "establecimiento",
+    "denominacion": "BODEGA DE ABASTECIMIENTO"
+  },
+  {
+    "id": 7076,
+    "tipo": "unidad",
+    "establecimiento_id": 6026,
+    "denominacion": "BODEGA DE ABASTECIMIENTO > Administración"
+  },
+  {
+    "id": 7077,
+    "tipo": "unidad",
+    "establecimiento_id": 6026,
+    "denominacion": "BODEGA DE ABASTECIMIENTO > Atención y Servicios"
+  },
+  {
+    "id": 7078,
+    "tipo": "unidad",
+    "establecimiento_id": 6026,
+    "denominacion": "BODEGA DE ABASTECIMIENTO > Prevención de Riesgos"
+  },
+  {
+    "id": 6027,
+    "tipo": "establecimiento",
+    "denominacion": "BODEGA DE ACTIVO FIJO"
+  },
+  {
+    "id": 7079,
+    "tipo": "unidad",
+    "establecimiento_id": 6027,
+    "denominacion": "BODEGA DE ACTIVO FIJO > Administración"
+  },
+  {
+    "id": 7080,
+    "tipo": "unidad",
+    "establecimiento_id": 6027,
+    "denominacion": "BODEGA DE ACTIVO FIJO > Atención y Servicios"
+  },
+  {
+    "id": 7081,
+    "tipo": "unidad",
+    "establecimiento_id": 6027,
+    "denominacion": "BODEGA DE ACTIVO FIJO > Prevención de Riesgos"
+  },
+  {
+    "id": 6028,
+    "tipo": "establecimiento",
+    "denominacion": "LABORATORIO DENTAL"
+  },
+  {
+    "id": 7082,
+    "tipo": "unidad",
+    "establecimiento_id": 6028,
+    "denominacion": "LABORATORIO DENTAL > Administración"
+  },
+  {
+    "id": 7083,
+    "tipo": "unidad",
+    "establecimiento_id": 6028,
+    "denominacion": "LABORATORIO DENTAL > Atención y Servicios"
+  },
+  {
+    "id": 7084,
+    "tipo": "unidad",
+    "establecimiento_id": 6028,
+    "denominacion": "LABORATORIO DENTAL > Prevención de Riesgos"
+  },
+  {
+    "id": 6029,
+    "tipo": "establecimiento",
+    "denominacion": "LICEO COMERCIAL"
+  },
+  {
+    "id": 7085,
+    "tipo": "unidad",
+    "establecimiento_id": 6029,
+    "denominacion": "LICEO COMERCIAL > Administración"
+  },
+  {
+    "id": 7086,
+    "tipo": "unidad",
+    "establecimiento_id": 6029,
+    "denominacion": "LICEO COMERCIAL > Atención y Servicios"
+  },
+  {
+    "id": 7087,
+    "tipo": "unidad",
+    "establecimiento_id": 6029,
+    "denominacion": "LICEO COMERCIAL > Prevención de Riesgos"
+  },
+  {
+    "id": 6030,
+    "tipo": "establecimiento",
+    "denominacion": "LICEO BICENTENARIO"
+  },
+  {
+    "id": 7088,
+    "tipo": "unidad",
+    "establecimiento_id": 6030,
+    "denominacion": "LICEO BICENTENARIO > Administración"
+  },
+  {
+    "id": 7089,
+    "tipo": "unidad",
+    "establecimiento_id": 6030,
+    "denominacion": "LICEO BICENTENARIO > Atención y Servicios"
+  },
+  {
+    "id": 7090,
+    "tipo": "unidad",
+    "establecimiento_id": 6030,
+    "denominacion": "LICEO BICENTENARIO > Prevención de Riesgos"
+  },
+  {
+    "id": 6031,
+    "tipo": "establecimiento",
+    "denominacion": "LICEO INDUSTRIAL"
+  },
+  {
+    "id": 7091,
+    "tipo": "unidad",
+    "establecimiento_id": 6031,
+    "denominacion": "LICEO INDUSTRIAL > Administración"
+  },
+  {
+    "id": 7092,
+    "tipo": "unidad",
+    "establecimiento_id": 6031,
+    "denominacion": "LICEO INDUSTRIAL > Atención y Servicios"
+  },
+  {
+    "id": 7093,
+    "tipo": "unidad",
+    "establecimiento_id": 6031,
+    "denominacion": "LICEO INDUSTRIAL > Prevención de Riesgos"
+  },
+  {
+    "id": 6032,
+    "tipo": "establecimiento",
+    "denominacion": "LICEO TECNICO"
+  },
+  {
+    "id": 7094,
+    "tipo": "unidad",
+    "establecimiento_id": 6032,
+    "denominacion": "LICEO TECNICO > Administración"
+  },
+  {
+    "id": 7095,
+    "tipo": "unidad",
+    "establecimiento_id": 6032,
+    "denominacion": "LICEO TECNICO > Atención y Servicios"
+  },
+  {
+    "id": 7096,
+    "tipo": "unidad",
+    "establecimiento_id": 6032,
+    "denominacion": "LICEO TECNICO > Prevención de Riesgos"
+  },
+  {
+    "id": 6033,
+    "tipo": "establecimiento",
+    "denominacion": "CEMUJER"
+  },
+  {
+    "id": 7097,
+    "tipo": "unidad",
+    "establecimiento_id": 6033,
+    "denominacion": "CEMUJER > Administración"
+  },
+  {
+    "id": 7098,
+    "tipo": "unidad",
+    "establecimiento_id": 6033,
+    "denominacion": "CEMUJER > Atención y Servicios"
+  },
+  {
+    "id": 7099,
+    "tipo": "unidad",
+    "establecimiento_id": 6033,
+    "denominacion": "CEMUJER > Prevención de Riesgos"
+  },
+  {
+    "id": 6034,
+    "tipo": "establecimiento",
+    "denominacion": "DPTO DESARROLLO DE PERSONAS Y CALIDAD DE VIDA"
+  },
+  {
+    "id": 7100,
+    "tipo": "unidad",
+    "establecimiento_id": 6034,
+    "denominacion": "DPTO DESARROLLO DE PERSONAS Y CALIDAD DE VIDA > Administración"
+  },
+  {
+    "id": 7101,
+    "tipo": "unidad",
+    "establecimiento_id": 6034,
+    "denominacion": "DPTO DESARROLLO DE PERSONAS Y CALIDAD DE VIDA > Atención y Servicios"
+  },
+  {
+    "id": 7102,
+    "tipo": "unidad",
+    "establecimiento_id": 6034,
+    "denominacion": "DPTO DESARROLLO DE PERSONAS Y CALIDAD DE VIDA > Prevención de Riesgos"
+  },
+  {
+    "id": 6035,
+    "tipo": "establecimiento",
+    "denominacion": "DPTO RURAL"
+  },
+  {
+    "id": 7103,
+    "tipo": "unidad",
+    "establecimiento_id": 6035,
+    "denominacion": "DPTO RURAL > Administración"
+  },
+  {
+    "id": 7104,
+    "tipo": "unidad",
+    "establecimiento_id": 6035,
+    "denominacion": "DPTO RURAL > Atención y Servicios"
+  },
+  {
+    "id": 7105,
+    "tipo": "unidad",
+    "establecimiento_id": 6035,
+    "denominacion": "DPTO RURAL > Prevención de Riesgos"
+  },
+  {
+    "id": 6036,
+    "tipo": "establecimiento",
+    "denominacion": "UNIDAD DE SALUD DEL PERSONAL"
+  },
+  {
+    "id": 7106,
+    "tipo": "unidad",
+    "establecimiento_id": 6036,
+    "denominacion": "UNIDAD DE SALUD DEL PERSONAL > Administración"
+  },
+  {
+    "id": 7107,
+    "tipo": "unidad",
+    "establecimiento_id": 6036,
+    "denominacion": "UNIDAD DE SALUD DEL PERSONAL > Atención y Servicios"
+  },
+  {
+    "id": 7108,
+    "tipo": "unidad",
+    "establecimiento_id": 6036,
+    "denominacion": "UNIDAD DE SALUD DEL PERSONAL > Prevención de Riesgos"
+  },
+  {
+    "id": 6037,
+    "tipo": "establecimiento",
+    "denominacion": "POSTA LOS MOLINOS"
+  },
+  {
+    "id": 7109,
+    "tipo": "unidad",
+    "establecimiento_id": 6037,
+    "denominacion": "POSTA LOS MOLINOS > Administración"
+  },
+  {
+    "id": 7110,
+    "tipo": "unidad",
+    "establecimiento_id": 6037,
+    "denominacion": "POSTA LOS MOLINOS > Atención y Servicios"
+  },
+  {
+    "id": 7111,
+    "tipo": "unidad",
+    "establecimiento_id": 6037,
+    "denominacion": "POSTA LOS MOLINOS > Prevención de Riesgos"
+  },
+  {
+    "id": 6038,
+    "tipo": "establecimiento",
+    "denominacion": "POSTA LOS ROBLES"
+  },
+  {
+    "id": 7112,
+    "tipo": "unidad",
+    "establecimiento_id": 6038,
+    "denominacion": "POSTA LOS ROBLES > Administración"
+  },
+  {
+    "id": 7113,
+    "tipo": "unidad",
+    "establecimiento_id": 6038,
+    "denominacion": "POSTA LOS ROBLES > Atención y Servicios"
+  },
+  {
+    "id": 7114,
+    "tipo": "unidad",
+    "establecimiento_id": 6038,
+    "denominacion": "POSTA LOS ROBLES > Prevención de Riesgos"
+  },
+  {
+    "id": 6039,
+    "tipo": "establecimiento",
+    "denominacion": "POSTA LOS TRONCOS"
+  },
+  {
+    "id": 7115,
+    "tipo": "unidad",
+    "establecimiento_id": 6039,
+    "denominacion": "POSTA LOS TRONCOS > Administración"
+  },
+  {
+    "id": 7116,
+    "tipo": "unidad",
+    "establecimiento_id": 6039,
+    "denominacion": "POSTA LOS TRONCOS > Atención y Servicios"
+  },
+  {
+    "id": 7117,
+    "tipo": "unidad",
+    "establecimiento_id": 6039,
+    "denominacion": "POSTA LOS TRONCOS > Prevención de Riesgos"
+  },
+  {
+    "id": 6040,
+    "tipo": "establecimiento",
+    "denominacion": "POSTA DICAHUE"
+  },
+  {
+    "id": 7118,
+    "tipo": "unidad",
+    "establecimiento_id": 6040,
+    "denominacion": "POSTA DICAHUE > Administración"
+  },
+  {
+    "id": 7119,
+    "tipo": "unidad",
+    "establecimiento_id": 6040,
+    "denominacion": "POSTA DICAHUE > Atención y Servicios"
+  },
+  {
+    "id": 7120,
+    "tipo": "unidad",
+    "establecimiento_id": 6040,
+    "denominacion": "POSTA DICAHUE > Prevención de Riesgos"
+  },
+  {
+    "id": 6041,
+    "tipo": "establecimiento",
+    "denominacion": "POSTA ALBORADA"
+  },
+  {
+    "id": 7121,
+    "tipo": "unidad",
+    "establecimiento_id": 6041,
+    "denominacion": "POSTA ALBORADA > Administración"
+  },
+  {
+    "id": 7122,
+    "tipo": "unidad",
+    "establecimiento_id": 6041,
+    "denominacion": "POSTA ALBORADA > Atención y Servicios"
+  },
+  {
+    "id": 7123,
+    "tipo": "unidad",
+    "establecimiento_id": 6041,
+    "denominacion": "POSTA ALBORADA > Prevención de Riesgos"
+  },
+  {
+    "id": 6042,
+    "tipo": "establecimiento",
+    "denominacion": "POSTA MESAMAVIDA"
+  },
+  {
+    "id": 7124,
+    "tipo": "unidad",
+    "establecimiento_id": 6042,
+    "denominacion": "POSTA MESAMAVIDA > Administración"
+  },
+  {
+    "id": 7125,
+    "tipo": "unidad",
+    "establecimiento_id": 6042,
+    "denominacion": "POSTA MESAMAVIDA > Atención y Servicios"
+  },
+  {
+    "id": 7126,
+    "tipo": "unidad",
+    "establecimiento_id": 6042,
+    "denominacion": "POSTA MESAMAVIDA > Prevención de Riesgos"
+  },
+  {
+    "id": 6043,
+    "tipo": "establecimiento",
+    "denominacion": "POSTA SAN CARLOS"
+  },
+  {
+    "id": 7127,
+    "tipo": "unidad",
+    "establecimiento_id": 6043,
+    "denominacion": "POSTA SAN CARLOS > Administración"
+  },
+  {
+    "id": 7128,
+    "tipo": "unidad",
+    "establecimiento_id": 6043,
+    "denominacion": "POSTA SAN CARLOS > Atención y Servicios"
+  },
+  {
+    "id": 7129,
+    "tipo": "unidad",
+    "establecimiento_id": 6043,
+    "denominacion": "POSTA SAN CARLOS > Prevención de Riesgos"
+  },
+  {
+    "id": 6044,
+    "tipo": "establecimiento",
+    "denominacion": "POSTA LLANO BLANCO"
+  },
+  {
+    "id": 7130,
+    "tipo": "unidad",
+    "establecimiento_id": 6044,
+    "denominacion": "POSTA LLANO BLANCO > Administración"
+  },
+  {
+    "id": 7131,
+    "tipo": "unidad",
+    "establecimiento_id": 6044,
+    "denominacion": "POSTA LLANO BLANCO > Atención y Servicios"
+  },
+  {
+    "id": 7132,
+    "tipo": "unidad",
+    "establecimiento_id": 6044,
+    "denominacion": "POSTA LLANO BLANCO > Prevención de Riesgos"
+  },
+  {
+    "id": 6045,
+    "tipo": "establecimiento",
+    "denominacion": "POSTA CHACAYAL NORTE"
+  },
+  {
+    "id": 7133,
+    "tipo": "unidad",
+    "establecimiento_id": 6045,
+    "denominacion": "POSTA CHACAYAL NORTE > Administración"
+  },
+  {
+    "id": 7134,
+    "tipo": "unidad",
+    "establecimiento_id": 6045,
+    "denominacion": "POSTA CHACAYAL NORTE > Atención y Servicios"
+  },
+  {
+    "id": 7135,
+    "tipo": "unidad",
+    "establecimiento_id": 6045,
+    "denominacion": "POSTA CHACAYAL NORTE > Prevención de Riesgos"
+  },
+  {
+    "id": 6046,
+    "tipo": "establecimiento",
+    "denominacion": "POSTA CHACAYAL SUR"
+  },
+  {
+    "id": 7136,
+    "tipo": "unidad",
+    "establecimiento_id": 6046,
+    "denominacion": "POSTA CHACAYAL SUR > Administración"
+  },
+  {
+    "id": 7137,
+    "tipo": "unidad",
+    "establecimiento_id": 6046,
+    "denominacion": "POSTA CHACAYAL SUR > Atención y Servicios"
+  },
+  {
+    "id": 7138,
+    "tipo": "unidad",
+    "establecimiento_id": 6046,
+    "denominacion": "POSTA CHACAYAL SUR > Prevención de Riesgos"
+  },
+  {
+    "id": 6047,
+    "tipo": "establecimiento",
+    "denominacion": "POSTA EL DURAZNO"
+  },
+  {
+    "id": 7139,
+    "tipo": "unidad",
+    "establecimiento_id": 6047,
+    "denominacion": "POSTA EL DURAZNO > Administración"
+  },
+  {
+    "id": 7140,
+    "tipo": "unidad",
+    "establecimiento_id": 6047,
+    "denominacion": "POSTA EL DURAZNO > Atención y Servicios"
+  },
+  {
+    "id": 7141,
+    "tipo": "unidad",
+    "establecimiento_id": 6047,
+    "denominacion": "POSTA EL DURAZNO > Prevención de Riesgos"
+  },
+  {
+    "id": 6048,
+    "tipo": "establecimiento",
+    "denominacion": "POSTA SALTO DEL LAJA"
+  },
+  {
+    "id": 7142,
+    "tipo": "unidad",
+    "establecimiento_id": 6048,
+    "denominacion": "POSTA SALTO DEL LAJA > Administración"
+  },
+  {
+    "id": 7143,
+    "tipo": "unidad",
+    "establecimiento_id": 6048,
+    "denominacion": "POSTA SALTO DEL LAJA > Atención y Servicios"
+  },
+  {
+    "id": 7144,
+    "tipo": "unidad",
+    "establecimiento_id": 6048,
+    "denominacion": "POSTA SALTO DEL LAJA > Prevención de Riesgos"
+  },
+  {
+    "id": 6049,
+    "tipo": "establecimiento",
+    "denominacion": "POSTA SAN GERARDO"
+  },
+  {
+    "id": 7145,
+    "tipo": "unidad",
+    "establecimiento_id": 6049,
+    "denominacion": "POSTA SAN GERARDO > Administración"
+  },
+  {
+    "id": 7146,
+    "tipo": "unidad",
+    "establecimiento_id": 6049,
+    "denominacion": "POSTA SAN GERARDO > Atención y Servicios"
+  },
+  {
+    "id": 7147,
+    "tipo": "unidad",
+    "establecimiento_id": 6049,
+    "denominacion": "POSTA SAN GERARDO > Prevención de Riesgos"
+  },
+  {
+    "id": 6050,
+    "tipo": "establecimiento",
+    "denominacion": "POSTA MILLANTU"
+  },
+  {
+    "id": 7148,
+    "tipo": "unidad",
+    "establecimiento_id": 6050,
+    "denominacion": "POSTA MILLANTU > Administración"
+  },
+  {
+    "id": 7149,
+    "tipo": "unidad",
+    "establecimiento_id": 6050,
+    "denominacion": "POSTA MILLANTU > Atención y Servicios"
+  },
+  {
+    "id": 7150,
+    "tipo": "unidad",
+    "establecimiento_id": 6050,
+    "denominacion": "POSTA MILLANTU > Prevención de Riesgos"
+  },
+  {
+    "id": 6051,
+    "tipo": "establecimiento",
+    "denominacion": "POSTA VIRQUENCO"
+  },
+  {
+    "id": 7151,
+    "tipo": "unidad",
+    "establecimiento_id": 6051,
+    "denominacion": "POSTA VIRQUENCO > Administración"
+  },
+  {
+    "id": 7152,
+    "tipo": "unidad",
+    "establecimiento_id": 6051,
+    "denominacion": "POSTA VIRQUENCO > Atención y Servicios"
+  },
+  {
+    "id": 7153,
+    "tipo": "unidad",
+    "establecimiento_id": 6051,
+    "denominacion": "POSTA VIRQUENCO > Prevención de Riesgos"
+  }
+]

@@ -114,8 +114,8 @@ class InvestigationCatalogSeeder extends Seeder
     private function seedPrompt(): void
     {
         DB::table('ai_prompts')->updateOrInsert(['nombre' => 'analisis-investigacion'], [
-            'version' => 1, 'modelo' => 'qwen2.5-coder-7b-instruct', 'activo' => true,
-            'prompt_base' => 'Analiza exclusivamente antecedentes verificados. Separa hechos observables, construye relaciones causales sin atribuir culpa y selecciona únicamente códigos cuya glosa principal describa directamente el mecanismo o condición del relato. No selecciones por coincidencias de palabras secundarias. Propón medidas concretas según la jerarquía de controles. No inventes personas, fechas, diagnósticos ni códigos.',
+            'version' => 3, 'modelo' => 'qwen2.5-7b-instruct', 'activo' => true,
+            'prompt_base' => 'Aplica la metodología del Árbol de Causas con trazabilidad por fuente. Distingue eventos puntuales, condiciones permanentes, declaraciones, hechos corroborados y datos pendientes; declarado no significa verificado, y una cita no equivale por sí sola a corroboración. Produce por separado hechos cronológicos, vacíos de información y árbol retrospectivo desde la lesión. No incluyas falta de recuerdo o de inspección como hechos: regístralas como verificaciones pendientes. El árbol usa solo hechos revisados, vincula antecedente→consecuencia y clasifica cadena, conjunción (antecedentes independientes conjuntamente necesarios) o disyunción; valida cada vínculo con la prueba contrafactual. No confundas cronología con causalidad, no fuerces conectividad ni inventes hechos, evidencia, relaciones, diagnósticos, normas infringidas ni responsabilidades. Usa exclusivamente códigos de la matriz local entregada y solo si están respaldados por hechos. Propón medidas concretas y verificables ligadas a nodos causales, priorizando controles de mayor jerarquía. Explicita fuentes, contradicciones y vacíos; la salida es una propuesta editable que requiere revisión humana.',
             'created_at' => now(), 'updated_at' => now(),
         ]);
     }

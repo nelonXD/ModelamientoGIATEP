@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -38,6 +39,7 @@ class AuthenticationTest extends TestCase
     public function test_password_step_accepts_only_an_active_registered_rut(): void
     {
         User::factory()->create(['rut' => '12345678-5', 'status' => 'active']);
+        Http::fake(['*' => Http::response(['message' => 'No encontrado'], 404)]);
 
         $this->postJson('/login/verificar-rut', ['rut' => '12.345.678-5'])
             ->assertOk()

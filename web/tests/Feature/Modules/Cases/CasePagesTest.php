@@ -9,6 +9,8 @@ use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\CaseCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -44,7 +46,11 @@ class CasePagesTest extends TestCase
             ->assertOk()
             ->assertSee('Casos registrados')
             ->assertSee('Registrar caso')
-            ->assertSee('Ver antecedentes')
+            ->assertSee('Doble clic para ver antecedentes')
+            ->assertSee('Editar caso')
+            ->assertSee('Ver evidencia')
+            ->assertSee(route('modules.cases.evidence.index', ['case' => 'GIATEP-2026-001']), false)
+            ->assertSee(route('modules.cases.edit', ['case' => 'GIATEP-2026-001']), false)
             ->assertSee('Editar tipo de caso')
             ->assertSee('Tipo de caso')
             ->assertSee('¿Deseas continuar?')
@@ -52,7 +58,7 @@ class CasePagesTest extends TestCase
             ->assertSee('Formulario por actualizar')
             ->assertSee('Evidencias adjuntas')
             ->assertSee('Iniciar investigación')
-            ->assertSee(route('modules.investigations.index', ['case' => 'GIATEP-2026-001']), false);
+            ->assertSee(route('modules.investigations.start', ['case' => 'GIATEP-2026-001']), false);
 
         $this->actingAs($user)
             ->get(route('modules.cases.create'))
@@ -91,6 +97,68 @@ class CasePagesTest extends TestCase
         $this->actingAs($user)->get(route('modules.cases.create'))->assertForbidden();
     }
 
+    public function test_authorized_role_can_edit_and_update_a_case(): void
+    {
+        Storage::fake('local');
+        $user = $this->userWithRole('prevencion', 'Prevencionista');
+        $case = $this->occupationalCase($user);
+
+        $this->actingAs($user)
+            ->get(route('modules.cases.edit', ['case' => $case->folio]))
+            ->assertOk()
+            ->assertSee('Editar caso GIATEP-2026-001')
+            ->assertSee("value='Camila Soto Rojas'", false)
+            ->assertDontSee('Agregar nueva evidencia')
+            ->assertSee('Guardar cambios');
+
+        $response = $this->actingAs($user)->patch(route('modules.cases.update', ['case' => $case->folio]), [
+            'employer_name' => 'Dirección Comunal de Salud',
+            'employer_rut' => '69.170.102-6',
+            'employer_address' => 'Avenida Central 1250',
+            'employer_commune' => 'Los Ángeles',
+            'economic_activity' => 'Salud pública',
+            'company_type' => 'Principal',
+            'administrator' => 'ACHS',
+            'establishment_id' => $case->establishment_id,
+            'worker_name' => 'Camila Soto Actualizada',
+            'worker_rut' => '17.456.321-8',
+            'job_title' => 'Técnica en enfermería',
+            'workplace' => 'Urgencias',
+            'case_type' => 'Accidente de trabajo',
+            'event_date' => now()->subDay()->toDateString(),
+            'event_time' => '10:30',
+            'event_location' => 'Acceso principal',
+            'narrative' => 'Relato actualizado con los nuevos antecedentes disponibles.',
+        ]);
+
+        $response->assertRedirect(route('modules.cases.index'));
+        $this->assertDatabaseHas('occupational_cases', [
+            'id' => $case->id,
+            'worker_name' => 'Camila Soto Actualizada',
+            'workplace' => 'Urgencias',
+            'event_location' => 'Acceso principal',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('modules.cases.evidence.index', ['case' => $case->folio]))
+            ->assertOk()
+            ->assertSee('Evidencias del caso')
+            ->assertSee('Agregar nueva evidencia')
+            ->assertDontSee('Datos del empleador');
+
+        $this->actingAs($user)->post(route('modules.cases.evidence.store', ['case' => $case->folio]), [
+            'evidence_files' => [UploadedFile::fake()->create('informe-medico.pdf', 100, 'application/pdf')],
+        ])->assertRedirect(route('modules.cases.evidence.index', ['case' => $case->folio]));
+
+        $evidence = $case->evidences()->sole();
+        Storage::disk('local')->assertExists($evidence->path);
+
+        $this->actingAs($user)
+            ->get(route('modules.cases.evidence.download', ['case' => $case->folio, 'evidence' => $evidence->id]))
+            ->assertOk()
+            ->assertDownload('informe-medico.pdf');
+    }
+
     public function test_observations_button_is_available_to_an_authorized_role(): void
     {
         $user = $this->userWithRole('delegado', 'Delegado de Seguridad');
@@ -103,7 +171,7 @@ class CasePagesTest extends TestCase
             ->assertSee(route('modules.observations.index', ['case' => 'GIATEP-2026-001']), false);
     }
 
-    public function test_case_with_initiated_investigation_has_investigation_button_disabled(): void
+    public function test_case_with_initiated_investigation_only_shows_the_active_investigation_link(): void
     {
         $user = $this->userWithRole('delegado', 'Delegado de Seguridad');
         $case = $this->occupationalCase($user);
@@ -120,8 +188,8 @@ class CasePagesTest extends TestCase
         $this->actingAs($user)
             ->get(route('modules.cases.index'))
             ->assertOk()
-            ->assertSee('data-investigation-disabled', false)
-            ->assertSee('disabled', false)
+            ->assertDontSee('data-investigation-disabled', false)
+            ->assertDontSee('title="Este caso ya cuenta con una investigación iniciada', false)
             ->assertSee('Ver expediente en curso (INV-2026-001)')
             ->assertDontSee('href="'.route('modules.investigations.index', ['case' => 'GIATEP-2026-001', 'case_type' => 'Accidente del trabajo']).'"', false);
     }
@@ -136,12 +204,9 @@ class CasePagesTest extends TestCase
             ->assertOk()
             ->assertSee('INV-NUEVA')
             ->assertSee('Información recuperada del caso GIATEP-2026-001')
-            ->assertSee('Entorno de pruebas guiado')
-            ->assertSee('Completitud metodológica')
-            ->assertSee('Recopilación')
-            ->assertSee('Construcción del árbol')
-            ->assertSee('Administración')
-            ->assertSee('Evidencia testimonial registrada')
+            ->assertDontSee('Entorno de pruebas guiado')
+            ->assertDontSee('Completitud metodológica')
+            ->assertDontSee('Evidencia testimonial registrada')
             ->assertSee('name="worker_name"', false)
             ->assertSee('value="Camila Soto Rojas"', false)
             ->assertSee('Entrevistas')
@@ -152,12 +217,11 @@ class CasePagesTest extends TestCase
             ->assertSee('data-interview-validation', false)
             ->assertSee('Factores musculoesqueléticos')
             ->assertSee('Organización del trabajo')
-            ->assertSee('Analizar relato final')
-            ->assertSee('Debe ser redactado y revisado por el prevencionista')
-            ->assertSee('Control de calidad del relato')
-            ->assertSee('Por qué verificable')
-            ->assertSee('data-story-quality', false)
-            ->assertSee('Hechos detectados')
+            ->assertSee('Generar borrador con el modelo seleccionado')
+            ->assertSee('El texto generado es solo una propuesta')
+            ->assertDontSee('Control de calidad del relato')
+            ->assertDontSee('data-story-quality', false)
+            ->assertSee('Hechos del relato')
             ->assertSee('Árbol de causas propuesto')
             ->assertSee('Medidas propuestas')
             ->assertSee('Guardar propuesta')
@@ -216,6 +280,95 @@ class CasePagesTest extends TestCase
             ->get(route('modules.cases.index'))
             ->assertOk()
             ->assertSee('GIATEP-'.now()->year.'-001');
+    }
+
+    public function test_authorized_user_can_store_a_case_with_extended_details(): void
+    {
+        $user = $this->userWithRole('prevencion', 'Prevencionista');
+        $establishment = Establishment::factory()->create(['name' => 'CESFAM Nororiente']);
+
+        $response = $this->actingAs($user)->post(route('modules.cases.store'), [
+            'employer_name' => 'CMPC',
+            'employer_rut' => '69.170.100-K',
+            'employer_address' => 'Balmaceda 722',
+            'employer_commune' => 'Laja',
+            'employer_phone' => '936606218',
+            'economic_activity' => 'Salud municipal',
+            'company_type' => 'Principal',
+            'administrator' => 'ACHS',
+            'establishment_id' => $establishment->id,
+            'worker_name' => 'Claudia Rubilar',
+            'worker_rut' => '21.312.312-3',
+            'worker_address' => 'Balmaceda 722',
+            'worker_commune' => 'Laja',
+            'phone' => '936606218',
+            'worker_sex' => 'Hombre',
+            'birth_date' => '1994-07-15',
+            'nationality' => 'Chilena',
+            'job_title' => 'Supervisor',
+            'workplace' => 'Cesfam Nororiente',
+            'contract_type' => 'Indefinido',
+            'occupational_category' => 'Trabajador dependiente',
+            'hire_date' => '2023-06-15',
+            'income_type' => 'Remuneración fija',
+            'work_schedule' => 'Diurna',
+            'indigenous_people' => 'Ninguno',
+            'case_type' => 'Accidente de trabajo',
+            'event_date' => '2026-10-15',
+            'event_time' => '12:30',
+            'event_location' => 'Box Odontológico Cesfam Nororiente',
+            'narrative' => 'Relato detallado del evento ocurrido en box odontológico.',
+            'witnesses' => 'Testigo 1',
+        ]);
+
+        $response->assertRedirect(route('modules.cases.index'));
+        $createdCase = OccupationalCase::query()->where('worker_rut', '21.312.312-3')->first();
+        $this->assertNotNull($createdCase);
+        $this->assertSame('Remuneración fija', $createdCase->details['income_type']);
+        $this->assertSame('Diurna', $createdCase->details['work_schedule']);
+        $this->assertSame('Ninguno', $createdCase->details['indigenous_people']);
+        $this->assertSame('936606218', $createdCase->worker_phone);
+    }
+
+    public function test_authorized_user_can_store_a_disease_case_with_disease_details(): void
+    {
+        $user = $this->userWithRole('prevencion', 'Prevencionista');
+        $establishment = Establishment::factory()->create(['name' => 'CESFAM Nororiente']);
+
+        $response = $this->actingAs($user)->post(route('modules.cases.store'), [
+            'employer_name' => 'Dirección Comunal de Salud',
+            'employer_rut' => '69.170.102-6',
+            'employer_address' => 'Avenida Central 1250',
+            'employer_commune' => 'Los Ángeles',
+            'economic_activity' => 'Salud pública',
+            'company_type' => 'Principal',
+            'administrator' => 'ACHS',
+            'establishment_id' => $establishment->id,
+            'worker_name' => 'Marcela Gomez',
+            'worker_rut' => '15.987.654-2',
+            'job_title' => 'Kinesióloga',
+            'workplace' => 'Sala de Rehabilitación',
+            'case_type' => 'Enfermedad profesional',
+            'event_date' => '2026-10-10',
+            'narrative' => 'Dolor crónico en hombro derecho tras movimientos repetitivos continuos.',
+            'affected_body_part' => 'Hombro derecho',
+            'symptom_duration' => '3 meses',
+            'previous_symptoms' => 'No',
+            'activity_when_symptoms_began' => 'Terapia física con pacientes de alta complejidad',
+            'symptom_job_position' => 'Box de Kinesioterapia',
+            'coworkers_same_symptoms' => 'Sí',
+            'suspected_work_agents' => 'Movimientos repetitivos y posturas forzadas',
+            'exposure_duration' => '2 años',
+        ]);
+
+        $response->assertRedirect(route('modules.cases.index'));
+        $createdCase = OccupationalCase::query()->where('worker_rut', '15.987.654-2')->first();
+        $this->assertNotNull($createdCase);
+        $this->assertSame('Enfermedad profesional', $createdCase->case_type);
+        $this->assertSame('Hombro derecho', $createdCase->details['affected_body_part']);
+        $this->assertSame('3 meses', $createdCase->details['symptom_duration']);
+        $this->assertSame('Terapia física con pacientes de alta complejidad', $createdCase->details['activity_when_symptoms_began']);
+        $this->assertSame('Movimientos repetitivos y posturas forzadas', $createdCase->details['suspected_work_agents']);
     }
 
     public function test_unauthenticated_user_is_redirected_from_case_pages(): void

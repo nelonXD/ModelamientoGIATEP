@@ -13,6 +13,58 @@ class DemoWorkspace
     /** @return array<string, mixed> */
     public function data(): array
     {
+        if (OriginalGiatepSchema::isActive()) {
+            $storedCases = OccupationalCase::query()->with(['establishment', 'evidences', 'investigation.owner'])->orderByDesc('Id_Caso')->get();
+            $establishments = Establishment::query()->orderBy('Nombre_Dependencia')->pluck('Nombre_Dependencia')->all();
+            $cases = $storedCases->map(fn (OccupationalCase $case): array => [
+                'id' => $case->folio, 'type' => $case->case_type, 'worker' => $case->worker_name, 'rut' => $case->worker_rut,
+                'job_title' => $case->job_title ?? 'Funcionario/a de salud', 'phone' => $case->worker_phone ?? '',
+                'establishment' => $case->establishment?->name ?? '', 'workplace' => $case->workplace ?? '',
+                'employer_name' => $case->employer_name ?? '', 'employer_rut' => $case->employer_rut ?? '',
+                'employer_address' => $case->employer_address ?? '', 'administrator' => $case->administrator ?? '',
+                'economic_activity' => $case->economic_activity ?? '', 'date' => $case->event_date?->toDateString() ?? '',
+                'time' => $case->event_time ? substr((string) $case->event_time, 0, 5) : '', 'location' => $case->event_location ?? '',
+                'status' => $case->status, 'qualification' => 'Pendiente',
+                'injury' => $case->details['affected_body_part'] ?? 'Por confirmar', 'body_part' => $case->details['affected_body_part'] ?? 'Por confirmar',
+                'story' => $case->narrative ?? '', 'witnesses' => '', 'investigation_id' => $case->investigation?->folio, 'evidence_count' => $case->evidences->count(),
+                'form_type' => str_contains(strtolower($case->case_type ?? ''), 'enfermedad') ? 'DIEP' : 'DIAT',
+            ]);
+            $investigations = $storedCases->filter(fn (OccupationalCase $case): bool => $case->investigation !== null)
+                ->map(function (OccupationalCase $case): array {
+                    $investigation = $case->investigation;
+
+                    return [
+                        'id' => $investigation->folio,
+                        'case_id' => $case->folio,
+                        'case_type' => $case->case_type,
+                        'worker' => $case->worker_name,
+                        'establishment' => $case->establishment?->name ?? 'Establecimiento de salud',
+                        'status' => match ($investigation->status) {
+                            'En investigación', 'En desarrollo', 'En curso' => 'En proceso',
+                            'Concluida', 'Cerrado' => 'Realizada',
+                            default => $investigation->status,
+                        },
+                        'progress' => match ($investigation->status) {
+                            'Concluida', 'Cerrado' => 100,
+                            'Con observaciones' => 85,
+                            'En desarrollo' => 65,
+                            default => 30,
+                        },
+                        'owner' => $investigation->owner?->name ?? 'Responsable técnico',
+                        'updated' => $investigation->updated_at?->toDateString() ?? now()->toDateString(),
+                        'kind' => 'Árbol de causas',
+                        'final_story' => $investigation->final_story ?: $case->narrative,
+                        'has_facts' => false,
+                        'pending' => 'Recopilar entrevistas y evidencias',
+                    ];
+                })->values();
+
+            return [
+                'cases' => $cases, 'investigations' => $investigations, 'measures' => collect(), 'observations' => collect(),
+                'establishments' => $establishments, 'activity' => [],
+            ];
+        }
+
         $storedCases = OccupationalCase::query()
             ->with(['establishment', 'investigation.owner', 'investigation.measures', 'investigation.facts', 'investigation.causalNodes', 'evidences'])
             ->orderByDesc('event_date')
@@ -80,7 +132,11 @@ class DemoWorkspace
             'case_type' => $investigation->occupationalCase->case_type,
             'worker' => $investigation->occupationalCase->worker_name,
             'establishment' => $investigation->occupationalCase->establishment?->name ?? 'Establecimiento de salud',
-            'status' => $investigation->status,
+            'status' => match ($investigation->status) {
+                'En investigación', 'En desarrollo', 'En curso' => 'En proceso',
+                'Concluida', 'Cerrado' => 'Realizada',
+                default => $investigation->status,
+            },
             'progress' => match ($investigation->status) {
                 'Concluida', 'Cerrado' => 100,
                 'Con observaciones' => 85,

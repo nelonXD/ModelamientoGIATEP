@@ -37,13 +37,14 @@ $groups = [
 
 @endphp
 
-<div class="min-h-screen lg:grid lg:grid-cols-[18.5rem_1fr]">
+<div class="app-shell min-h-screen">
     <!-- Barra Lateral de Navegación -->
-    <aside class="fixed inset-y-0 left-0 z-40 hidden w-72 flex-col bg-slate-900 text-white shadow-xl lg:static lg:flex lg:w-auto" data-sidebar>
-        <div class="border-b border-white/10 px-6 py-5">
+    <aside class="fixed inset-y-0 left-0 z-40 hidden w-56 flex-col bg-[#0b2545] text-white shadow-xl lg:static lg:flex lg:w-auto" data-sidebar>
+        <div class="border-b border-white/10 px-5 py-4">
             <div class="flex items-center justify-between">
                 <div>
                     <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
+                        <span class="grid size-8 place-items-center rounded-lg bg-sky-500 text-sm font-black text-slate-950">G</span>
                         <span class="text-2xl font-black tracking-tight text-white">GIATEP</span>
                     </a>
                 </div>
@@ -51,7 +52,7 @@ $groups = [
             </div>
         </div>
 
-        <nav class="flex-1 overflow-y-auto p-4" aria-label="Navegación principal">
+        <nav class="min-h-0 flex-1 overflow-y-auto p-4" aria-label="Navegación principal">
             @foreach($groups as $group => $items)
                 @php
                     $visible = collect($items)->filter(fn($item) => auth()->user()->hasPermission($item[1]));
@@ -61,9 +62,17 @@ $groups = [
                         <p class="mb-2 px-3 text-[10px] font-black uppercase tracking-[.18em] text-sky-400">{{ $group }}</p>
                         <ul class="grid gap-1">
                             @foreach($visible as [$label, $permission, $routeName])
+                                @php
+                                    $icon = match ($label) {
+                                        'Inicio' => '⌂', 'Casos' => '▣', 'Investigación' => '◉',
+                                        'Revisiones y validaciones' => '✓', 'Observaciones' => '◌',
+                                        'Medidas y planes de acción' => '▤', 'Dashboards y estadísticas' => '▥',
+                                        'Reportes e informes' => '▧', 'Mi perfil' => '●', default => '•',
+                                    };
+                                @endphp
                                 <li>
                                     <a href="{{ route($routeName) }}" class="nav-link flex items-center justify-between {{ request()->routeIs($routeName) ? 'nav-link-active' : '' }}">
-                                        <span>{{ $label }}</span>
+                                        <span class="flex items-center gap-2.5"><span class="w-4 text-center text-sm text-sky-200" aria-hidden="true">{{ $icon }}</span>{{ $label }}</span>
                                         @if(request()->routeIs($routeName))
                                             <span class="size-1.5 rounded-full bg-white"></span>
                                         @endif
@@ -77,7 +86,7 @@ $groups = [
         </nav>
 
         <div class="border-t border-white/10 bg-slate-950/60 p-4">
-            <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+            <div class="rounded-lg border border-white/10 bg-white/5 p-2.5">
                 <p class="text-[10px] font-bold uppercase tracking-wider text-sky-300">Establecimientos autorizados</p>
                 <p class="mt-1 text-xs font-semibold leading-relaxed text-slate-200">
                     {{ auth()->user()->establishments->map(fn($item) => $item->type . ' ' . $item->name)->join(' · ') ?: 'Red Comunal Completa (APS Los Ángeles)' }}

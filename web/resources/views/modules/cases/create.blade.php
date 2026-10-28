@@ -35,6 +35,17 @@
             </ol>
         </nav>
 
+        @if($errors->any())
+            <div class='rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-800' role='alert'>
+                <p class='font-bold mb-1.5 text-sm'>No se pudo registrar el caso. Por favor verifique los siguientes antecedentes:</p>
+                <ul class='list-disc list-inside space-y-1'>
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <form class='space-y-6' method='POST' action='{{ route('modules.cases.store') }}' enctype='multipart/form-data' data-case-form novalidate>
             @csrf
             @include('modules.cases.partials.step-employer')

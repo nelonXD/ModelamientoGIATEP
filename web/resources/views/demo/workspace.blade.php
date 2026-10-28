@@ -23,7 +23,7 @@ $statusClass = fn ($status) => match ($status) {
 };
 @endphp
 <x-layouts.app :title="$pageTitle.' · GIATEP Los Ángeles'">
-<div class="mx-auto max-w-[1600px] space-y-6" data-demo-workspace data-demo-module="{{ $module }}" data-case-folio="{{ $module === 'investigations' && $selected ? $selected['case_id'] : '' }}" data-story-store-url="{{ route('modules.investigations.story.store') }}" data-ai-analyze-url="{{ route('modules.investigations.ai.analyze') }}" data-ai-store-url="{{ route('modules.investigations.ai.store') }}" data-interview-store-url="{{ route('modules.investigations.interviews.store') }}">
+<div class="mx-auto max-w-[1600px] space-y-6" data-demo-workspace data-demo-module="{{ $module }}" data-case-folio="{{ $module === 'investigations' && $selected ? $selected['case_id'] : '' }}" data-story-store-url="{{ route('modules.investigations.story.store') }}" data-story-generate-url="{{ route('modules.investigations.story.generate') }}" data-ai-models-url="{{ route('modules.investigations.ai.models') }}" data-ai-analyze-url="{{ route('modules.investigations.ai.analyze') }}" data-ai-facts-url="{{ route('modules.investigations.ai.facts') }}" data-ai-tree-url="{{ route('modules.investigations.ai.tree') }}" data-ai-factor-batch-url="{{ route('modules.investigations.ai.factor-batch') }}" data-ai-measures-url="{{ route('modules.investigations.ai.measures') }}" data-ai-store-url="{{ route('modules.investigations.ai.store') }}" data-interview-store-url="{{ route('modules.investigations.interviews.store') }}">
     <!-- Encabezado del módulo -->
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
@@ -526,90 +526,44 @@ $statusClass = fn ($status) => match ($status) {
         @if($selected)
             @php
                 $case = $demo['cases']->firstWhere('id', $selected['case_id']);
-                $manualStages = [
-                    ['number' => '01', 'title' => 'Recopilación', 'description' => 'Entrevistas, inspección del lugar y documentos verificables.', 'ready' => ($case['evidence_count'] ?? 0) > 0],
-                    ['number' => '02', 'title' => 'Construcción del árbol', 'description' => 'Relato objetivo, lista numerada de hechos y relaciones lógicas.', 'ready' => ! empty($selected['has_facts'])],
-                    ['number' => '03', 'title' => 'Administración', 'description' => 'Causas codificadas, medidas, responsables, plazos y seguimiento.', 'ready' => ($selected['progress'] ?? 0) >= 80],
-                ];
-                $manualChecks = [
-                    ['label' => 'Caso identificado y antecedentes generales', 'done' => ! empty($case['worker']) && ! empty($case['date'])],
-                    ['label' => 'Evidencia testimonial registrada', 'done' => ! empty($case['witnesses']) && $case['witnesses'] !== 'Sin testigos'],
-                    ['label' => 'Evidencia física o documental adjunta', 'done' => ($case['evidence_count'] ?? 0) > 0],
-                    ['label' => 'Relato cronológico verificable', 'done' => mb_strlen((string) ($selected['final_story'] ?? '')) >= 120],
-                    ['label' => 'Hechos y árbol causal construidos', 'done' => ! empty($selected['has_facts'])],
-                    ['label' => 'Plan de acción listo para revisión', 'done' => ($selected['progress'] ?? 0) >= 80],
-                ];
-                $completedManualChecks = collect($manualChecks)->where('done', true)->count();
+                $completedStages = min(8, (int) floor(($selected['progress'] / 100) * 8));
+                $activeStage = min(7, $completedStages);
+                $stageProgress = round(($completedStages / 8) * 100, 1);
             @endphp
 
-            <section class="rounded-2xl border border-sky-200 bg-gradient-to-r from-sky-50 to-white p-5 shadow-xs" aria-labelledby="training-mode-title">
-                <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div class="max-w-3xl">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="rounded-full bg-sky-700 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white">Expediente Oficial · Entorno de pruebas guiado</span>
-                            <span class="text-xs font-bold text-sky-900">Guía ISP · Metodología Árbol de Causas</span>
-                        </div>
-                        <h2 id="training-mode-title" class="mt-3 text-xl font-black text-slate-950">Investigación Técnica de Accidente / Enfermedad</h2>
-                        <p class="mt-1 text-sm leading-relaxed text-slate-600">Expediente formal según la metodología del Árbol de Causas (Ley 16.744 / Guía Técnica ISP). La investigación guía la recopilación, la construcción causal y el plan de acción preventivo.</p>
-                    </div>
-                    <div class="min-w-52 rounded-xl border border-sky-200 bg-white p-4">
-                        <div class="flex items-end justify-between gap-4">
-                            <span class="text-xs font-bold text-slate-600">Completitud metodológica</span>
-                            <strong class="text-2xl font-black text-sky-800">{{ $completedManualChecks }}/{{ count($manualChecks) }}</strong>
-                        </div>
-                        <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-sky-600" style="width: {{ round(($completedManualChecks / count($manualChecks)) * 100) }}%"></div></div>
-                    </div>
-                </div>
-                <div class="mt-5 grid gap-3 md:grid-cols-3">
-                    @foreach($manualStages as $stage)
-                        <div class="rounded-xl border {{ $stage['ready'] ? 'border-emerald-200 bg-emerald-50/70' : 'border-slate-200 bg-white' }} p-4">
-                            <div class="flex items-center justify-between gap-3">
-                                <span class="text-xs font-black text-sky-800">FASE {{ $stage['number'] }}</span>
-                                <span class="status {{ $stage['ready'] ? 'status-approved' : 'status-pending' }}">{{ $stage['ready'] ? 'Con antecedente' : 'Pendiente' }}</span>
-                            </div>
-                            <h3 class="mt-2 font-black text-slate-950">{{ $stage['title'] }}</h3>
-                            <p class="mt-1 text-xs leading-relaxed text-slate-600">{{ $stage['description'] }}</p>
-                        </div>
-                    @endforeach
-                </div>
-                <details class="mt-4 rounded-xl border border-slate-200 bg-white p-4">
-                    <summary class="cursor-pointer text-sm font-black text-slate-900">Ver controles mínimos del expediente</summary>
-                    <div class="mt-4 grid gap-2 md:grid-cols-2">
-                        @foreach($manualChecks as $check)
-                            <div class="flex items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
-                                <span class="grid size-6 shrink-0 place-items-center rounded-full {{ $check['done'] ? 'bg-emerald-600 text-white' : 'bg-amber-100 text-amber-800' }}">{{ $check['done'] ? '✓' : '!' }}</span>
-                                {{ $check['label'] }}
-                            </div>
-                        @endforeach
-                    </div>
-                </details>
-            </section>
-            <div class="grid gap-6 xl:grid-cols-[16rem_1fr]">
-                <!-- Barra de Fases del Expediente -->
-                <aside class="card h-fit p-3 shadow-sm">
-                    <div class="border-b border-slate-100 px-3 py-2">
-                        <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Expediente Oficial</span>
-                        <p class="font-black text-slate-900">{{ $selected['id'] }}</p>
-                        <p class="text-[11px] text-slate-500">{{ $selected['case_id'] }}</p>
-                    </div>
-                    <nav class="mt-2 space-y-1">
+            <div class="space-y-5">
+                <div class="card overflow-x-auto p-4 shadow-sm sm:p-5" aria-label="Progreso de la investigación">
+                    <div class="flex min-w-[760px] items-start">
                         @foreach([
-                            '1. Antecedentes Generales',
-                            '2. Entrevistas y Testigos',
-                            '3. Evidencias y Documentos',
-                            '4. Relato Cronológico Final',
-                            '5. Hechos Constatados',
-                            '6. Árbol de Causas Visual',
-                            '7. Matriz de Causas y Medidas',
-                            '8. Participantes y Firmas',
-                            '9. Dictamen y Cierre'
-                        ] as $i => $section)
-                            <button class="section-link {{ $i === 0 ? 'section-link-active' : '' }} {{ in_array($i, [4,5,6]) && empty($selected['has_facts']) ? 'hidden' : '' }}" data-section-target="inv-{{ $i }}" @if(in_array($i, [4,5,6])) data-ai-derived-nav @endif>
-                                {{ $section }}
-                            </button>
+                            'Antecedentes',
+                            'Recopilación de información',
+                            'Hechos y relato',
+                            'Árbol de causas',
+                            'Medidas',
+                            'Revisión técnica',
+                            'Participantes y firmas',
+                            'Cierre',
+                        ] as $i => $step)
+                            @php $state = $i < $completedStages ? 'completed' : ($completedStages < 8 && $i === $activeStage ? 'current' : 'locked'); @endphp
+                            <div class="relative flex flex-1 flex-col items-center text-center text-[10px] leading-tight {{ $i < 7 ? 'after:absolute after:left-1/2 after:top-3.5 after:h-0.5 after:w-full after:translate-x-3.5 after:bg-slate-200' : '' }} {{ $state === 'completed' ? 'after:bg-emerald-400' : '' }}">
+                                <span class="relative z-10 grid size-7 place-items-center rounded-full border text-xs font-black {{ $state === 'completed' ? 'border-emerald-200 bg-emerald-100 text-emerald-700' : ($state === 'current' ? 'border-sky-600 bg-sky-600 text-white ring-4 ring-sky-100' : 'border-slate-200 bg-slate-100 text-slate-400') }}">
+                                    {{ $state === 'completed' ? '✓' : ($state === 'locked' ? '🔒' : $i + 1) }}
+                                </span>
+                                <span class="mt-2 max-w-24 font-bold {{ $state === 'current' ? 'text-sky-800' : ($state === 'completed' ? 'text-slate-700' : 'text-slate-400') }}">{{ $i + 1 }}. {{ $step }}</span>
+                                <span class="mt-1 {{ $state === 'completed' ? 'text-emerald-700' : ($state === 'current' ? 'text-sky-700' : 'text-slate-400') }}">{{ $state === 'completed' ? 'Completado' : ($state === 'current' ? 'En desarrollo' : 'Bloqueado') }}</span>
+                            </div>
                         @endforeach
-                    </nav>
-                </aside>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-xs">
+                    <div><span class="font-black text-sky-950">Expediente {{ $selected['id'] }}</span><span class="ml-2 text-slate-600">Caso {{ $selected['case_id'] }}</span><span class="ml-3 font-bold text-sky-800">{{ number_format($stageProgress, 1, ',', '.') }} % · {{ $completedStages }} de 8 etapas completas</span></div>
+                    <div class="flex gap-2"><button type="button" data-section-target="inv-0" class="btn-secondary px-3 py-1.5 text-xs">Editar información</button><a href="{{ route('modules.observations.index', ['case' => $selected['case_id']]) }}" class="btn-secondary px-3 py-1.5 text-xs">Agregar observación</a></div>
+                </div>
+                <nav class="flex flex-wrap gap-2" aria-label="Secciones del expediente">
+                    @foreach(['Antecedentes', 'Entrevistas', 'Evidencias', 'Relato cronológico', 'Hechos constatados', 'Árbol de causas', 'Medidas', 'Participantes y firmas', 'Dictamen y cierre'] as $i => $section)
+                        <button class="section-link {{ $i === 0 ? 'section-link-active' : '' }} {{ in_array($i, [4,5,6]) && empty($selected['has_facts']) ? 'hidden' : '' }}" data-section-target="inv-{{ $i }}" @if(in_array($i, [4,5,6])) data-ai-derived-nav @endif>{{ $i + 1 }}. {{ $section }}</button>
+                    @endforeach
+                </nav>
 
                 <!-- Contenido de la Investigación -->
                 <form method="POST" action="{{ route('demo.action', 'investigations') }}" class="card min-w-0 shadow-sm" data-unsaved-form>
@@ -681,19 +635,27 @@ $statusClass = fn ($status) => match ($status) {
                         <!-- Sección 1: Entrevistas a Testigos -->
                         @php
                             $caseInterviews = collect();
+                            $caseEvidenceFiles = collect();
                             $currentInvFolio = $selected['id'] ?? null;
                             $currentCaseFolio = $selected['case_id'] ?? ($case['id'] ?? null);
 
-                            if ($currentInvFolio && $currentInvFolio !== 'INV-NUEVA') {
+                            if (\App\Support\OriginalGiatepSchema::isActive() && $currentCaseFolio) {
+                                $caseModel = \App\Models\OccupationalCase::where('folio', $currentCaseFolio)->with('evidences')->first();
+                                $caseInterviews = $caseModel?->investigation?->interviews ?? collect();
+                                $caseEvidenceFiles = $caseModel?->evidences ?? collect();
+                            } elseif (! \App\Support\OriginalGiatepSchema::isActive() && $currentInvFolio && $currentInvFolio !== 'INV-NUEVA') {
                                 $invModel = \App\Models\Investigation::where('folio', $currentInvFolio)->with('interviews.answers')->first();
                                 if ($invModel) {
                                     $caseInterviews = $invModel->interviews;
                                 }
-                            } elseif ($currentCaseFolio) {
-                                $caseModel = \App\Models\OccupationalCase::where('folio', $currentCaseFolio)->with('investigation.interviews.answers')->first();
+                                $caseModel = \App\Models\OccupationalCase::where('folio', $currentCaseFolio)->with('evidences')->first();
+                                $caseEvidenceFiles = $caseModel?->evidences ?? collect();
+                            } elseif (! \App\Support\OriginalGiatepSchema::isActive() && $currentCaseFolio) {
+                                $caseModel = \App\Models\OccupationalCase::where('folio', $currentCaseFolio)->with(['investigation.interviews.answers', 'evidences'])->first();
                                 if ($caseModel && $caseModel->investigation) {
                                     $caseInterviews = $caseModel->investigation->interviews;
                                 }
+                                $caseEvidenceFiles = $caseModel?->evidences ?? collect();
                             }
                         @endphp
                         <section data-section="inv-1" class="hidden space-y-6" data-interviews-workspace>
@@ -842,7 +804,7 @@ $statusClass = fn ($status) => match ($status) {
                                     </label>
                                     <label><span class="label">Fecha de la Entrevista</span><input type="date" class="input" name="interview_date" value="{{ now()->toDateString() }}"></label>
                                     <label><span class="label">Nombre Completo</span><input class="input" name="interviewee_name" value="" placeholder="Ej. Nombre completo del testigo o entrevistado"></label>
-                                    <label><span class="label">RUT</span><input class="input" name="interviewee_rut" placeholder="12.345.678-9"></label>
+                                    <label><span class="label">RUT</span><input class="input" name="interviewee_rut" required placeholder="12.345.678-9"><span class="hint">Necesario para vincular la declaración con el testigo en la base de datos.</span></label>
                                     <label><span class="label">Cargo u Oficio</span><input class="input" name="interviewee_role" value="" placeholder="Ej. TENS / Auxiliar / Enfermera"></label>
                                     <label><span class="label">Lugar de la Entrevista</span><input class="input" name="interview_location" value="{{ $case['establishment'] ?? 'Establecimiento de salud' }}" placeholder="Ej. Box / Oficina de Prevención"></label>
                                 </div>
@@ -870,6 +832,17 @@ $statusClass = fn ($status) => match ($status) {
                                     </div>
                                 @endforeach
                             </div>
+                            <div class="rounded-xl border border-slate-200 bg-white p-4">
+                                <h4 class="text-sm font-bold text-slate-900">Archivos de evidencia asociados al caso</h4>
+                                @forelse($caseEvidenceFiles as $evidence)
+                                    <div class="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2">
+                                        <span class="text-sm text-slate-800">{{ $evidence->original_name }}</span>
+                                        <a class="text-link" href="{{ route('modules.cases.evidence.download', ['case' => $currentCaseFolio, 'evidence' => $evidence->id]) }}">Descargar evidencia</a>
+                                    </div>
+                                @empty
+                                    <p class="mt-2 text-xs text-slate-500">Este caso aún no tiene archivos de evidencia guardados.</p>
+                                @endforelse
+                            </div>
                             <div class="grid gap-4 md:grid-cols-3">
                                 <label><span class="label">Tipo de Evidencia</span><select class="input"><option>Fotografía del lugar</option><option>Procedimiento de Trabajo Seguro (PTS)</option><option>Registro de Capacitación / Inducción</option><option>Certificado de Atención Médica ACHS</option><option>Hoja de Datos de Seguridad (HDS)</option></select></label>
                                 <label><span class="label">Origen / Custodio</span><input class="input" placeholder="Ej. Prevencionista / Jefatura"></label>
@@ -889,28 +862,27 @@ $statusClass = fn ($status) => match ($status) {
                             <div class="source-banner">
                                 Redactado por la comisión investigadora (Prevención, CPHS y Delegado) integrando los antecedentes, declaraciones y evidencias verificadas.
                             </div>
-                            <label for="final-investigation-story" class="block">
-                                <span class="label">Relato Técnico y Cronológico Validado</span>
-                                <textarea id="final-investigation-story" class="input leading-relaxed" name="final_story" rows="8" placeholder="Redacte cronológicamente los hechos sin adjetivos subjetivos ni conclusiones apresuradas.">{{ old('final_story', !empty($selected['final_story']) ? $selected['final_story'] : ($case['story'] ?? '')) }}</textarea>
-                                <span class="hint">Debe ser redactado y revisado por el prevencionista, Comité Paritario o delegado responsable.</span>
-                            </label>
-                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5" data-story-quality>
-                                <div class="flex flex-wrap items-center justify-between gap-3">
-                                    <div>
-                                        <h4 class="font-black text-slate-950">Control de calidad del relato</h4>
-                                        <p class="mt-1 text-xs text-slate-600">Ayuda de entrenamiento. La comisión investigadora debe confirmar el contenido.</p>
-                                    </div>
-                                    <span class="status status-pending" data-story-quality-status>Revisión pendiente</span>
+                            <div class="space-y-3 rounded-xl border border-violet-200 bg-violet-50 p-4">
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <button type="button" class="btn-secondary border-violet-300 text-violet-900" data-generate-final-story>Generar borrador con el modelo seleccionado</button>
+                                    <p class="text-sm text-violet-950">Integra los datos y fuentes guardados del caso. Revisa la cronología y las atribuciones antes de guardar el borrador.</p>
                                 </div>
-                                <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                                    @foreach(['Quién', 'Qué ocurrió', 'Cuándo', 'Dónde', 'Por qué verificable', 'Cómo ocurrió'] as $criterion)
-                                        <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">
-                                            <input type="checkbox" class="rounded border-slate-300 text-sky-700" data-story-criterion> {{ $criterion }}
-                                        </label>
-                                    @endforeach
+                                <div class="max-w-xl">
+                                    <label class="label" for="investigation-ai-model">Modelo LM Studio para relato final y análisis local</label>
+                                    <select class="input" id="investigation-ai-model" data-ai-model aria-describedby="investigation-ai-model-help" disabled>
+                                        <option value="">Cargando modelos de LM Studio…</option>
+                                    </select>
+                                    <button type="button" class="mt-2 text-xs font-semibold text-violet-900 underline" data-ai-model-refresh>Actualizar modelos disponibles</button>
+                                    <p class="mt-1 text-xs text-violet-800" id="investigation-ai-model-help" data-ai-model-status role="status">Groq usa el modelo GPT-OSS 120B configurado en el servidor.</p>
                                 </div>
-                                <p class="mt-3 hidden text-xs font-semibold text-amber-800" data-story-subjective-warning>Revise expresiones potencialmente subjetivas. El manual exige hechos concretos y verificables, sin juicios de valor.</p>
                             </div>
+                            <p class="hidden text-sm font-bold text-violet-800" data-story-generate-loading role="status">Preparando borrador con LM Studio…</p>
+                            <div class="hidden rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700" data-ai-metadata="story" aria-live="polite"></div>
+                            <label for="final-investigation-story" class="block">
+                                <span class="label">Borrador de relato técnico y cronológico</span>
+                                <textarea id="final-investigation-story" class="input leading-relaxed" name="final_story" rows="8" placeholder="Redacte cronológicamente los hechos sin adjetivos subjetivos ni conclusiones apresuradas.">{{ old('final_story', !empty($selected['final_story']) ? $selected['final_story'] : ($case['story'] ?? '')) }}</textarea>
+                                <span class="hint">El texto generado es solo una propuesta: debe ser validado por el prevencionista, Comité Paritario o delegado responsable.</span>
+                            </label>
                             <div class="flex items-center gap-3">
                                 <button type="button" class="btn-secondary" data-save-final-story>Guardar Relato Final</button>
                                 <p class="hidden text-sm font-bold text-emerald-800" data-final-story-saved>Relato guardado correctamente.</p>
@@ -921,36 +893,56 @@ $statusClass = fn ($status) => match ($status) {
                                 <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
                                         <div class="flex items-center gap-2">
-                                            <span class="rounded bg-violet-700 px-2.5 py-0.5 text-xs font-black text-white">IA Asistida · LM Studio</span>
-                                            <span class="text-xs font-semibold text-violet-900">Endpoint: {{ config('services.lm_studio.url') }}</span>
+                                            <span class="rounded bg-violet-700 px-2.5 py-0.5 text-xs font-black text-white">IA Asistida · <span data-ai-provider-label>LM Studio</span></span>
+                                            <span class="text-xs font-semibold text-violet-900" data-ai-provider-location>Procesamiento en el servidor local</span>
                                         </div>
-                                        <h4 class="mt-2 text-lg font-black text-violet-950">Construcción Asistida del Árbol de Causas</h4>
+                                        <h4 class="mt-2 text-lg font-black text-violet-950">Análisis asistido por etapas</h4>
                                         <p class="mt-1 text-xs text-violet-900 leading-relaxed">
-                                            Analiza el relato final para desglosar hechos cronológicos, estructurar el árbol causal y sugerir factores de la matriz oficial de 222 causas.
+                                            Revisa cada resultado antes de enviarlo a la siguiente etapa. La matriz de 222 factores se consulta solo al generar las medidas.
                                         </p>
                                     </div>
-                                    <button type="button" class="btn-primary shrink-0 bg-violet-700 hover:bg-violet-800" data-final-ai-generate>Analizar relato final</button>
                                 </div>
+                                <div class="mt-5 grid gap-3 md:grid-cols-3">
+                                    <button type="button" class="btn-primary bg-violet-700 hover:bg-violet-800" data-ai-stage="facts">1. Generar hechos</button>
+                                    <button type="button" class="btn-primary bg-blue-700 hover:bg-blue-800" data-ai-stage="tree" disabled>2. Generar árbol</button>
+                                    <button type="button" class="btn-primary bg-sky-700 hover:bg-sky-800" data-ai-stage="measures" disabled>3. Generar medidas</button>
+                                </div>
+                                <div class="mt-4 flex flex-wrap items-center gap-2">
+                                    <span class="text-xs font-bold text-violet-950">Motor para estas etapas:</span>
+                                    <button type="button" class="btn-secondary border-violet-300 text-violet-900" data-ai-provider="lm_studio" aria-pressed="true">LM Studio</button>
+                                    <button type="button" class="btn-secondary border-orange-300 text-orange-900" data-ai-provider="groq" aria-pressed="false" disabled>Groq · GPT-OSS 120B</button>
+                                </div>
+                                <p class="mt-2 text-xs text-slate-600">Al usar Groq se envían el relato, el análisis, las instrucciones, extractos de la guía y factores de la matriz a la API de Groq. Los archivos adjuntos no se envían.</p>
                                 <p class="mt-4 hidden text-xs font-bold text-red-700" data-final-ai-error role="alert"></p>
-                                <p class="mt-4 hidden text-xs font-bold text-violet-800" data-final-ai-loading role="status">Analizando hechos y factores causales con LM Studio…</p>
+                                <p class="mt-4 hidden text-xs font-bold text-violet-800" data-final-ai-loading role="status">Procesando etapa con LM Studio…</p>
+                                <p class="mt-3 hidden text-xs text-amber-900" data-ai-change-notice role="status"></p>
                             </div>
 
                             <!-- Propuesta generada / habilitada -->
                             <div class="hidden space-y-6" data-final-ai-result>
-                                <fieldset class="rounded-2xl border border-slate-200 p-5">
-                                    <legend class="px-2 font-black text-blue-950">Hechos detectados</legend>
+                                <fieldset class="rounded-2xl border border-slate-200 p-5" data-ai-stage-panel="facts">
+                                    <legend class="px-2 font-black text-blue-950">Hechos del relato</legend>
+                                    <p class="mb-3 text-xs text-slate-600">Revise o edite los eventos y condiciones. “Declarado” significa que una fuente lo informó; “verificado” requiere corroboración descrita. Los datos faltantes se muestran aparte y no se incorporan como hechos.</p>
+                                    <div class="mb-3 hidden rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700" data-ai-metadata="facts"></div>
                                     <div class="mt-3 space-y-2.5 text-xs" data-ai-facts>
                                     </div>
-                                </fieldset>
-
-                                <fieldset class="rounded-2xl border border-slate-200 p-5">
-                                    <legend class="px-2 font-black text-blue-950">Árbol de causas propuesto</legend>
-                                    <div class="mt-3 grid gap-4 md:grid-cols-2 text-xs">
-                                        <label><span class="label">Hecho final</span><input class="input" name="ai_tree_final" value="" placeholder="Se generará con el análisis IA" disabled></label>
-                                        <label><span class="label">Antecedente principal</span><input class="input" name="ai_tree_origin" value="" placeholder="Se generará con el análisis IA" disabled></label>
+                                    <div class="mt-4 hidden rounded-xl border border-amber-200 bg-amber-50 p-4" data-ai-pending-verifications>
+                                        <h3 class="text-sm font-black text-amber-950">Pendiente de verificar</h3>
+                                        <ul class="mt-2 list-disc space-y-1 pl-5 text-xs text-amber-900" data-ai-pending-list></ul>
                                     </div>
                                 </fieldset>
 
+                                <fieldset class="hidden rounded-2xl border border-slate-200 p-5" data-ai-stage-panel="tree">
+                                    <legend class="px-2 font-black text-blue-950">Árbol de causas propuesto</legend>
+                                    <p class="mb-4 text-xs text-slate-600">Hecho final arriba y antecedentes abajo. Círculo: hecho puntual; rectángulo: condición permanente; línea punteada: vínculo aparente por verificar.</p>
+                                    <div class="mb-3 hidden rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700" data-ai-metadata="tree"></div>
+                                    <p class="hidden mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-900" data-ai-tree-note></p>
+                                    <div class="causal-graph-viewport min-h-16" data-ai-tree-diagram aria-live="polite"></div>
+                                    <p class="mt-3 hidden text-xs text-slate-500" data-ai-guide-reference></p>
+                                </fieldset>
+
+                                <div class="hidden space-y-6" data-ai-stage-panel="measures">
+                                <div class="hidden rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700" data-ai-metadata="measures"></div>
                                 <fieldset class="rounded-2xl border border-sky-200 bg-sky-50/60 p-5">
                                     <legend class="px-2 font-black text-blue-950">Factores de la matriz sugeridos</legend>
                                     <p class="text-xs text-slate-600">La IA selecciona factores de la matriz oficial de 222 causas. Revise y desmarque los que no correspondan.</p>
@@ -966,7 +958,8 @@ $statusClass = fn ($status) => match ($status) {
 
                                 <div class="flex justify-between items-center pt-3 border-t">
                                     <p class="text-xs text-slate-500">Revise y edite toda la propuesta antes de incorporarla a la investigación.</p>
-                                    <button type="button" class="btn-primary" data-save-ai-proposal>Guardar propuesta</button>
+                                    <button type="button" class="btn-primary" data-save-ai-proposal disabled>Guardar propuesta</button>
+                                </div>
                                 </div>
                                 <p class="hidden rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-bold text-emerald-900" data-ai-saved-status role="status">
                                     Propuesta incorporada. Se habilitaron los apartados correspondientes.
@@ -977,12 +970,12 @@ $statusClass = fn ($status) => match ($status) {
                         <!-- Sección 4: Hechos Constatados -->
                         @php
                             $dbFacts = collect();
-                            if (!empty($selected['id']) && $selected['id'] !== 'INV-NUEVA') {
+                            if (! \App\Support\OriginalGiatepSchema::isActive() && !empty($selected['id']) && $selected['id'] !== 'INV-NUEVA') {
                                 $invFactsModel = \App\Models\Investigation::where('folio', $selected['id'])->with('facts')->first();
                                 if ($invFactsModel) {
                                     $dbFacts = $invFactsModel->facts;
                                 }
-                            } elseif (!empty($selected['case_id'])) {
+                            } elseif (! \App\Support\OriginalGiatepSchema::isActive() && !empty($selected['case_id'])) {
                                 $caseFactsModel = \App\Models\OccupationalCase::where('folio', $selected['case_id'])->with('investigation.facts')->first();
                                 if ($caseFactsModel && $caseFactsModel->investigation) {
                                     $dbFacts = $caseFactsModel->investigation->facts;
@@ -1009,17 +1002,19 @@ $statusClass = fn ($status) => match ($status) {
                         <!-- Sección 5: Árbol de Causas Visual -->
                         @php
                             $dbNodes = collect();
-                            if (!empty($selected['id']) && $selected['id'] !== 'INV-NUEVA') {
+                            if (! \App\Support\OriginalGiatepSchema::isActive() && !empty($selected['id']) && $selected['id'] !== 'INV-NUEVA') {
                                 $invTreeModel = \App\Models\Investigation::where('folio', $selected['id'])->with('causalNodes')->first();
                                 if ($invTreeModel) {
                                     $dbNodes = $invTreeModel->causalNodes;
                                 }
-                            } elseif (!empty($selected['case_id'])) {
+                            } elseif (! \App\Support\OriginalGiatepSchema::isActive() && !empty($selected['case_id'])) {
                                 $caseTreeModel = \App\Models\OccupationalCase::where('folio', $selected['case_id'])->with('investigation.causalNodes')->first();
                                 if ($caseTreeModel && $caseTreeModel->investigation) {
                                     $dbNodes = $caseTreeModel->investigation->causalNodes;
                                 }
                             }
+                            $storedGraphNode = $dbNodes->first(fn ($node) => ($node->node_type ?? $node->type ?? '') === 'graph');
+                            $storedTreeGraph = $storedGraphNode ? json_decode($storedGraphNode->description, true) : null;
                         @endphp
                         <section data-section="inv-5" class="hidden space-y-6">
                             <div class="flex items-center justify-between border-b pb-4">
@@ -1032,7 +1027,11 @@ $statusClass = fn ($status) => match ($status) {
 
                             <!-- Gráfico Visual del Árbol de Causas -->
                             <div class="rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:p-10 space-y-8" data-derived-tree>
-                                @if($dbNodes->isNotEmpty())
+                                @if(is_array($storedTreeGraph))
+                                    <div class="causal-graph-viewport" data-tree-graph-json="{{ json_encode($storedTreeGraph, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG) }}"></div>
+                                @elseif($dbNodes->isNotEmpty())
+                                    @php $legacyTreeNodes = $dbNodes->reject(fn ($node) => ($node->node_type ?? $node->type ?? '') === 'graph'); @endphp
+                                    @php $dbNodes = $legacyTreeNodes; @endphp
                                     @php $finalNodes = $dbNodes->where('type', 'final'); @endphp
                                     @if($finalNodes->isNotEmpty())
                                         <div class="text-center">
@@ -1193,7 +1192,7 @@ $statusClass = fn ($status) => match ($status) {
                 <input class="input" placeholder="Buscar por código o trabajador" data-table-search>
                 <select class="input" data-table-filter="status">
                     <option value="">Todos los estados</option>
-                    @foreach($demo['investigations']->pluck('status')->unique() as $st)
+                    @foreach(['En proceso', 'Pendiente', 'Realizada', 'No aplica'] as $st)
                         <option>{{ $st }}</option>
                     @endforeach
                 </select>
@@ -1717,7 +1716,14 @@ $statusClass = fn ($status) => match ($status) {
                             <td><span class="rounded bg-slate-100 px-2 py-0.5 text-xs font-bold">{{ $row[1] }}</span></td>
                             <td>{{ $row[2] }}</td>
                             <td><span class="status status-approved">{{ $row[3] }}</span></td>
-                            <td><button class="text-link" type="button" data-open-demo-modal data-record="{{ $row[0] }}">Editar</button></td>
+                            <td>
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <button class="text-link" type="button" data-open-demo-modal data-record="{{ $row[0] }}">Editar</button>
+                                    @if($module === 'settings' && $row[0] === 'Matriz de Factores Causales')
+                                        <a class="text-link" href="{{ route('modules.cause-factors.index') }}">Ver matriz</a>
+                                    @endif
+                                </div>
+                            </td>
                         </tr>
                     @empty
                         <tr><td colspan="5" class="p-8 text-center text-slate-500">No hay registros configurados en este catálogo.</td></tr>

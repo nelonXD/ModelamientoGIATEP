@@ -28,6 +28,140 @@ document.querySelectorAll('[data-confirm]').forEach((form) => {
     });
 });
 
+const renderCausalTree = (container, tree) => {
+    if (!container || !tree?.nodes?.length) return;
+    const svgNs = 'http://www.w3.org/2000/svg';
+    const nodes = tree.nodes;
+    const nodeById = new Map(nodes.map((node) => [node.id, node]));
+    const edges = (tree.edges || []).filter((edge) => nodeById.has(edge.from) && nodeById.has(edge.to) && edge.from !== edge.to);
+    const finalId = nodeById.has(tree.final_node_id) ? tree.final_node_id : nodes[nodes.length - 1].id;
+    const depth = new Map([[finalId, 0]]);
+    const queue = [finalId];
+    while (queue.length) {
+        const consequence = queue.shift();
+        edges.filter((edge) => edge.to === consequence).forEach((edge) => {
+            if (!depth.has(edge.from)) {
+                depth.set(edge.from, depth.get(consequence) + 1);
+                queue.push(edge.from);
+            }
+        });
+    }
+    const maxDepth = Math.max(0, ...depth.values());
+    const levels = Array.from({ length: maxDepth + 1 }, () => []);
+    nodes.forEach((node, index) => {
+        if (!depth.has(node.id)) {
+            depth.set(node.id, maxDepth + 1);
+            levels[maxDepth + 1] ||= [];
+        }
+        levels[depth.get(node.id)].push({ ...node, order: index });
+    });
+    const width = Math.max(820, ...levels.map((level) => level.length * 250 + 80));
+    const rowHeight = 150;
+    const height = 135 + levels.length * rowHeight;
+    const svg = document.createElementNS(svgNs, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', 'Árbol de causas vertical. El hecho final está arriba y los antecedentes abajo.');
+    svg.classList.add('causal-graph-svg');
+    const defs = document.createElementNS(svgNs, 'defs');
+    const marker = document.createElementNS(svgNs, 'marker');
+    marker.setAttribute('id', `causal-arrow-${Math.random().toString(36).slice(2)}`);
+    marker.setAttribute('markerWidth', '9'); marker.setAttribute('markerHeight', '9');
+    marker.setAttribute('refX', '7'); marker.setAttribute('refY', '4.5'); marker.setAttribute('orient', 'auto');
+    const arrow = document.createElementNS(svgNs, 'path');
+    arrow.setAttribute('d', 'M0 0 L9 4.5 L0 9 Z'); arrow.setAttribute('class', 'causal-arrow-head');
+    marker.append(arrow); defs.append(marker); svg.append(defs);
+    const markerId = marker.id;
+    const amberMarker = marker.cloneNode(true);
+    amberMarker.id = `${markerId}-amber`;
+    amberMarker.querySelector('path').classList.add('is-apparent');
+    defs.append(amberMarker);
+    const positions = new Map();
+    levels.forEach((level, levelIndex) => level.forEach((node, index) => {
+        positions.set(node.id, { x: width * (index + 1) / (level.length + 1), y: 70 + levelIndex * rowHeight });
+    }));
+
+    edges.forEach((edge) => {
+        const source = positions.get(edge.from);
+        const target = positions.get(edge.to);
+        if (!source || !target) return;
+        const path = document.createElementNS(svgNs, 'path');
+        const sourceY = source.y - 43;
+        const targetY = target.y + 43;
+        path.setAttribute('d', `M ${source.x} ${sourceY} C ${source.x} ${(sourceY + targetY) / 2}, ${target.x} ${(sourceY + targetY) / 2}, ${target.x} ${targetY}`);
+        path.setAttribute('marker-end', `url(#${edge.link_type === 'aparente' ? amberMarker.id : markerId})`);
+        path.classList.add('causal-graph-edge');
+        if (edge.link_type === 'aparente') path.classList.add('is-apparent');
+        const title = document.createElementNS(svgNs, 'title');
+        title.textContent = `${edge.logic}: ${edge.basis || 'relación causal propuesta'}`;
+        path.append(title); svg.append(path);
+    });
+
+    const wrap = (value, limit = 25) => {
+        const words = String(value || '').split(/\s+/);
+        const lines = [];
+        let line = '';
+        words.forEach((word) => {
+            if (line && `${line} ${word}`.length > limit) { lines.push(line); line = word; }
+            else line = line ? `${line} ${word}` : word;
+        });
+        if (line) lines.push(line);
+        const visible = lines.slice(0, 3);
+        if (lines.length > 3) visible[2] = `${visible[2].replace(/[.,;:]$/, '')}…`;
+        return visible;
+    };
+    levels.forEach((level, levelIndex) => level.forEach((node) => {
+        const point = positions.get(node.id);
+        const group = document.createElementNS(svgNs, 'g');
+        group.classList.add('causal-graph-node', node.type === 'permanente' ? 'is-permanent' : 'is-event');
+        if (node.id === finalId) group.classList.add('is-final');
+        const shape = document.createElementNS(svgNs, node.type === 'permanente' ? 'rect' : 'ellipse');
+        if (node.type === 'permanente') {
+            shape.setAttribute('x', point.x - 112); shape.setAttribute('y', point.y - 42);
+            shape.setAttribute('width', '224'); shape.setAttribute('height', '84'); shape.setAttribute('rx', '13');
+        } else {
+            shape.setAttribute('cx', point.x); shape.setAttribute('cy', point.y);
+            shape.setAttribute('rx', '112'); shape.setAttribute('ry', '42');
+        }
+        group.append(shape);
+        const label = document.createElementNS(svgNs, 'text');
+        label.setAttribute('x', point.x); label.setAttribute('y', point.y - (wrap(node.description).length - 1) * 7);
+        label.classList.add('causal-graph-label');
+        wrap(node.description).forEach((line, lineIndex) => {
+            const span = document.createElementNS(svgNs, 'tspan');
+            span.setAttribute('x', point.x); span.setAttribute('dy', lineIndex === 0 ? '0' : '15'); span.textContent = line;
+            label.append(span);
+        });
+        const kind = document.createElementNS(svgNs, 'text');
+        kind.setAttribute('x', point.x); kind.setAttribute('y', point.y + 31);
+        kind.classList.add('causal-graph-kind'); kind.textContent = `${node.id} · ${node.type === 'permanente' ? 'PERMANENTE' : (node.id === finalId ? 'HECHO FINAL' : 'HECHO')}`;
+        group.append(label, kind);
+        const title = document.createElementNS(svgNs, 'title'); title.textContent = node.description; group.append(title);
+        svg.append(group);
+    }));
+    const details = document.createElement('details');
+    details.className = 'mt-4 rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-700';
+    const summary = document.createElement('summary'); summary.className = 'cursor-pointer font-semibold'; summary.textContent = 'Leer hechos y fundamento de las conexiones';
+    details.append(summary);
+    const descriptions = document.createElement('ul'); descriptions.className = 'mt-3 space-y-2';
+    nodes.forEach((node) => {
+        const row = document.createElement('li'); row.textContent = `${node.id}: ${node.description}`; descriptions.append(row);
+    });
+    details.append(descriptions);
+    const relationships = document.createElement('ul'); relationships.className = 'mt-4 space-y-2 border-t border-slate-200 pt-3';
+    const logicLabels = { cadena: 'Cadena', conjuncion: 'Conjunción', disyuncion: 'Disyunción' };
+    edges.forEach((edge) => {
+        const row = document.createElement('li'); row.textContent = `${edge.from} → ${edge.to} · ${logicLabels[edge.logic] || 'Vínculo'}${edge.link_type === 'aparente' ? ' · aparente, por verificar' : ''}: ${edge.basis || 'Sin fundamento registrado'}`; relationships.append(row);
+    });
+    details.append(relationships);
+    container.replaceChildren(svg, details);
+};
+
+document.querySelectorAll('[data-tree-graph-json]').forEach((container) => {
+    try { renderCausalTree(container, JSON.parse(container.dataset.treeGraphJson)); }
+    catch { container.textContent = 'No se pudo cargar la visualización guardada del árbol.'; }
+});
+
 const loginForm = document.querySelector('[data-login-form]');
 
 if (loginForm) {
@@ -36,9 +170,48 @@ if (loginForm) {
     const continueButton = loginForm.querySelector('[data-login-continue]');
     const passwordStep = loginForm.querySelector('[data-login-password-step]');
     const passwordInput = loginForm.querySelector('#password');
+    const firstAccessSection = loginForm.querySelector('[data-first-access]');
+    const existingLoginSection = loginForm.querySelector('[data-existing-login]');
+    const submitButton = loginForm.querySelector('[data-submit-button]');
+    const firstAccessProfile = loginForm.querySelector('[data-first-access-profile]');
     const changeRutButton = loginForm.querySelector('[data-login-change-rut]');
     const rutSummary = loginForm.querySelector('[data-login-rut-summary]');
     const rutError = loginForm.querySelector('[data-rut-error]');
+    const loginUrl = loginForm.action;
+
+    const setAccountMode = (profile = null, setupUrl = null) => {
+        const needsSetup = Boolean(profile && setupUrl);
+        existingLoginSection.classList.toggle('hidden', needsSetup);
+        firstAccessSection.classList.toggle('hidden', ! needsSetup);
+        passwordInput.disabled = needsSetup;
+        passwordInput.required = ! needsSetup;
+        firstAccessSection.querySelectorAll('input').forEach((field) => {
+            field.disabled = ! needsSetup;
+            field.required = needsSetup;
+        });
+        loginForm.action = needsSetup ? setupUrl : loginUrl;
+        submitButton.textContent = needsSetup ? 'Crear cuenta e ingresar' : 'Ingresar';
+
+        if (needsSetup) {
+            rutSummary.textContent = `${rutInput.value} · ${profile.name}`;
+            firstAccessProfile.replaceChildren();
+            [
+                ['Cargo', profile.job_title],
+                ['Rol GIATEP', profile.role_name],
+                ['Dependencia', profile.dependency_name],
+            ].forEach(([label, value]) => {
+                const term = document.createElement('dt');
+                term.className = 'font-semibold text-slate-600';
+                term.textContent = label;
+                const description = document.createElement('dd');
+                description.className = 'font-bold text-slate-950';
+                description.textContent = value || '—';
+                firstAccessProfile.append(term, description);
+            });
+        } else {
+            rutSummary.textContent = rutInput.value;
+        }
+    };
 
     const normalizeRut = (value) => value.toUpperCase().replace(/[^0-9K]/g, '');
     const isValidRut = (value) => {
@@ -104,6 +277,8 @@ if (loginForm) {
 
                 return;
             }
+
+            setAccountMode(result.requires_setup ? result.profile : null, result.setup_url || null);
         } catch {
             rutError.textContent = 'No fue posible verificar el RUT. Intenta nuevamente.';
             rutError.classList.remove('hidden');
@@ -141,8 +316,11 @@ if (loginForm) {
         passwordStep.classList.add('hidden');
         rutStep.classList.remove('hidden');
         continueButton.classList.remove('hidden');
-        passwordInput.disabled = true;
+        setAccountMode();
         passwordInput.value = '';
+        firstAccessSection.querySelectorAll('input').forEach((field) => {
+            field.value = '';
+        });
         rutInput.readOnly = false;
         rutInput.focus();
         rutInput.select();
@@ -163,42 +341,10 @@ document.querySelectorAll('[data-section-target]').forEach((button) => button.ad
     workspace.querySelectorAll('[data-section]').forEach((section) => section.classList.toggle('hidden', section.dataset.section !== button.dataset.sectionTarget));
 }));
 
-document.querySelectorAll('[data-story-quality]').forEach((qualityPanel) => {
-    const workspace = qualityPanel.closest('[data-demo-workspace]');
-    const story = workspace?.querySelector('#final-investigation-story');
-    const criteria = [...qualityPanel.querySelectorAll('[data-story-criterion]')];
-    const status = qualityPanel.querySelector('[data-story-quality-status]');
-    const warning = qualityPanel.querySelector('[data-story-subjective-warning]');
-    const subjectiveTerms = [
-        'imprudente',
-        'irresponsable',
-        'descuidado',
-        'negligente',
-        'por culpa',
-        'obviamente',
-        'siempre',
-        'nunca',
-    ];
-
-    const updateStoryQuality = () => {
-        const value = story?.value.toLocaleLowerCase('es-CL') ?? '';
-        const completed = criteria.filter((criterion) => criterion.checked).length;
-        const hasSubjectiveTerm = subjectiveTerms.some((term) => value.includes(term));
-        const isReady = completed === criteria.length && value.trim().length >= 120 && ! hasSubjectiveTerm;
-
-        warning.classList.toggle('hidden', ! hasSubjectiveTerm);
-        status.textContent = isReady ? 'Listo para revisión humana' : `${completed}/${criteria.length} criterios confirmados`;
-        status.classList.toggle('status-approved', isReady);
-        status.classList.toggle('status-pending', ! isReady);
-    };
-
-    criteria.forEach((criterion) => criterion.addEventListener('change', updateStoryQuality));
-    story?.addEventListener('input', updateStoryQuality);
-    updateStoryQuality();
-});
-
 document.querySelectorAll('[data-interview-form]').forEach((form) => {
     const witnessType = form.querySelector('[data-witness-type]');
+    if (! witnessType) return;
+
     const applicability = {
         affected: ['chronology', 'task', 'protection', 'training', 'evidence', 'environment'],
         direct: ['chronology', 'task', 'protection', 'training', 'evidence', 'environment'],
@@ -229,26 +375,29 @@ document.querySelectorAll('[data-interview-form]').forEach((form) => {
 
     form.querySelectorAll('[data-conditional-detail]').forEach((row) => {
         const field = row.querySelector('[data-conditional-input]');
+        if (! field) return;
         const input = field.querySelector('textarea, input');
         row.querySelectorAll('input[type="radio"]').forEach((radio) => radio.addEventListener('change', () => {
             const show = radio.checked && radio.value === row.dataset.detailWhen;
             field.classList.toggle('hidden', ! show);
-            input.disabled = ! show;
-            if (! show) input.value = '';
+            if (input) input.disabled = ! show;
+            if (! show && input) input.value = '';
         }));
     });
 
     form.querySelectorAll('[data-toggle-other]').forEach((checkbox) => checkbox.addEventListener('change', () => {
         const field = form.querySelector(`[data-other-field="${checkbox.dataset.toggleOther}"]`);
+        if (! field) return;
         const input = field.querySelector('input, textarea');
         field.classList.toggle('hidden', ! checkbox.checked);
-        input.disabled = ! checkbox.checked;
-        if (! checkbox.checked) input.value = '';
+        if (input) input.disabled = ! checkbox.checked;
+        if (! checkbox.checked && input) input.value = '';
     }));
 
     form.querySelectorAll('[data-development-question]').forEach((question) => {
         const notApplicable = question.querySelector('[data-development-na]');
         const answer = question.querySelector('textarea');
+        if (! notApplicable || ! answer) return;
         notApplicable.addEventListener('change', () => {
             answer.disabled = notApplicable.checked;
             answer.classList.toggle('hidden', notApplicable.checked);
@@ -258,6 +407,7 @@ document.querySelectorAll('[data-interview-form]').forEach((form) => {
 
     form.querySelectorAll('[data-yes-options]').forEach((control) => {
         const panel = control.querySelector('[data-yes-options-panel]');
+        if (! panel) return;
         const radios = [...control.querySelectorAll(':scope > div:first-child input[type="radio"]')];
         const updateOptions = () => {
             const show = radios.some((radio) => radio.checked && radio.value === 'yes');
@@ -281,21 +431,28 @@ document.querySelectorAll('[data-interviews-workspace]').forEach((workspace) => 
     const adaptedQuestionnaire = workspace.querySelector('[data-adapted-questionnaire]');
     const formTitle = workspace.querySelector('[data-interview-form-title]');
     const showEditor = (mode = 'adapted') => {
+        if (! editor || ! list) return;
         editor.dataset.interviewMode = mode;
         const useLegacy = mode === 'legacy';
-        legacyQuestionnaire.classList.toggle('hidden', ! useLegacy);
-        legacyQuestionnaire.disabled = ! useLegacy;
-        legacyQuestionnaire.setAttribute('aria-hidden', useLegacy ? 'false' : 'true');
-        adaptedQuestionnaire.classList.toggle('hidden', useLegacy);
-        adaptedQuestionnaire.querySelectorAll('input, textarea, select').forEach((field) => { field.disabled = useLegacy; });
+        if (legacyQuestionnaire) {
+            legacyQuestionnaire.classList.toggle('hidden', ! useLegacy);
+            legacyQuestionnaire.disabled = ! useLegacy;
+            legacyQuestionnaire.setAttribute('aria-hidden', useLegacy ? 'false' : 'true');
+        }
+        if (adaptedQuestionnaire) {
+            adaptedQuestionnaire.classList.toggle('hidden', useLegacy);
+            adaptedQuestionnaire.querySelectorAll('input, textarea, select').forEach((field) => { field.disabled = useLegacy; });
+        }
         if (! useLegacy) updateInterviewFlow();
-        formTitle.textContent = useLegacy ? 'Formulario de entrevista anterior' : 'Formulario de entrevista';
+        if (formTitle) {
+            formTitle.textContent = useLegacy ? 'Formulario de entrevista anterior' : 'Formulario de entrevista';
+        }
         list.classList.add('hidden');
         editor.classList.remove('hidden');
     };
     const showList = () => {
-        editor.classList.add('hidden');
-        list.classList.remove('hidden');
+        editor?.classList.add('hidden');
+        list?.classList.remove('hidden');
     };
 
     const clearFormForNew = () => {
@@ -544,6 +701,7 @@ document.querySelectorAll('[data-interviews-workspace]').forEach((workspace) => 
             validation.classList.remove('hidden');
             return;
         }
+        shell.dispatchEvent(new CustomEvent('giatep:interview-saved'));
         const row = document.createElement('tr');
         [name, witness.options[witness.selectedIndex].text, role, dateValue ? dateValue.split('-').reverse().join('/') : 'Sin fecha'].forEach((value, index) => {
             const cell = document.createElement('td');
@@ -577,32 +735,241 @@ document.querySelectorAll('[data-interviews-workspace]').forEach((workspace) => 
 });
 
 document.querySelectorAll('[data-final-story-ai]').forEach((section) => {
-    const button = section.querySelector('[data-final-ai-generate]');
+    const stageButtons = [...section.querySelectorAll('[data-ai-stage]')];
     const loading = section.querySelector('[data-final-ai-loading]');
     const error = section.querySelector('[data-final-ai-error]');
     const result = section.querySelector('[data-final-ai-result]');
     const story = section.querySelector('[name="final_story"]');
+    const draftButton = section.querySelector('[data-generate-final-story]');
+    const draftLoading = section.querySelector('[data-story-generate-loading]');
     const storySaveButton = section.querySelector('[data-save-final-story]');
     const storySaved = section.querySelector('[data-final-story-saved]');
     const saveButton = result.querySelector('[data-save-ai-proposal]');
+    const modelSelector = section.querySelector('[data-ai-model]');
+    const modelStatus = section.querySelector('[data-ai-model-status]');
+    const modelRefresh = section.querySelector('[data-ai-model-refresh]');
+    const providerButtons = [...section.querySelectorAll('[data-ai-provider]')];
+    const providerLabel = section.querySelector('[data-ai-provider-label]');
+    const providerLocation = section.querySelector('[data-ai-provider-location]');
     const investigation = section.closest('form');
-
-    const saveFinalStory = async () => {
-        if (! story.value.trim()) throw new Error('Escriba el relato final antes de guardarlo.');
-        const workspace = section.closest('[data-demo-workspace]');
-        const response = await fetch(workspace.dataset.storyStoreUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-            body: JSON.stringify({ case_folio: workspace.dataset.caseFolio, story: story.value.trim() }),
+    let reviewedFacts = [];
+    let causalTree = null;
+    let measuresReady = false;
+    let busy = false;
+    let inputRevision = 0;
+    let modelUnavailable = true;
+    let loadingModels = false;
+    let selectedProvider = 'lm_studio';
+    let groqAvailable = false;
+    let groqModel = 'openai/gpt-oss-120b';
+    let proposalMetadata = {};
+    const changeNotice = section.querySelector('[data-ai-change-notice]');
+    const requestHeaders = { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content };
+    const showError = (message) => {
+        error.textContent = message;
+        error.classList.remove('hidden');
+    };
+    const showChangeNotice = (message) => {
+        changeNotice.textContent = message;
+        changeNotice.classList.toggle('hidden', ! message);
+    };
+    const postJson = async (url, data, fallbackMessage) => {
+        const response = await fetch(url, { method: 'POST', headers: requestHeaders, body: JSON.stringify(data) });
+        const payload = await response.json().catch(() => null);
+        if (response.status === 419) throw new Error('La sesión venció. Copie los cambios sin guardar y vuelva a ingresar antes de intentarlo otra vez.');
+        if (! response.ok || ! payload) {
+            const details = Object.values(payload?.errors || {}).flat().filter((item) => typeof item === 'string');
+            throw new Error(details[0] || payload?.message || fallbackMessage);
+        }
+        return payload;
+    };
+    const refreshControls = () => {
+        draftButton.disabled = busy || loadingModels || modelUnavailable;
+        storySaveButton.disabled = busy;
+        modelSelector.disabled = busy || loadingModels || modelUnavailable || selectedProvider === 'groq';
+        modelRefresh.disabled = busy || loadingModels;
+        providerButtons.forEach((button) => {
+            button.disabled = busy || loadingModels || (button.dataset.aiProvider === 'groq' && ! groqAvailable);
+            button.setAttribute('aria-pressed', String(button.dataset.aiProvider === selectedProvider));
         });
+        stageButtons.forEach((button) => {
+            const stage = button.dataset.aiStage;
+            const providerUnavailable = selectedProvider === 'groq' ? ! groqAvailable : modelUnavailable;
+            button.disabled = busy || loadingModels || providerUnavailable || (stage !== 'facts' && ! factsPayload().length) || (stage === 'measures' && ! causalTree);
+        });
+        saveButton.disabled = busy || ! measuresReady;
+        result.querySelectorAll('input, textarea, select, [data-ai-fact] button').forEach((control) => { control.disabled = busy; });
+        investigation.querySelectorAll('[data-save-interview]').forEach((button) => { button.disabled = busy; });
+        section.setAttribute('aria-busy', String(busy));
+    };
+    const renderMetadata = (stage, payload) => {
+        if (stage !== 'story') proposalMetadata[stage] = {
+            model: payload.model || '', prompt_version: payload.prompt_version || '',
+            quality_warnings: (Array.isArray(payload.quality_warnings) ? payload.quality_warnings : []).map((warning) => typeof warning === 'string' ? warning : warning?.message).filter(Boolean),
+        };
+        const target = section.querySelector(`[data-ai-metadata="${stage}"]`);
+        if (! target) return;
+        target.replaceChildren();
+        const summary = document.createElement('p');
+        summary.className = 'font-semibold';
+        summary.textContent = [payload.model ? `Modelo: ${payload.model}` : '', payload.prompt_version ? `Versión: ${payload.prompt_version}` : ''].filter(Boolean).join(' · ');
+        if (summary.textContent) target.append(summary);
+        const warnings = [...(Array.isArray(payload.quality_warnings) ? payload.quality_warnings : []), ...(Array.isArray(payload.quality_adjustments) ? payload.quality_adjustments : [])];
+        if (warnings.length) {
+            const list = document.createElement('ul'); list.className = 'mt-2 list-disc space-y-1 pl-5 text-amber-900';
+            warnings.forEach((warning) => {
+                const text = typeof warning === 'string' ? warning : warning?.message;
+                if (! text) return;
+                const row = document.createElement('li'); row.textContent = text; list.append(row);
+            });
+            if (list.childElementCount) target.append(list);
+        }
+        const references = Array.isArray(payload.source_references) ? payload.source_references : [];
+        if (references.length) {
+            const details = document.createElement('details'); details.className = 'mt-2';
+            const title = document.createElement('summary'); title.className = 'cursor-pointer font-semibold'; title.textContent = 'Fuentes utilizadas por párrafo'; details.append(title);
+            const catalog = new Map((payload.source_catalog || []).map((source) => [source.id, source.label || source.id]));
+            references.forEach((reference, index) => {
+                const row = document.createElement('p'); row.className = 'mt-2';
+                row.textContent = `Párrafo ${index + 1}: ${(reference.source_ids || []).map((id) => `${id} · ${catalog.get(id) || 'fuente registrada'}`).join('; ')}`;
+                details.append(row);
+            });
+            target.append(details);
+        }
+        target.classList.toggle('hidden', target.childElementCount === 0);
+    };
+
+    const loadAvailableModels = async () => {
+        if (! modelSelector) return;
+        const workspace = section.closest('[data-demo-workspace]');
+        const response = await fetch(workspace.dataset.aiModelsUrl, { headers: { 'Accept': 'application/json' } });
+        if (! response.ok) throw new Error('No se pudo consultar la configuración de los proveedores IA.');
         const payload = await response.json();
-        if (! response.ok) throw new Error(payload.message || 'No fue posible guardar el relato final.');
-        storySaved.classList.remove('hidden');
+        groqAvailable = Boolean(payload.groq_available);
+        groqModel = payload.groq_model || 'openai/gpt-oss-120b';
+        let savedModel = '';
+        try { savedModel = localStorage.getItem('giatep.ai.investigation.model') || ''; } catch { /* El almacenamiento del navegador puede estar deshabilitado. */ }
+        const preferredModel = savedModel || payload.configured_model || '';
+        const models = [...(payload.models || [])];
+        if (payload.configured_model && ! models.some((model) => model.id === payload.configured_model)) {
+            models.unshift({ id: payload.configured_model, name: `${payload.configured_model} (configurado)` });
+        }
+        modelSelector.replaceChildren();
+        models.forEach((model) => {
+            const option = document.createElement('option');
+            option.value = model.id;
+            option.textContent = model.name || model.id;
+            modelSelector.append(option);
+        });
+        if (! models.length) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'No se encontraron modelos';
+            modelSelector.append(option);
+            modelUnavailable = true;
+            refreshControls();
+            modelStatus.textContent = payload.connected ? 'No hay modelos disponibles para la API de LM Studio.' : 'No se pudo conectar con LM Studio. Inícialo y recarga esta página.';
+            if (! groqAvailable) modelStatus.textContent += ' Groq no está disponible: configura GROQ_API_KEY en el servidor.';
+            return;
+        }
+        modelUnavailable = false;
+        modelSelector.value = models.some((model) => model.id === preferredModel) ? preferredModel : models[0].id;
+        modelStatus.textContent = payload.connected ? 'Selecciona un modelo disponible; si uno descargado no aparece, activa la carga dinámica (JIT) en LM Studio. La elección se recordará en este navegador.' : 'Se usa el modelo configurado; no se pudo consultar LM Studio.';
+        if (! groqAvailable) modelStatus.textContent += ' Groq no está disponible: configura GROQ_API_KEY en el servidor.';
+        refreshControls();
+    };
+    const refreshModels = async () => {
+        if (busy || loadingModels) return;
+        loadingModels = true;
+        refreshControls();
+        const previousModel = modelSelector.value;
+        try {
+            await loadAvailableModels();
+            if (previousModel && modelSelector.value !== previousModel) modelSelector.dispatchEvent(new Event('change'));
+        } catch {
+            modelStatus.textContent = 'No se pudo consultar LM Studio. Revise que el servidor local esté iniciado y pulse «Actualizar modelos disponibles».';
+        } finally {
+            loadingModels = false;
+            refreshControls();
+        }
+    };
+    modelRefresh.addEventListener('click', refreshModels);
+    modelSelector?.addEventListener('change', () => {
+        try { localStorage.setItem('giatep.ai.investigation.model', modelSelector.value); } catch { /* La selección sigue vigente en esta página. */ }
+        inputRevision++;
+        resetLaterStages();
+        showChangeNotice('Modelo cambiado. Genere nuevamente los hechos, el árbol y las medidas con el modelo seleccionado. El relato se conservó.');
+    });
+    providerButtons.forEach((button) => button.addEventListener('click', () => {
+        const nextProvider = button.dataset.aiProvider;
+        if (busy || nextProvider === selectedProvider || (nextProvider === 'groq' && ! groqAvailable)) return;
+        selectedProvider = nextProvider;
+        inputRevision++;
+        resetLaterStages();
+        const usingGroq = selectedProvider === 'groq';
+        providerLabel.textContent = usingGroq ? 'Groq · GPT-OSS 120B' : 'LM Studio';
+        providerLocation.textContent = usingGroq ? 'API externa; solo texto, sin archivos adjuntos' : 'Procesamiento en el servidor local';
+        showChangeNotice(`Motor cambiado a ${usingGroq ? `Groq (${groqModel})` : 'LM Studio'}. Genere nuevamente los hechos, el árbol y las medidas.`);
+        refreshControls();
+    }));
+
+    const saveFinalStory = async (value = story.value.trim()) => {
+        if (! value) throw new Error('Escriba el relato final antes de guardarlo.');
+        const workspace = section.closest('[data-demo-workspace]');
+        const payload = await postJson(workspace.dataset.storyStoreUrl, { case_folio: workspace.dataset.caseFolio, story: value }, 'No fue posible guardar el relato final.');
+        if (story.value.trim() === value) storySaved.classList.remove('hidden');
         return payload;
     };
 
-    story.addEventListener('input', () => storySaved.classList.add('hidden'));
+    draftButton.addEventListener('click', async () => {
+        if (busy) return;
+        busy = true;
+        const revision = inputRevision;
+        const selectedModel = modelSelector?.value || '';
+        refreshControls();
+        const workspace = section.closest('[data-demo-workspace]');
+        error.classList.add('hidden');
+        draftLoading.textContent = 'Generando un nuevo borrador con LM Studio…';
+        draftLoading.classList.remove('hidden');
+        draftButton.disabled = true;
+        draftButton.textContent = 'Generando borrador…';
+        const startedAt = Date.now();
+        const timer = setInterval(() => {
+            draftLoading.textContent = `Generando un nuevo borrador con LM Studio… (${Math.floor((Date.now() - startedAt) / 1000)}s)`;
+        }, 1000);
+
+        try {
+            const payload = await postJson(workspace.dataset.storyGenerateUrl, { case_folio: workspace.dataset.caseFolio, model: selectedModel }, 'No fue posible generar el borrador.');
+            if (inputRevision !== revision) {
+                draftLoading.classList.add('hidden');
+                showChangeNotice('El relato se editó durante la generación. Se conservaron sus cambios; genere un nuevo borrador si desea reemplazarlos.');
+                return;
+            }
+            if (typeof payload.story !== 'string' || ! payload.story.trim()) {
+                throw new Error('LM Studio respondió sin contenido. El relato anterior se conservó; vuelve a intentarlo.');
+            }
+
+            story.value = payload.story.trim();
+            story.dispatchEvent(new Event('input', { bubbles: true }));
+            renderMetadata('story', payload);
+            story.focus();
+            draftLoading.textContent = `Borrador generado con ${payload.model}${payload.interviews_used ? `; se consideraron ${payload.interviews_used} entrevistas guardadas` : '; no hay entrevistas guardadas para este caso'}. Revísalo antes de continuar.`;
+            storySaved.classList.add('hidden');
+        } catch (exception) {
+            draftLoading.classList.add('hidden');
+            showError(`${exception.message} El relato anterior se conservó.`);
+        } finally {
+            clearInterval(timer);
+            busy = false;
+            refreshControls();
+            draftButton.textContent = 'Generar borrador con modelo seleccionado';
+        }
+    });
+
     storySaveButton.addEventListener('click', async () => {
+        if (busy) return;
+        busy = true;
+        refreshControls();
         error.classList.add('hidden');
         storySaveButton.disabled = true;
         try {
@@ -611,182 +978,384 @@ document.querySelectorAll('[data-final-story-ai]').forEach((section) => {
             error.textContent = exception.message;
             error.classList.remove('hidden');
         } finally {
-            storySaveButton.disabled = false;
+            busy = false;
+            refreshControls();
         }
     });
 
-    button.addEventListener('click', async () => {
-        if (! story.value.trim()) {
-            error.classList.remove('hidden');
-            story.focus();
-            return;
+    const factsPayload = () => [...result.querySelectorAll('[name="ai_facts[]"]')].map((input) => ({
+        description: input.value.trim(), classification: input.closest('[data-ai-fact]')?.dataset.classification || 'hecho',
+        evidence_status: input.closest('[data-ai-fact]')?.dataset.evidenceStatus || 'no_verificado',
+        evidence: input.closest('[data-ai-fact]')?.dataset.evidence || '',
+        source: input.closest('[data-ai-fact]')?.dataset.source || 'Fuente no identificada',
+        source_ids: JSON.parse(input.closest('[data-ai-fact]')?.dataset.sourceIds || '[]'),
+    })).filter((fact) => fact.description);
+
+    const clearSavedStatus = () => {
+        result.querySelector('[data-ai-saved-status]').classList.add('hidden');
+        saveButton.textContent = 'Guardar propuesta';
+    };
+    const invalidateTree = () => {
+        causalTree = null;
+        measuresReady = false;
+        delete proposalMetadata.tree;
+        delete proposalMetadata.measures;
+        result.dataset.treeGraph = '';
+        result.querySelector('[data-ai-stage-panel="tree"]').classList.add('hidden');
+        result.querySelector('[data-ai-stage-panel="measures"]').classList.add('hidden');
+        clearSavedStatus();
+        refreshControls();
+    };
+    const resetLaterStages = () => {
+        reviewedFacts = []; causalTree = null;
+        measuresReady = false;
+        proposalMetadata = {};
+        result.classList.add('hidden');
+        result.querySelector('[data-ai-stage-panel="tree"]').classList.add('hidden');
+        result.querySelector('[data-ai-stage-panel="measures"]').classList.add('hidden');
+        result.querySelector('[data-ai-facts]').replaceChildren();
+        result.querySelector('[data-ai-pending-list]')?.replaceChildren();
+        result.querySelector('[data-ai-pending-verifications]')?.classList.add('hidden');
+        result.querySelector('[data-ai-tree-diagram]').replaceChildren();
+        result.querySelector('[data-ai-factors]').replaceChildren();
+        result.querySelector('[data-ai-measures]').replaceChildren();
+        result.dataset.treeGraph = '';
+        section.querySelectorAll('[data-ai-metadata]:not([data-ai-metadata="story"])').forEach((target) => { target.replaceChildren(); target.classList.add('hidden'); });
+        clearSavedStatus();
+        refreshControls();
+    };
+
+    story.addEventListener('input', () => {
+        storySaved.classList.add('hidden');
+        inputRevision++;
+        const hadResults = reviewedFacts.length > 0 || causalTree;
+        resetLaterStages();
+        section.querySelector('[data-ai-metadata="story"]').classList.add('hidden');
+        if (hadResults) showChangeNotice('El relato cambió. Genere otra vez los hechos, el árbol y las medidas para analizar el texto actualizado.');
+    });
+
+    result.querySelector('[data-ai-facts]').addEventListener('input', (event) => {
+        const input = event.target.closest('[name="ai_facts[]"], [data-ai-fact-classification]');
+        if (! input) return;
+        const wrapper = input.closest('[data-ai-fact]');
+        inputRevision++;
+        if (input.matches('[data-ai-fact-classification]')) {
+            wrapper.dataset.classification = input.value;
+        } else {
+            wrapper.dataset.evidenceStatus = 'no_verificado';
+            wrapper.dataset.source = 'Editado por investigador; revisar respaldo';
+            wrapper.dataset.sourceIds = '[]';
+            wrapper.dataset.evidence = '';
+            wrapper.querySelector('[data-fact-evidence]')?.remove();
         }
+        const caption = wrapper.querySelector('.label');
+        const index = [...wrapper.parentElement.children].indexOf(wrapper) + 1;
+        caption.textContent = `${wrapper.dataset.classification === 'permanente' ? 'Condición permanente' : 'Hecho puntual'} ${index} · ${wrapper.dataset.evidenceStatus === 'no_verificado' ? 'pendiente de verificación' : wrapper.dataset.evidenceStatus} · fuente: ${wrapper.dataset.source}`;
+        invalidateTree();
+        showChangeNotice('Los hechos cambiaron. Revise su respaldo y genere nuevamente el árbol y las medidas.');
+    });
+
+    const renderFacts = (items) => {
+        const facts = result.querySelector('[data-ai-facts]');
+        facts.replaceChildren(...items.map((item, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'rounded-xl border border-slate-200 bg-white p-4';
+            wrapper.dataset.aiFact = '';
+            wrapper.dataset.classification = item.classification || 'hecho';
+            wrapper.dataset.evidenceStatus = item.evidence_status || 'no_verificado';
+            wrapper.dataset.evidence = item.evidence || '';
+            wrapper.dataset.source = item.source || 'Fuente no identificada';
+            wrapper.dataset.sourceIds = JSON.stringify(item.source_ids || []);
+            const header = document.createElement('div'); header.className = 'mb-2 flex items-center justify-between gap-3';
+            const caption = document.createElement('span'); caption.className = 'label';
+            const statusLabels = { verificado: 'verificado', declarado: 'declarado · sin corroboración independiente', no_verificado: 'pendiente de verificación' };
+            caption.textContent = `${wrapper.dataset.classification === 'permanente' ? 'Condición permanente' : 'Hecho puntual'} ${index + 1} · ${statusLabels[wrapper.dataset.evidenceStatus] || 'pendiente de verificación'} · fuente: ${wrapper.dataset.source}`;
+            const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'btn-secondary shrink-0 px-2 py-1 text-xs'; remove.textContent = 'Quitar';
+            remove.addEventListener('click', () => {
+                wrapper.remove();
+                inputRevision++;
+                [...facts.querySelectorAll('[data-ai-fact] .label')].forEach((label, factIndex) => {
+                    const item = label.closest('[data-ai-fact]');
+                    label.textContent = `${item.dataset.classification === 'permanente' ? 'Condición permanente' : 'Hecho puntual'} ${factIndex + 1} · ${statusLabels[item.dataset.evidenceStatus] || 'pendiente de verificación'} · fuente: ${item.dataset.source}`;
+                });
+                invalidateTree();
+                showChangeNotice('Se quitó un hecho. Genere nuevamente el árbol y las medidas con los hechos restantes.');
+            });
+            header.append(caption, remove);
+            const label = document.createElement('label'); label.className = 'block';
+            const input = document.createElement('textarea'); input.className = 'input leading-relaxed'; input.name = 'ai_facts[]'; input.value = item.description; input.rows = 2;
+            input.setAttribute('aria-label', `Descripción del hecho ${index + 1}`);
+            label.append(input); wrapper.append(header, label);
+            const classification = document.createElement('select'); classification.className = 'input mt-2 max-w-xs text-xs'; classification.dataset.aiFactClassification = '';
+            classification.setAttribute('aria-label', `Tipo del hecho ${index + 1}`);
+            [['hecho', 'Hecho puntual'], ['permanente', 'Condición permanente']].forEach(([value, text]) => {
+                const option = document.createElement('option'); option.value = value; option.textContent = text; classification.append(option);
+            });
+            classification.value = wrapper.dataset.classification;
+            wrapper.append(classification);
+            if (item.evidence) {
+                const evidence = document.createElement('p'); evidence.className = 'text-xs text-slate-600';
+                evidence.dataset.factEvidence = '';
+                evidence.textContent = `Fragmento literal: “${item.evidence}”`; wrapper.append(evidence);
+            }
+            return wrapper;
+        }));
+        if (items.length === 0) {
+            const empty = document.createElement('p'); empty.className = 'rounded-xl border border-dashed border-amber-300 bg-amber-50 p-4 text-xs text-amber-900';
+            empty.textContent = 'No se identificaron hechos utilizables con el relato entregado. Revise las verificaciones pendientes y agregue antecedentes antes de construir el árbol.';
+            facts.append(empty);
+        }
+    };
+
+    const renderPendingVerifications = (items = []) => {
+        const section = result.querySelector('[data-ai-pending-verifications]');
+        const list = result.querySelector('[data-ai-pending-list]');
+        list.replaceChildren(...items.map((item) => {
+            const row = document.createElement('li'); row.textContent = item; return row;
+        }));
+        section.classList.toggle('hidden', items.length === 0);
+    };
+
+    const renderMeasures = (payload) => {
+        const factors = result.querySelector('[data-ai-factors]');
+        factors.replaceChildren(...payload.factors.map((factor) => {
+            const label = document.createElement('label');
+            label.className = 'flex items-start gap-3 rounded-xl border border-sky-200 bg-white p-4';
+            label.innerHTML = '<input type="checkbox" class="mt-1 size-4 accent-blue-800" name="ai_factor_codes[]" checked><span><strong class="block text-blue-950"></strong><span class="mt-1 block text-sm text-slate-700"></span><small class="mt-1 block text-xs text-slate-500"></small></span>';
+            label.querySelector('input').value = factor.code;
+            label.querySelector('strong').textContent = `${factor.code} · ${factor.category}`;
+            label.querySelector('span span').textContent = factor.label;
+            label.querySelector('small').textContent = factor.explanation;
+            return label;
+        }));
+        if (! payload.factors.length) {
+            const empty = document.createElement('p'); empty.className = 'text-sm text-slate-600';
+            empty.textContent = 'El relato no respalda con claridad ningún factor de la matriz disponible.'; factors.append(empty);
+        }
+        const measures = result.querySelector('[data-ai-measures]');
+        measures.replaceChildren(...payload.measures.map((measure) => {
+            const row = document.createElement('div');
+            row.className = 'grid gap-3 rounded-xl bg-slate-50 p-4 lg:grid-cols-[1fr_11rem_12rem_11rem]'; row.dataset.aiMeasure = '';
+            row.innerHTML = '<label><span class="label">Medida</span><textarea class="input" name="ai_measure_description[]" rows="2"></textarea></label><label><span class="label">Categoría</span><input class="input" name="ai_measure_category[]"></label><label><span class="label">Responsable</span><input class="input" name="ai_measure_owner[]"></label><label><span class="label">Plazo</span><input type="date" class="input" name="ai_measure_due[]"></label><label class="lg:col-span-2"><span class="label">Criterio de cobertura y estabilidad</span><textarea class="input" name="ai_measure_criterion[]" rows="2"></textarea></label><label class="lg:col-span-2"><span class="label">Causas abordadas (IDs de nodo)</span><input class="input" name="ai_measure_nodes[]"></label>';
+            row.querySelector('[name="ai_measure_description[]"]').value = measure.description;
+            row.querySelector('[name="ai_measure_category[]"]').value = measure.category;
+            row.querySelector('[name="ai_measure_owner[]"]').value = measure.responsible;
+            row.querySelector('[name="ai_measure_due[]"]').value = measure.due_date || '';
+            row.querySelector('[name="ai_measure_criterion[]"]').value = measure.criterion || '';
+            row.querySelector('[name="ai_measure_nodes[]"]').value = (measure.related_node_ids || []).join(', ');
+            return row;
+        }));
+        if (! payload.measures.length) {
+            const empty = document.createElement('p');
+            empty.className = 'text-sm text-slate-600';
+            empty.textContent = 'No se proponen medidas todavía: el análisis no encontró factores causales respaldados que permitan recomendar una acción específica. Revise las verificaciones pendientes y complete la investigación antes de definir medidas.';
+            measures.append(empty);
+        }
+    };
+
+    const runStage = async (stage) => {
+        if (busy) return;
+        if (! story.value.trim()) { error.textContent = 'Escriba el relato final antes de iniciar el análisis.'; error.classList.remove('hidden'); story.focus(); return; }
+        if (stage !== 'facts' && ! factsPayload().length) { error.textContent = 'Genere y revise primero los hechos.'; error.classList.remove('hidden'); return; }
+        if (stage === 'measures' && ! causalTree) { error.textContent = 'Genere y revise primero el árbol.'; error.classList.remove('hidden'); return; }
+
+        const revision = inputRevision;
+        const storySnapshot = story.value.trim();
+        const facts = factsPayload();
+        const selectedModel = modelSelector?.value || '';
+        const body = { case_folio: section.closest('[data-demo-workspace]').dataset.caseFolio, story: storySnapshot, model: selectedProvider === 'groq' ? '' : selectedModel, provider: selectedProvider, ...(stage !== 'facts' ? { facts } : {}), ...(stage === 'measures' ? { tree: structuredClone(causalTree) } : {}) };
+        const assertInputsCurrent = () => {
+            if (inputRevision !== revision) throw new Error('Los datos se editaron mientras se procesaba la etapa. El resultado recibido se descartó; vuelva a generar con los datos actuales.');
+        };
+        busy = true;
+        refreshControls();
 
         error.classList.add('hidden');
-        button.disabled = true;
-        button.textContent = 'Analizando…';
+        const workspace = section.closest('[data-demo-workspace]');
+        const activeButton = stageButtons.find((item) => item.dataset.aiStage === stage);
+        const originalLabel = activeButton.textContent;
+        activeButton.textContent = 'Procesando…';
         loading.classList.remove('hidden');
         let elapsedSeconds = 0;
-        loading.textContent = 'Analizando hechos y factores causales con LM Studio… (0s)';
+        let loadingStatus = `Generando ${stage === 'facts' ? 'hechos' : stage === 'tree' ? 'árbol' : 'medidas'} con ${selectedProvider === 'groq' ? 'Groq' : 'LM Studio'}…`;
+        loading.textContent = `${loadingStatus} (0s)`;
         const timer = setInterval(() => {
             elapsedSeconds++;
-            loading.textContent = `Analizando hechos y factores causales con LM Studio… (${elapsedSeconds}s)`;
+            loading.textContent = `${loadingStatus} (${elapsedSeconds}s)`;
         }, 1000);
-        result.classList.add('hidden');
-        result.querySelectorAll('input, textarea').forEach((field) => { field.disabled = true; });
-
-        const workspace = section.closest('[data-demo-workspace]');
         try {
-            await saveFinalStory();
-        } catch (exception) {
-            clearInterval(timer);
-            loading.classList.add('hidden'); error.textContent = exception.message; error.classList.remove('hidden');
-            button.disabled = false; button.textContent = 'Analizar relato final';
-            return;
-        }
-        fetch(workspace.dataset.aiAnalyzeUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-            body: JSON.stringify({ story: story.value.trim() }),
-        }).then(async (response) => {
-            clearInterval(timer);
-            const payload = await response.json();
-            if (! response.ok) throw new Error(payload.message || 'No fue posible generar el análisis.');
-
-            result.dataset.model = payload.model;
-            const facts = result.querySelector('[data-ai-facts]');
-            facts.replaceChildren(...payload.facts.map((value) => {
-                const input = document.createElement('input');
-                input.className = 'input'; input.name = 'ai_facts[]'; input.value = value;
-                return input;
-            }));
-            result.querySelector('[name="ai_tree_final"]').value = payload.tree.final;
-            result.querySelector('[name="ai_tree_origin"]').value = payload.tree.origin;
-            const treeGrid = result.querySelector('[name="ai_tree_final"]').closest('.grid');
-            treeGrid.querySelectorAll('[name="ai_tree_cause[]"]').forEach((input) => input.closest('label').remove());
-            payload.tree.causes.forEach((value, index) => {
-                const label = document.createElement('label');
-                label.innerHTML = `<span class="label">Causa ${index + 1}</span><input class="input" name="ai_tree_cause[]">`;
-                label.querySelector('input').value = value; treeGrid.append(label);
-            });
-            const factors = result.querySelector('[data-ai-factors]');
-            factors.replaceChildren(...payload.factors.map((factor) => {
-                const label = document.createElement('label');
-                label.className = 'flex items-start gap-3 rounded-xl border border-sky-200 bg-white p-4';
-                label.innerHTML = '<input type="checkbox" class="mt-1 size-4 accent-blue-800" name="ai_factor_codes[]" checked><span><strong class="block text-blue-950"></strong><span class="mt-1 block text-sm text-slate-700"></span><small class="mt-1 block text-xs text-slate-500"></small></span>';
-                label.querySelector('input').value = factor.code;
-                label.querySelector('strong').textContent = `${factor.code} · ${factor.category}`;
-                label.querySelector('span span').textContent = factor.label;
-                label.querySelector('small').textContent = factor.explanation;
-                return label;
-            }));
-            if (! payload.factors.length) {
-                const empty = document.createElement('p'); empty.className = 'text-sm text-slate-600';
-                empty.textContent = 'El relato no respalda con claridad ningún factor de la matriz disponible.'; factors.append(empty);
+            await saveFinalStory(storySnapshot);
+            assertInputsCurrent();
+            let payload;
+            if (stage === 'measures') {
+                const candidateCodes = [];
+                let batchIndex = 0;
+                let totalBatches = 1;
+                while (batchIndex < totalBatches) {
+                    loadingStatus = `Revisando matriz causal: lote ${batchIndex + 1}${totalBatches > 1 ? `/${totalBatches}` : ''}`;
+                    const batch = await postJson(workspace.dataset.aiFactorBatchUrl, { ...body, batch_index: batchIndex }, 'No fue posible revisar este lote de factores.');
+                    assertInputsCurrent();
+                    candidateCodes.push(...(batch.candidate_codes || []));
+                    if (! Number.isInteger(batch.total_batches) || batch.total_batches < 1 || batch.total_batches > 21) throw new Error('La revisión de la matriz respondió con un número de lotes inválido.');
+                    totalBatches = batch.total_batches;
+                    batchIndex++;
+                }
+                loadingStatus = 'Generando medidas a partir de los factores pertinentes';
+                payload = await postJson(workspace.dataset.aiMeasuresUrl, { ...body, candidate_codes: [...new Set(candidateCodes)].slice(0, 64) }, 'No fue posible generar las medidas.');
+            } else {
+                payload = await postJson(workspace.dataset[`ai${stage[0].toUpperCase()}${stage.slice(1)}Url`], body, `No fue posible generar la etapa de ${stage}.`);
             }
-            const measures = result.querySelector('[data-ai-measures]');
-            measures.replaceChildren(...payload.measures.map((measure) => {
-                const row = document.createElement('div');
-                row.className = 'grid gap-3 rounded-xl bg-slate-50 p-4 lg:grid-cols-[1fr_11rem_12rem_11rem]'; row.dataset.aiMeasure = '';
-                row.innerHTML = '<label><span class="label">Medida</span><textarea class="input" name="ai_measure_description[]" rows="2"></textarea></label><label><span class="label">Categoría</span><input class="input" name="ai_measure_category[]"></label><label><span class="label">Responsable</span><input class="input" name="ai_measure_owner[]"></label><label><span class="label">Plazo</span><input type="date" class="input" name="ai_measure_due[]"></label>';
-                row.querySelector('[name="ai_measure_description[]"]').value = measure.description;
-                row.querySelector('[name="ai_measure_category[]"]').value = measure.category;
-                row.querySelector('[name="ai_measure_owner[]"]').value = measure.responsible;
-                row.querySelector('[name="ai_measure_due[]"]').value = measure.due_date || '';
-                return row;
-            }));
-            loading.classList.add('hidden'); result.classList.remove('hidden');
-            result.querySelectorAll('input, textarea').forEach((field) => { field.disabled = false; });
-            button.disabled = false; button.textContent = 'Volver a analizar'; result.querySelector('input, textarea')?.focus();
-        }).catch((exception) => {
+            assertInputsCurrent();
+            result.dataset.model = payload.model || result.dataset.model || '';
+
+            if (stage === 'facts') {
+                if (! Array.isArray(payload.facts)) throw new Error('La respuesta no contiene una lista de hechos utilizable.');
+                resetLaterStages();
+                reviewedFacts = payload.facts;
+                renderFacts(reviewedFacts);
+                renderPendingVerifications(payload.pending_verifications || []);
+                result.classList.remove('hidden');
+                stageButtons.find((item) => item.dataset.aiStage === 'tree').disabled = reviewedFacts.length === 0;
+                if (payload.guide_reference) {
+                    const pageLabel = (payload.guide_reference.pages || []).map((page) => `p. ${page}`).join(', ');
+                    const guideReference = result.querySelector('[data-ai-guide-reference]');
+                    guideReference.textContent = `Referencia local: ${payload.guide_reference.title} (${payload.guide_reference.version}), páginas ${pageLabel || 'no disponibles'}.`;
+                    guideReference.classList.remove('hidden');
+                }
+            } else if (stage === 'tree') {
+                if (! payload.tree || ! Array.isArray(payload.tree.nodes) || ! Array.isArray(payload.tree.edges) || ! payload.tree.nodes.some((node) => node.id === payload.tree.final_node_id)) throw new Error('La respuesta no contiene un árbol con un hecho final válido.');
+                invalidateTree();
+                causalTree = payload.tree;
+                result.dataset.treeGraph = JSON.stringify(causalTree);
+                renderCausalTree(result.querySelector('[data-ai-tree-diagram]'), causalTree);
+                const treeNote = result.querySelector('[data-ai-tree-note]');
+                const excludedCount = (causalTree.excluded_node_ids || []).length;
+                treeNote.textContent = excludedCount ? `Se omitieron ${excludedCount} nodo(s) sin un vínculo que los conecte con el hecho final; no se inventaron relaciones para incorporarlos.` : '';
+                treeNote.classList.toggle('hidden', excludedCount === 0);
+                result.querySelector('[data-ai-stage-panel="tree"]').classList.remove('hidden');
+            } else {
+                if (! Array.isArray(payload.factors) || ! Array.isArray(payload.measures)) throw new Error('La respuesta no contiene factores y medidas utilizables.');
+                renderMeasures(payload);
+                result.querySelector('[data-ai-stage-panel="measures"]').classList.remove('hidden');
+                measuresReady = true;
+                clearSavedStatus();
+            }
+            renderMetadata(stage, payload);
+            showChangeNotice('');
+        } catch (exception) {
+            showError(`${exception.message}${inputRevision === revision ? ' Los resultados anteriores se conservaron.' : ''}`);
+        } finally {
             clearInterval(timer);
-            loading.classList.add('hidden'); error.textContent = exception.message; error.classList.remove('hidden');
-            button.disabled = false; button.textContent = 'Analizar relato final';
-        });
-    });
+            loading.classList.add('hidden');
+            activeButton.textContent = originalLabel;
+            busy = false;
+            refreshControls();
+        }
+    };
+
+    stageButtons.forEach((stageButton) => stageButton.addEventListener('click', () => runStage(stageButton.dataset.aiStage)));
 
     saveButton.addEventListener('click', async () => {
-        const factsTarget = investigation.querySelector('[data-derived-facts]');
-        const treeTarget = investigation.querySelector('[data-derived-tree]');
-        const measuresTarget = investigation.querySelector('[data-derived-measures]');
-        factsTarget.replaceChildren();
-        treeTarget.replaceChildren();
-        measuresTarget.replaceChildren();
-
-        result.querySelectorAll('[name="ai_facts[]"]').forEach((source) => {
-            const row = document.createElement('div');
-            row.className = 'repeat-row';
-            const handle = document.createElement('span');
-            handle.className = 'drag-handle';
-            handle.textContent = '⋮⋮';
-            const input = document.createElement('input');
-            input.className = 'input';
-            input.name = 'facts[]';
-            input.value = source.value;
-            const remove = document.createElement('button');
-            remove.type = 'button';
-            remove.className = 'btn-secondary';
-            remove.dataset.removeRow = '';
-            remove.textContent = 'Quitar';
-            row.append(handle, input, remove);
-            factsTarget.append(row);
-        });
-
+        if (busy || ! measuresReady || ! causalTree) return;
+        busy = true;
+        refreshControls();
+        error.classList.add('hidden');
+        const originalLabel = saveButton.textContent;
+        saveButton.textContent = 'Guardando propuesta…';
+        const revision = inputRevision;
+        const graph = structuredClone(causalTree);
+        const nodesById = new Map((graph.nodes || []).map((node) => [node.id, node]));
+        const finalNode = nodesById.get(graph.final_node_id);
+        const antecedents = new Set((graph.edges || []).map((edge) => edge.from));
+        const origins = (graph.nodes || []).filter((node) => antecedents.has(node.id) && node.id !== finalNode?.id);
         const treeValues = {
-            final: result.querySelector('[name="ai_tree_final"]').value,
-            origin: result.querySelector('[name="ai_tree_origin"]').value,
-            causes: [...result.querySelectorAll('[name="ai_tree_cause[]"]')].map((input) => input.value),
+            final: finalNode?.description || '',
+            origin: origins.map((node) => node.description).join('; ') || finalNode?.description || '',
+            causes: (graph.nodes || []).filter((node) => node.id !== finalNode?.id).map((node) => node.description),
+            graph,
         };
-        const finalNode = document.createElement('div');
-        finalNode.className = 'cause-node cause-final';
-        finalNode.textContent = treeValues.final;
-        const connector = document.createElement('div');
-        connector.className = 'cause-connector';
-        connector.textContent = '↑ Y ↑';
-        const causes = document.createElement('div');
-        causes.className = 'grid gap-4 md:grid-cols-2';
-        treeValues.causes.forEach((value) => {
-            const node = document.createElement('div');
-            node.className = 'cause-node';
-            node.textContent = value;
-            causes.append(node);
-        });
-        const originConnector = connector.cloneNode(true);
-        originConnector.textContent = '↑';
-        const originNode = document.createElement('div');
-        originNode.className = 'cause-node mx-auto';
-        originNode.textContent = treeValues.origin;
-        treeTarget.append(finalNode, connector, causes, originConnector, originNode);
-
-        result.querySelectorAll('[data-ai-measure]').forEach((source) => {
-            const row = document.createElement('tr');
-            ['ai_measure_description[]', 'ai_measure_category[]', 'ai_measure_owner[]', 'ai_measure_due[]'].forEach((name) => {
-                const cell = document.createElement('td');
-                cell.textContent = source.querySelector(`[name="${name}"]`).value;
-                row.append(cell);
-            });
-            measuresTarget.append(row);
-        });
-
         const workspace = investigation.closest('[data-demo-workspace]');
-        const response = await fetch(workspace.dataset.aiStoreUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-            body: JSON.stringify({
-                case_folio: workspace.dataset.caseFolio, story: story.value.trim(), model: result.dataset.model || '',
-                facts: [...result.querySelectorAll('[name="ai_facts[]"]')].map((input) => input.value), tree: treeValues,
-                factor_codes: [...result.querySelectorAll('[name="ai_factor_codes[]"]:checked')].map((input) => input.value),
-                measures: [...result.querySelectorAll('[data-ai-measure]')].map((row) => ({ description: row.querySelector('[name="ai_measure_description[]"]').value, category: row.querySelector('[name="ai_measure_category[]"]').value, responsible: row.querySelector('[name="ai_measure_owner[]"]').value, due_date: row.querySelector('[name="ai_measure_due[]"]').value || null })),
-            }),
-        });
-        const payload = await response.json();
-        if (! response.ok) { error.textContent = payload.message || 'No fue posible guardar la propuesta.'; error.classList.remove('hidden'); return; }
+        const body = {
+            case_folio: workspace.dataset.caseFolio, story: story.value.trim(), model: result.dataset.model || '',
+            facts: factsPayload().map((fact) => fact.description), fact_details: factsPayload(), tree: treeValues,
+            factor_codes: [...result.querySelectorAll('[name="ai_factor_codes[]"]:checked')].map((input) => input.value),
+            prompt_version: proposalMetadata.measures?.prompt_version || proposalMetadata.tree?.prompt_version || proposalMetadata.facts?.prompt_version || '',
+            quality_warnings: [...new Set(Object.values(proposalMetadata).flatMap((metadata) => metadata.quality_warnings || []))],
+            measures: [...result.querySelectorAll('[data-ai-measure]')].map((row) => ({ description: row.querySelector('[name="ai_measure_description[]"]').value, category: row.querySelector('[name="ai_measure_category[]"]').value, responsible: row.querySelector('[name="ai_measure_owner[]"]').value, due_date: row.querySelector('[name="ai_measure_due[]"]').value || null, criterion: row.querySelector('[name="ai_measure_criterion[]"]').value, related_node_ids: row.querySelector('[name="ai_measure_nodes[]"]').value.split(',').map((id) => id.trim()).filter(Boolean) })),
+        };
+        try {
+            await postJson(workspace.dataset.aiStoreUrl, body, 'No fue posible guardar la propuesta.');
+            if (inputRevision !== revision) {
+                showChangeNotice('Se guardó la versión enviada, pero el relato cambió durante el guardado. Genere nuevamente el análisis para incorporar sus cambios.');
+                return;
+            }
+            const factsTarget = investigation.querySelector('[data-derived-facts]');
+            const treeTarget = investigation.querySelector('[data-derived-tree]');
+            const measuresTarget = investigation.querySelector('[data-derived-measures]');
+            factsTarget.replaceChildren();
+            treeTarget.replaceChildren();
+            measuresTarget.replaceChildren();
 
-        investigation.closest('[data-demo-workspace]').querySelectorAll('[data-ai-derived-nav]').forEach((nav) => nav.classList.remove('hidden'));
-        result.querySelector('[data-ai-saved-status]').classList.remove('hidden');
-        saveButton.textContent = 'Propuesta guardada';
-        investigation.closest('[data-demo-workspace]').querySelector('[data-section-target="inv-4"]').click();
+            result.querySelectorAll('[name="ai_facts[]"]').forEach((source) => {
+                const row = document.createElement('div');
+                row.className = 'repeat-row';
+                const handle = document.createElement('span');
+                handle.className = 'drag-handle';
+                handle.textContent = '⋮⋮';
+                const input = document.createElement('input');
+                input.className = 'input';
+                input.name = 'facts[]';
+                input.value = source.value;
+                const remove = document.createElement('button');
+                remove.type = 'button';
+                remove.className = 'btn-secondary';
+                remove.dataset.removeRow = '';
+                remove.textContent = 'Quitar';
+                row.append(handle, input, remove);
+                factsTarget.append(row);
+            });
+
+            const diagram = document.createElement('div'); diagram.className = 'causal-graph-viewport';
+            renderCausalTree(diagram, graph); treeTarget.replaceChildren(diagram);
+
+            result.querySelectorAll('[data-ai-measure]').forEach((source) => {
+                const row = document.createElement('tr');
+                ['ai_measure_description[]', 'ai_measure_category[]', 'ai_measure_owner[]', 'ai_measure_due[]'].forEach((name) => {
+                    const cell = document.createElement('td');
+                    cell.textContent = source.querySelector(`[name="${name}"]`).value;
+                    row.append(cell);
+                });
+                measuresTarget.append(row);
+            });
+
+            investigation.closest('[data-demo-workspace]').querySelectorAll('[data-ai-derived-nav]').forEach((nav) => nav.classList.remove('hidden'));
+            result.querySelector('[data-ai-saved-status]').classList.remove('hidden');
+            saveButton.textContent = 'Propuesta guardada';
+            investigation.closest('[data-demo-workspace]').querySelector('[data-section-target="inv-4"]').click();
+        } catch (exception) {
+            showError(exception.message);
+            saveButton.textContent = originalLabel;
+        } finally {
+            busy = false;
+            refreshControls();
+        }
     });
+    result.querySelector('[data-ai-measures]').addEventListener('input', clearSavedStatus);
+    result.querySelector('[data-ai-factors]').addEventListener('change', clearSavedStatus);
+    section.closest('[data-demo-workspace]').addEventListener('giatep:interview-saved', () => {
+        inputRevision++;
+        resetLaterStages();
+        section.querySelector('[data-ai-metadata="story"]').classList.add('hidden');
+        showChangeNotice('Se guardó una entrevista nueva. Actualice el relato para integrar esa fuente y genere nuevamente los hechos, el árbol y las medidas.');
+    });
+    investigation.addEventListener('submit', (event) => {
+        if (! busy) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        showError('Espere a que termine la solicitud de IA antes de guardar la investigación.');
+    }, true);
+    refreshControls();
+    refreshModels();
 });
 
 document.querySelectorAll('[data-demo-form]').forEach((form) => {

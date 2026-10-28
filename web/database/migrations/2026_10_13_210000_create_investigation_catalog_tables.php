@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\OriginalGiatepSchema;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -9,6 +10,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (OriginalGiatepSchema::isActive()) {
+            return;
+        }
+
         if (Schema::hasTable('cause_factors') && ! Schema::hasTable('ai_prompts')) {
             Schema::dropIfExists('investigation_cause_factor');
             Schema::dropIfExists('interview_answer_options');
@@ -153,6 +158,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (OriginalGiatepSchema::isActive()) {
+            return;
+        }
+
         Schema::dropIfExists('ai_analysis_runs');
         Schema::dropIfExists('ai_prompts');
         Schema::dropIfExists('investigation_cause_factor');

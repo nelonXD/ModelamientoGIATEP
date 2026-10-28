@@ -4,8 +4,10 @@ namespace App\Http\Requests;
 
 use App\Models\RegistrationRequest;
 use App\Models\User;
+use App\Support\OriginalGiatepSchema;
 use App\Support\Rut;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Validator;
@@ -19,6 +21,19 @@ class StoreRegistrationRequest extends FormRequest
 
     public function rules(): array
     {
+        if (OriginalGiatepSchema::isActive()) {
+            return [
+                'rut' => ['required', 'string'],
+                'name' => ['required', 'string', 'max:150'],
+                'job_title' => ['required', 'string', 'max:100'],
+                'establishment_id' => ['required', Rule::exists('dependencia', 'Id_Dependencia')],
+                'requested_role' => ['required', Rule::in(['delegado', 'cphs'])],
+                'email' => ['required', 'email', 'max:254'],
+                'phone' => ['required', 'string', 'max:30'],
+                'password' => ['required', 'confirmed', Password::min(8)],
+            ];
+        }
+
         return [
             'rut' => ['required', 'string'],
             'name' => ['required', 'string', 'max:255'],
@@ -43,11 +58,17 @@ class StoreRegistrationRequest extends FormRequest
                 $validator->errors()->add('rut', 'Ingresa un RUT válido.');
             }
 
-            if (User::where('rut', $this->string('rut'))->exists()) {
+            $userExists = OriginalGiatepSchema::isActive()
+                ? DB::table('usuario')->where('Rut_Usuario', $this->string('rut')->toString())->exists()
+                : User::where('rut', $this->string('rut')->toString())->exists();
+            if ($userExists) {
                 $validator->errors()->add('rut', 'Ya existe una cuenta asociada a este RUT.');
             }
 
-            if (RegistrationRequest::where('rut', $this->string('rut'))->where('status', 'pending')->exists()) {
+            $requestExists = OriginalGiatepSchema::isActive()
+                ? DB::table('solicitud_acceso')->where('Rut_Solicitante', $this->string('rut')->toString())->where('Estado_Solicitud', 'Pendiente')->exists()
+                : RegistrationRequest::where('rut', $this->string('rut')->toString())->where('status', 'pending')->exists();
+            if ($requestExists) {
                 $validator->errors()->add('rut', 'Ya existe una solicitud pendiente para este RUT.');
             }
         }];

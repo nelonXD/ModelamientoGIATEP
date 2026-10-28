@@ -1,0 +1,405 @@
+{
+  "reference_id": "ISP-D057-PR-500-02-001-v1",
+  "title": "Guía para la investigación de accidentes: Metodología Árbol de Causas",
+  "publisher": "Instituto de Salud Pública de Chile · Departamento Salud Ocupacional",
+  "version": 1,
+  "resolution": "Resolución Exenta N.º 151, 23-01-2020",
+  "document_code": "D057-PR-500-02-001",
+  "source_file": "D057-PR-500-02-001_Guia_Investigacion_Accidentes_v1_(2).pdf",
+  "source_sha256": "978c2b28ccc9336a89ce5e0f0eae4db17d45974dba555968d27ffd796f7138d2",
+  "page_count": 28,
+  "extracted_at_utc": "2026-10-19T14:31:40+00:00",
+  "extractor": "pypdf 6.10.0",
+  "limitations": "Extracción textual por página. Diagramas, simbología e imágenes pueden no quedar íntegramente representados; revisar el PDF original en las páginas marcadas para revisión visual.",
+  "pages": [
+    {
+      "page": 1,
+      "section": "METODOLOGÍA ARBOL DE CAUSAS",
+      "headings": [
+        "DEPARTAMENTO SALUD OCUPACIONAL",
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS"
+      ],
+      "text": "DEPARTAMENTO SALUD OCUPACIONAL La presente versión responde fielmente al contenido de la Resolución Exenta N° 151 del 23/01/2020 del Instituto de Salud Pública de Chile, que aprueba el presente documento. VERSIÓN 1",
+      "text_chars": 214,
+      "needs_visual_review": true
+    },
+    {
+      "page": 2,
+      "section": "METODOLOGÍA ARBOL DE CAUSAS",
+      "headings": [
+        "EDITOR RESPONSABLE:",
+        "COMITÉ DE EXPERTOS REVISOR:",
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS"
+      ],
+      "text": "EDITOR RESPONSABLE: Susana Muñoz Fica Sección Seguridad en el Trabajo COMITÉ DE EXPERTOS REVISOR: Esteban Varas R. MINSAL Elena Contreras. SUSESO Marco Soto. SUSESO Lionel Cancino. Dirección del Trabajo M° José Muñoz. Directemar Ricardo Berrios B. Sernageomin Axel Miranda R. Instituto Seguridad Laboral Patricio Vejar Z. Mutual de Seguridad Juan Marquis F. IST Luis Carrera O. IST REVISOR: José Espinosa Robles Subdpto. Seguridad y Tecnologías en el Trabajo D057-PR-500-02-001 Versión 1. Para citar el presente documento: Instituto de Salud Pública de Chile, Guía para la Investigación de Accidentes Metodología Árbol de Causas. V1. 2019 Consultas o comentarios: Sección OIRS del Instituto de Salud Pública de Chile, www.ispch.cl.",
+      "text_chars": 731,
+      "needs_visual_review": false
+    },
+    {
+      "page": 3,
+      "section": "2. OBJETIVOS",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS.",
+        "1. ANTECEDENTES",
+        "2. OBJETIVOS"
+      ],
+      "text": "METODOLOGÍA ARBOL DE CAUSAS. 1. ANTECEDENTES La Oficina Internacional del Trabajo (OIT) estima que cada 15 segundos, un trabajador muere a causa de accidentes o enfermedades relacionadas con el trabajo y 153 trabajadores tienen un accidente laboral. Además, señala que las muertes y las lesiones siguen presentando particularmente altos índices en los países en desarrollo, donde existen grandes cantidades de trabajadores en actividades primarias y de extracción como: agricultura, explotación forestal, pesca y minería entre otros. En Chile por su parte, según estadísticas de la Superintendencia de Seguridad Social, el número de fallecidos por accidentes del trabajo llega a la cifra de 208 para el año 2018, produciéndose durante ese año 164.407 accidentes del trabajo (disminución de 3,3% respecto de 2017) y 53.595 accidentes de trayecto (disminución de 1,9% respecto de 2017). En este contexto, una estrategia fundamental para disminuir y evitar la repetición de los accidentes son los procesos de investigación de accidentes laborales, instancia fundamental para la gestión de la prevención de riesgos, dado que al analizar sus causas se identifican los factores de riesgos y los riesgos presentes en el lugar de trabajo que deben ser eliminados, adoptándose las medidas preventivas que per - mitan evitar lesiones y enfermedades en los trabajadores a futuro. Debido a lo anteriormente expuesto, y consciente de la importancia de establecer un método estan - darizado para la realización de una investigación de accidentes graves y fatales basado en el Método del Árbol de Causas, en adelante llamado “MAC” es que el Instituto de Salud Pública de Chile, a través de su Departamento Salud Ocupacional y específicamente de la Sección de Seguridad en el Trabajo, propone la presente guía, no sólo para el uso de las empresas y OAL sino que también para su uso por parte de las autoridades en la materia. 2. OBJETIVOS a) Proponer una guía de aplicación del MAC para la investigación de accidentes graves y fatales. b) Proponer un registro con los contenidos mínimos que debe tener un informe de investigación de accidentes basado en el MAC.",
+      "text_chars": 2145,
+      "needs_visual_review": false
+    },
+    {
+      "page": 4,
+      "section": "4. MARCO LEGAL",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "3. ALCANCE",
+        "3.1. Teórico",
+        "3.2. Población Objetivo",
+        "3.3. Población Usuaria",
+        "4. MARCO LEGAL"
+      ],
+      "text": "3. ALCANCE 3.1. Teórico Investigación de Accidentes Laborales del tipo grave o fatal, en base a la Metodología del Árbol de Causas. 3.2. Población Objetivo Todos los trabajadores y trabajadoras expuestos a accidentes laborales graves y fatales en sus ambientes de trabajo. 3.3. Población Usuaria Profesionales del área de prevención de riesgos y Miembros del Comité Paritarios de Higiene que se desempeñen en empresas, organizaciones y autoridades relacionadas con la investigación, reportabilidad y/o fiscalización de accidentes graves o fatales. 4. MARCO LEGAL • Ley N° 16.744 – Establece Normas sobre Accidentes del Trabajo y Enfermedades Profesionales, Ministerio del Trabajo y Previsión Social. • Decreto Supremo N°40 – Aprueba Reglamento sobre Prevención de Riesgos Profesionales, Ministerio del Trabajo y Previsión Social. • Decreto Supremo N° 54 - Aprueba Reglamento para la constitución y funcionamiento de los comités paritarios de Higiene y Seguridad, Ministerio del Trabajo y Previsión Social. • Circular N° 156 – Aprueba Compendio de Normas del Seguro Social sobre Accidentes del Trabajo y Enfermedades Profesionales de la Ley 16.744, deroga y declara inaplicables circulares que indica, Superintendencia de Seguridad Social. • Compendio de Normas del Seguro Social de Accidentes del Trabajo y Enfermedades Profesionales. SUSESO. • Decreto Supremo N° 92 - Aprueba Reglamento para la constitución y funcionamiento de los Comités Paritarios de Higiene y Seguridad en Actividad Laboral Marítima, Ministerio de Trabajo y Previsión Social. • Decreto Supremo N°76 - Aprueba Reglamento para la Aplicación del Artículo N° 66 Bis de la Ley N°16.744 sobre la Gestión de la Seguridad y Salud en el Trabajo en Obras, Faenas o Servicios que indica, Ministerio del Trabajo y Previsión Social. • Decreto Supremo N°132 - Reglamento de Seguridad Minera, Ministerio de Minería Publicado en el Diario Oficial el 07 de febrero de 2004 Santiago, Fijase como texto refundido, sistematizado y coordinado del Decreto Supremo Nº 72, de 1985, del mismo Ministerio. • “Manual del procedimiento de fiscalización de la Dirección del Trabajo” Dirección del Trabajo (2017), Versión 2.0. Ministerio del Trabajo y Previsión Social. • Decreto de Ley N° 2.222 Ley de Navegación, de fecha 31/05/1978, art. N° 91. Ministerio de Defensa Nacional. • Código del Trabajo art 188, 31 de julio de 2002. Ministerio del Trabajo y Previsión Social.",
+      "text_chars": 2415,
+      "needs_visual_review": false
+    },
+    {
+      "page": 5,
+      "section": "6  Según se indica en el Título IV del Decreto Supremo Nº 76, de 2007, Reglamento para la aplicación del artículo 66 bis de la ley 16.744,",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "5. DESARROLLO",
+        "5.1. Generalidades",
+        "5.2. Participantes en el proceso de investigación de accidentes en el país.",
+        "1  Según la OIT (Oficina Internacional del Trabajo), la investigación del accidente no sólo se debería realizar para el caso de accidentes de",
+        "2  Por parte de la Superintendencia de Seguridad Social (SUSESO) en su compendio de Normas del Seguro Social de Accidentes del",
+        "3\t \tObligación\tcontenida\ten\tel\tpunto\t3\tdel\tart.\t24\tdel\tDecreto\tSupremo\tN°54\tde\t1969,\tdel\tMinisterio\tdel\tTrabajo\ty\tPrevisión\tSocial",
+        "4\t \tArtículo\t18\tdel\tDecreto\tSupremo\tN°40\tde\t1969,\tdel\tMinisterio\tdel\tTrabajo\ty\tPrevisión\tSocial.",
+        "5  Se exceptúan del uso de esta metodología los accidentes de tránsito, sin perjuicio de lo anterior se deberá recabar la mayor cantidad de",
+        "6  Según se indica en el Título IV del Decreto Supremo Nº 76, de 2007, Reglamento para la aplicación del artículo 66 bis de la ley 16.744,"
+      ],
+      "text": "5. DESARROLLO 5.1. Generalidades Investigar los accidentes permite identificar todas aquellas causas que los originaron y, que potencialmente, podrían ser la fuente de origen de otros accidentes, posibilitando gestionar de mejor forma la eliminación de los riesgos y, por ende, prevenir que éstos puedan dañar la seguridad y salud de los trabajadores. Por tanto, se hace fundamental el poder contar con un “Procedimiento de Investigación de Accidentes” objetivo y veraz que permita la obtención de tales metas1. No obstante, si bien en Chile la recomendación de investigar es una práctica fomentada en el área de la prevención de riesgos, sólo se cuenta con la indicación2 de que para accidentes del tipo grave o fatal, dicha investigación deberá realizarse según la metodología del “árbol de causas”, la cual deberá ser notificada, por parte de los Organismos Administradores de la Ley N° 16.744 (OAL), a través del formato implementado para tal fin en el Sistema Nacional de Información de Seguridad y Salud en el Trabajo (SISESAT). 5.2. Participantes en el proceso de investigación de accidentes en el país. En Chile corresponderá al empleador, mediante su Comité Paritario de Higiene y Seguridad, realizar una investigación de los accidentes del trabajo que ocurran3, debiendo actuar con la asesoría del Departamento de Prevención de Riesgos Profesionales (cuando exista) y pudiendo requerir la asistencia técnica del or - ganismo administrador de la Ley Nº16.744 (OAL) a la que se encuentre afiliada o adherida la empresa y de acuerdo a lo establecido en su respectivo Reglamento Interno de Higiene y Seguridad4. En caso de que la empresa en donde se produjo el accidente no cuente con Comité Paritario de Higiene y Seguridad (empresas menores de 25 trabajadores(as), será el OAL al cual se encuentra afiliada la empresa quién deberá efectuar la investigación correspondiente. Independientemente de la función asesora en esta materia, en caso de un accidente clasificado como “grave”, el OAL podrá realizar su propia investigación, mientras que para el caso de un accidente “fatal”, deberá obligatoriamente realizarla en forma independiente a la de la empresa (tenga o no ésta Comité Pa - ritario de Higiene y Seguridad). En ambos casos, la metodología a aplicar corresponderá al “método del árbol de causas”5. En casos de empresas con trabajadores en régimen de subcontratación, corresponderá al Comité Pa - ritario de Faena 6 realizar las investigaciones de los accidentes del trabajo que ocurran, en aquellos casos cuando la empresa a la que pertenece el trabajador accidentado no cuente con Comité Paritario de Higiene y Seguridad, debiendo actuar con la asesoría del Departamento de Prevención de Riesgos de Faena o del Departamento de Prevención de Riesgos Profesionales de dicha empresa, pudiendo requerir la asistencia técnica del Organismo Administrador de la Ley N°16.744 a que se encuentre afiliada o adherida dicha empresa. No obstante, otros OAL presentes en la faena deberán colaborar y aportar con antecedentes necesa1 Según la OIT (Oficina Internacional del Trabajo), la investigación del accidente no sólo se debería realizar para el caso de accidentes de connotación grave o fatal, sino que también es recomendable realizarla para los casos en que se provoquen lesiones menores y cuasi accidentes (sucesos peligrosos). 2 Por parte de la Superintendencia de Seguridad Social (SUSESO) en su compendio de Normas del Seguro Social de Accidentes del Trabajo y Enfermedades Profesionales. 3 Obligación contenida en el punto 3 del art. 24 del Decreto Supremo N°54 de 1969, del Ministerio del Trabajo y Previsión Social 4 Artículo 18 del Decreto Supremo N°40 de 1969, del Ministerio del Trabajo y Previsión Social. 5 Se exceptúan del uso de esta metodología los accidentes de tránsito, sin perjuicio de lo anterior se deberá recabar la mayor cantidad de información cuando se deba investigar este tipo de accidentes. 6 Según se indica en el Título IV del Decreto Supremo Nº 76, de 2007, Reglamento para la aplicación del artículo 66 bis de la ley 16.744, sobre materias relativas a la seguridad y salud en el trabajo",
+      "text_chars": 4131,
+      "needs_visual_review": false
+    },
+    {
+      "page": 6,
+      "section": "8  Sobre todo, para el caso de posibles fiscalizaciones posteriores de la investigación, a través de la autoridad correspondiente.",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "5.3. Metodología para aplicación del árbol de causas.",
+        "5.3.1. Recopilación de la información.",
+        "7  Un formato de propuesta de información mínima preliminar a recopilar, propuesto en el manual de formación de investigadores - Inves-",
+        "8  Sobre todo, para el caso de posibles fiscalizaciones posteriores de la investigación, a través de la autoridad correspondiente."
+      ],
+      "text": "rios al OAL que le corresponde efectuar, asistir, coordinar y/o asesorar la investigación según corresponda. Respecto de las atribuciones de las autoridades fiscalizadoras en la materia, es importante indicar que no sólo están supeditadas a la exigencia respecto de los reportes de investigación de accidentes graves y fatales que incluyan las causas y medidas a implementar, sino que también respecto de la realización de investigaciones propias a través de su red de fiscalizadores(as) e inspectores(as), las cuales deben consi - derar la aplicación del MAC en su totalidad. 5.3. Metodología para aplicación del árbol de causas. El método del “Árbol de Causas” es una técnica para la investigación de accidentes basada en el análisis retrospectivo de las causas, teniendo su origen como una respuesta a los accidentes que se generaban en la industria minera y siderúrgica. Los primeros estudios respecto al “Método Árbol de Causas” fueron en Francia, realizados por el INRS (Institut National de Recherche et de Sécurité) 1970. El ergónomo Robert Villate del INPAC (Instituto para el mejoramiento de las condiciones de trabajo) de la CFDT (Confederación Francesa Democrática del Trabajo), publicó posteriormente el libro sobre el Método del árbol de Causas (MAC) y autorizó a Cesar Neffa para hacer la traducción del mismo. Una parte fundamental de la metodología del árbol de causas se basa en la obtención de un diagrama que refleja la construcción de la cadena de antecedentes del accidente, con una conexión lógica existentes entre ellos. Esta representación gráfica, facilita la detección de causas aparentemente ocultas y que contribuyeron a la ocurrencia de un accidente. Para efectos de la presente guía, se describirá el MAC en tres etapas: Recopilación de la información, Construcción del árbol y Administración de la información, las cuales se describen en detalle en los puntos 5.3.1, 5.3.2 y 5.3.3 respectivamente. 5.3.1. Recopilación de la información. La recopilación de la información es una parte fundamental de la investigación de accidentes y debe realizarse de forma metódica, asegurando la veracidad del material recolectado. Se debe realizar lo más temprano posible, en el lugar del accidente y bajo la responsabilidad de una persona que tenga conoci - miento del trabajo y de su forma habitual de ejecución. Para llevar a cabo esta etapa, es fundamental comenzar con la recolección de antecedentes sobre la persona afectada7, el testimonio de las personas cercanas que presenciaron el accidente, el entorno físico del lugar del accidente (máquinas, equipos, etc.) y la revisión de documentos relacionados con la ejecución de la tarea al momento del suceso, etapas que se describen en detalle en el punto 5.3.1.1 de la presente guía. Finalmente, una vez que se cuente con toda la información disponible, se debe proceder a realizar la construcción de un relato que permita la construcción diagrama del árbol. Al respecto, es de mucha importancia mencionar que el investigador debe contar con todos los respaldos necesarios que permitan verificar el relato en sí, lo que incluye los registros de la información recopilada según el formato utilizado8. 7 Un formato de propuesta de información mínima preliminar a recopilar, propuesto en el manual de formación de investigadores - Investigación de accidentes del trabajo a través del método árbol de causas - OIT, se presenta en el Anexo 1 de la presente guía. 8 Sobre todo, para el caso de posibles fiscalizaciones posteriores de la investigación, a través de la autoridad correspondiente.",
+      "text_chars": 3561,
+      "needs_visual_review": false
+    },
+    {
+      "page": 7,
+      "section": "5.3.1.1. Tipo de información a recolectar.",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "5.3.1.1. Tipo de información a recolectar."
+      ],
+      "text": "5.3.1.1. Tipo de información a recolectar. Se debe recolectar toda la información necesaria para realizar la investigación según la metodología árbol de causas, tomando en consideración a lo menos lo siguiente: • Empezar por la lesión y remontar lo más lejos posible. • Recolectar hechos concretos y objetivos y no interpretaciones y juicios de valor. • Investigar prioritariamente las variaciones, es decir “lo que no ocurrió como antes” Para llevar a cabo esta etapa, la presente guía propone 3 etapas para obtenerla: Información testimonial, Información física o del entorno e Información documental respectivamente, las cuales se describen a continuación: a) Información testimonial (entrevistas): La entrevista es una herramienta que permite al investigador recabar información relevante del accidente a través de un interrogatorio eficaz. Si bien existen varias metodologías de apoyo para la realización de una entrevista, a continuación, se presenta la “Técnica PEACE”, como una estrategia para la obtención de información completa, precisa y confiable, la cual consiste en: • Planificar (P). El objetivo es tener información, con preguntas a los testigos, saber qué información se necesita y con qué preguntas las obtendrá. Para tal fin, es fundamental contar con una pauta previa que permita poner énfasis en la orientación que se pretender dar a la indagación. • Entrar en contacto y explicar (E). se debe explicar cuál es el objetivo de la entrevista y cómo se realizará • Aclarar el relato o cuestionar (A). Son dos etapas, el investigador deberá solicitar al testigo que le cuente qué sucedió, si se le interrumpe, romperá el proceso mental del testigo, sólo cuando se haya obtenido toda la información, se puede cuestionar y solicitar se aclare algunos puntos. • Cierre (C). Cuando se haya obtenido toda la información que el testigo pueda dar, debe resumirse la información, preguntar al testigo si está de acuerdo con el resumen y, si no lo está, solicitar que lo clarifique. • Evaluación (E). Una vez que se ha obtenido la información de los testigos, debe ser evaluada por el investigador para asegurarse que tiene toda la información. Ello podría revelar la necesidad de otra entrevista. Para el registro de las entrevistas, el investigador y su equipo puede considerar el uso de técnicas audiovisuales, siempre y cuando la condición lo permita, como también, utilizar el formato de decla - ración formal (en papel). b) Información física y/o del entorno: Esta información tiene relación con la identificación de aquellos elementos físicos y del entorno que contribuyeron a la ocurrencia del accidente investigado, por ejemplo: equipos, maquinarias, instalaciones, EPP , condiciones ambientales, etc. Para tal fin, el investigador y su equipo pueden considerar el uso de pautas previas de chequeo, complementada también con el apoyo de recreación fotográfica o croquis. En el caso de realizar un levantamiento fotográfico, éste debe identificar claramente el lugar de los hechos, su señalización, puntos de referencia, maquinarias, vehículos (de haber vehículos involucrados) y equipos involucrados que tienen relación directa con el accidente investigado. Respecto del croquis, se debe realizar un dibujo a mano alzada del sitio del suceso considerando levantar la información necesaria para tener claridad de éste y los factores cercanos que pudieran haber contribuido en el accidente investigado.",
+      "text_chars": 3418,
+      "needs_visual_review": false
+    },
+    {
+      "page": 8,
+      "section": "10  Ejemplos prácticos respecto a la diferencia de estos términos es posible de encontrar en el “Manual de formación para investigadores -",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "5.3.1.2. Construcción del relato",
+        "9  Una alternativa válida también es poder elaborar una pauta en base a la “Matriz de factores de causas de los accidentes del trabajo”",
+        "10  Ejemplos prácticos respecto a la diferencia de estos términos es posible de encontrar en el “Manual de formación para investigadores -"
+      ],
+      "text": "c) Información documental: Corresponde a la recopilación de información documentada existente, rela - cionada con el accidente en investigación, por ejemplo: • Matriz de riesgos • Evaluaciones de riesgos • Plan de prevención de riesgos de la empresa • Evaluaciones del programa preventivo o del sistema de gestión de riesgos, en caso de existir. • Procedimientos de trabajo • Reglamentos internos • Registros de información de riesgos a los trabajadores • Registro de inspecciones • Registro de formación y capacitación de los trabajadores • Medidas propuestas por el Comité Paritario y Departamento de Prevención de Riesgos. • Registro de incidentes y accidentes • Registro de asistencia de jornada de trabajo y descansos • Todo informe de investigación del accidente existente, en caso de existir • Toda documentación que se determine de relevancia para la realización de la investigación (por ejemplo: certificaciones de equipos y/o herramientas, hojas de datos de seguridad (HDS) de sustancias involucradas, plan de emergencia, etc.). Tal cual lo indicado en las etapas anteriores de este punto, el investigador y su equipo deberán considerar los registros correspondientes que permitan realzar la trazabilidad de lo analizado frente a algún requerimiento solicitado por parte de una autoridad para algún accidente en específico. Una propuesta de registro general de la etapa de recolección de la información, se presenta en el Anexo N°2 de la presente guía9. 5.3.1.2. Construcción del relato Una etapa previa y fundamental para construcción del diagrama del árbol de causas es la confección del relato, el cual organiza de forma escrita toda la información recabada en los puntos anteriores, de forma lógica, clara y precisa, explicando claramente lo sucedido. Respecto de su contenido, el relato deberá contener todos los elementos o hechos que influenciaron la generación del accidente como consecuencia de la recopilación de la información realizada por el investi - gador y su equipo, sin incluir suposiciones, interpretaciones ni juicios de valor10. Un relato coherente debe explicitar que ocurrió, en 3° persona y paso por paso, respondiendo a las siguientes preguntas claves: ¿Quién·, ¿Qué·, ¿Cuándo·, ¿Dónde·, ¿Por qué· y ¿Cómo·, explicitando también las consecuencias generadas (si requirió rescate, maniobras de reanimación, lesión, pérdida de alguna parte del cuerpo, etc.). 9 Una alternativa válida también es poder elaborar una pauta en base a la “Matriz de factores de causas de los accidentes del trabajo” contenida en el Manual de formación de investigadores - Investigación de accidentes del trabajo a través del método árbol de causas - Anexo 1 – OIT. 10 Ejemplos prácticos respecto a la diferencia de estos términos es posible de encontrar en el “Manual de formación para investigadores - Investigación de accidentes del trabajo a través del método del árbol de causas”, parte 2.2 punto “b” Fase recopilación de la información (pág. 38).",
+      "text_chars": 2961,
+      "needs_visual_review": false
+    },
+    {
+      "page": 9,
+      "section": "12  Es importante señalar que esta Matriz es idéntica a la elaborada por la Subsecretaría de Previsión Social el 2017, denominada “Matriz",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "5.3.2. Construcción del Diagrama",
+        "5.3.2.1. Listado de hechos",
+        "5.3.2.2. Obtención del diagrama",
+        "5.3.3. Administración de la información",
+        "11  Este diagrama puede ser orientado de derecha a izquierda, o bien, de arriba hacia abajo.",
+        "12  Es importante señalar que esta Matriz es idéntica a la elaborada por la Subsecretaría de Previsión Social el 2017, denominada “Matriz"
+      ],
+      "text": "5.3.2. Construcción del Diagrama Con toda la información recopilada en el punto 5.3.1., en esta etapa se debe representar gráficamente las situaciones ocurridas a través de la metodología indicada por el MAC (Anexo N°3 de la presente guía), partiendo del último hecho (daño o lesión) y delimitando sus antecedentes inmediatos con el propósito de evidenciar gráficamente las relaciones entre los hechos que han contribuido a la producción del acciden - te11. Para tal fin, se hace necesario establecer dos etapas para la obtención de éste: Listado de hechos y obtención del diagrama, las cuales se describen a continuación. 5.3.2.1. Listado de hechos Una vez que ya se cuenta con el relato, se debe enlistar cada uno de los hechos explicitados en éste, asignándoles un número correspondiente en forma cronológica. 5.3.2.2. Obtención del diagrama Una vez enlistados los hechos, se procede a la construcción del diagrama del “árbol de causas”. Lo primero que se debe reconocer es el último hecho ocurrido identificado en el listado, o sea, aquel hecho que describe la lesión. Una vez identificado, se procede a realizar la siguiente pregunta: ¿qué ha sido necesario para que se produzca·, esperándose como respuesta la aparición de un segundo hecho de los ya enlistados. Como en todo orden de cosas, es posible que el hecho inicial (lesión) se deba a más de una causa, por lo que se debe realizar la siguiente pregunta: ¿ha sido necesario otro hecho para que se produzca· Si se encuentra respuesta, se debe volver a repetir la misma pregunta hasta no tener respuesta, obteniéndose la primera línea del diagrama. Posteriormente, se debe seguir el mismo procedimiento explicado en los párrafos anteriores para cada uno de los hechos finales obtenidos en la primera línea, hasta completar en su totalidad el listado de hechos al cual hace referencia el punto 5.3.2.1 de la presente guía, concluyéndose de esta forma la construcción del diagrama, ya que se identifican las causas primarias (las causas que propician el inicio del accidente), sin que exista una causa anterior para ser analizada. Es importante indicar que, dependiendo de los hechos, los tipos de unión entre éstos (encadenamien - tos) puede ser diferente, por lo que se debe tener en cuenta en todo momento los criterios de construcción del diagrama establecidos en el Anexo N°2 de la presente guía. 5.3.3. Administración de la información Una vez obtenido el diagrama del árbol de causas, se debe proceder a identificar la(s) causa(s) que originó(aron) la lesión, a partir de los últimos hechos de éste (los que quedaron ubicados al final del lado izquierdo del diagrama si se comenzó desde el lado derecho, o bien los que quedaron en la parte inferior de éste, si se comenzó desde arriba). Para tal fin, se debe correlacionar cada uno de los hechos finales del diagrama con su correspondiente causa establecida en la “matriz de factores de causas de los accidentes del trabajo” contenida en el Anexo 1 del Manual de formación de investigadores - Investigación de accidentes del trabajo a través del método árbol de causas – OIT, asignándole su codificación correspondiente12. Una vez identificada(s) la (las) causa(s), se debe proceder entonces a la definición de las medidas de control respectivas (correctivas y preventivas), diseñándose un plan de acción que las permita implementar 11 Este diagrama puede ser orientado de derecha a izquierda, o bien, de arriba hacia abajo. 12 Es importante señalar que esta Matriz es idéntica a la elaborada por la Subsecretaría de Previsión Social el 2017, denominada “Matriz de factores de causas de accidentes fatales en el trabajo”.",
+      "text_chars": 3636,
+      "needs_visual_review": false
+    },
+    {
+      "page": 10,
+      "section": "14  Basado en lo explicitado por el INSHT de España, en su nota técnica “Investigación de accidente por el método de árbol de causas”",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "5.4. Variables a Considerar en la Aplicación del Método",
+        "13  Un punto muy importante a considerar son los plazos de ejecución de cada una de las medidas recomendadas, ya que nunca se debe",
+        "14  Basado en lo explicitado por el INSHT de España, en su nota técnica “Investigación de accidente por el método de árbol de causas”"
+      ],
+      "text": "a corto, mediano y largo plazo según su complejidad13. Para tal fin, es imprescindible que en la concepción de éstas se consideren aspectos preventivos de importancia, como14: a) Adoptar medidas que antepongan la protección colectiva a la individual, orientando su implementa - ción a eliminar o controlar la(s) causa(s) que origina(n) el accidente, en caso de ser posible. b) Preferir la implementación de medidas que tengan la mayor cobertura posible (que alcance el mayor número posible de causas), por sobre aquellas de carácter puntual o local. c) Proponer medidas de control que sean estables en el tiempo (durables). d) Adaptar el trabajo a la persona, en particular, en lo que respecta a la concepción de los puestos de trabajo, así como a la elección de los equipos y métodos de trabajo. e) No adicionar riesgos a los ya existentes, ya que la(s) medida(s) implementada(s) no sólo debe(n) ser eficaz(ces) para la corrección del problema. Independientemente de todo lo ya expuesto en este punto, existen una serie de medidas inmediatas que se establecen en nuestra legislación para el caso de un accidente “fatal o grave”, las que deben ser implementadas por la empresa del siniestro y también por su Organismo Administrador de la Ley N°16744 (OAL), las cuales están señaladas en el Compendio de Normas del Seguro Social de Accidentes del trabajo y Enfermedades Profesionales de la Superintendencia de Seguridad Social (SUSESO) 15, específicamente en el LIBRO IV. PRESTACIONES PREVENTIVAS, Títulos I.D y II.H respectivamente. 5.4. Variables a Considerar en la Aplicación del Método Uno de los factores que de mayor manera intervienen en una correcta aplicación de la metodología del “árbol de causas” corresponde a la inclusión de criterios subjetivos para la obtención del relato por parte de quién realiza la investigación, lo que va en desmedro de la utilización de “hechos”, afectando de esta forma la calidad del diagrama a obtener y, por ende, la obtención de las causas que provocaron el accidente. En este sentido, es muy importante que el investigador cuente con la experiencia y competencias necesarias para poder diferenciar juicios de hechos, para así obtener relatos objetivos que permitan la construcción de diagramas eficientes. Otro punto de importancia a considerar es que no siempre posible obtener un mismo diagrama para un mismo accidente, aunque el método especifique un único procedimiento, ya que es posible la ocurrencia de errores debido a la aplicación de ciertas reglas del método (por ejemplo, cuando aparecen hechos in - dependientes pero que sucedieron cronológicamente, se tiende a relacionarlos secuencialmente y no en conjunción). Otra diferencia puede surgir debido a que algunos investigadores desglosan los hechos más que otros, lo que hace que el árbol sea más explicativo y, por ende, se genere una mayor longitud gráfica de las ramas, aunque sigan manteniendo las reglas del método (esto hace que a simple vista nos parezcan “árboles diferentes” de un mismo accidente). Otra variable confundente tiene que ver con la aplicación del método respecto a comenzar por el final y no por el principio, lo que obliga a retroceder en los hechos, lo que puede confundir al investigador. Finalmente, y a modo de resumen, es importante señalar que en forma práctica existen dos tipos de factores que influyen en la construcción del árbol. El primero se relaciona claramente con el conocimiento del método por parte del investigador y el segundo, con factores externos al método como la pericia de éste, los testigos involucrados y la calidad de sus testimonios, los objetivos perseguidos y, finalmente, de las posibilidades de intervención que se tenga sobre lo que se investiga. 13 Un punto muy importante a considerar son los plazos de ejecución de cada una de las medidas recomendadas, ya que nunca se debe perder de vista que éstas surgen para evitar que se produzca nuevamente el mismo accidente. 14 Basado en lo explicitado por el INSHT de España, en su nota técnica “Investigación de accidente por el método de árbol de causas” 15 https://www.suseso.cl/613/w3-propertyvalue-137116.html",
+      "text_chars": 4126,
+      "needs_visual_review": false
+    },
+    {
+      "page": 11,
+      "section": "16  El Anexo 5 de la presente guía también presenta un formato para poder registrar el seguimiento de la implementación de las medidas",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "5.5. Formato de investigación de accidentes",
+        "6. DEFINICIONES",
+        "16  El Anexo 5 de la presente guía también presenta un formato para poder registrar el seguimiento de la implementación de las medidas"
+      ],
+      "text": "5.5. Formato de investigación de accidentes De forma de homogenizar la información originada producto de la aplicación de la metodología de “árbol de causas” para la investigación de un accidente “grave o fatal”, la presente guía propone en su Anexo N°4 un formato único de presentación de informe para ser utilizado, tanto por las empresas como también por los OAL y las autoridades con competencia en la materia, basado en las directrices acá entregadas16. No obstante, lo indicado en el párrafo anterior, es importante señalar que, para efectos de mantener un registro de accidentes graves y fatales a nivel nacional, la SUSESO tiene implementado un “registro de accidentes laborales fatales (RALF)” en el cual los OAL deben necesariamente reportar una serie de antecedentes relacionados con los accidentes en una plataforma creada para tal fin (SISESAT)17. 6. DEFINICIONES a) Accidente de Trabajo: Toda lesión que una persona sufra a causa o con ocasión del trabajo, y que le produzca incapacidad o muerte. b) Cuasi Accidente: Evento no planificado que no resultó en lesiones, enfermedades ni daños, pero que tenía el potencial de causarlos. c) Accidente de Trayecto: Accidentes del trabajo ocurridos en el trayecto directo, de ida o regreso, entre la habitación y el lugar de trabajo, y aquellos que ocurran en el trayecto directo entre dos lugares de trabajo, aunque correspondan a distintos empleadores. d) Causa: Es la razón de ser de un hecho o fenómeno. e) Investigación (de accidentes): Proceso que permite recopilar, ordenar y evaluar todas las evidencias existentes sobre los hechos, causas, consecuencias y posibles soluciones. f) Accidente grave del trabajo: Es aquel accidente que genera una lesión a causa o con ocasión del tra - bajo y que provoca en forma inmediata la amputación o pérdida de cualquier parte del cuerpo, obliga a realizar maniobras de reanimación, obliga a realizar maniobras de rescate, ocurra por caídas de altura de más de 1.8 metros u ocurra en condiciones hiperbáricas. g) Accidente fatal de trabajo: Es aquel accidente que provoca la muerte del trabajador en forma inmediata o como consecuencia directa del accidente. h) Unidades de análisis: Objeto o individuo del que hay que obtener la información. i) Enfermedad Profesional: Cualquier enfermedad contraída como resultado de haber estado expuesto a un peligro derivado de una actividad laboral. Desde el punto de vista legal se entiende por enfermedad profesional, la causada de manera directa por el ejercicio de la profesión o el trabajo que realiza una persona y que le produzca incapacidad o muerte”. j) Hechos: Son datos concretos y objetivos, es algo real y verdadero. Son acontecimientos ciertos y verificables, presentan total certeza que no se presten a discusión k) Interpretación: Corresponde a la información que trata de justificar un hecho o explicarlo, por lo tanto, requieren ser corroboradas o comprobadas. 16 El Anexo 5 de la presente guía también presenta un formato para poder registrar el seguimiento de la implementación de las medidas propuestas en el informe, concordante con lo explicitado en el punto 5.3.3 de la presente guía. 17 https://www.suseso.cl/613/w3-propertyvalue-138287.html",
+      "text_chars": 3206,
+      "needs_visual_review": false
+    },
+    {
+      "page": 12,
+      "section": "7. BIBLIOGRAFÍA",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "7. BIBLIOGRAFÍA"
+      ],
+      "text": "l) Juicios de valor: Corresponden a un análisis particular basado en creencias, formas de vida o de valores. Por lo tanto, es subjetivo y corresponde al modo de pensar o de sentir del sujeto, es por eso que no se consideran en la investigación. m) Medida Correctiva: Corresponde a las medidas orientadas a prevenir de manera inmediata y directa las causas que han provocado el accidente evitando con ello su repetición. n) Medida Preventiva: Son medidas que surgen del accidente analizado pero que son aplicables a otras situaciones de trabajo donde se presentan los mismos factores potenciales de accidentes (FPA). Esto significa que los mismos hechos causales del accidente están presentes en otras situaciones del tra - bajo y podrían ocasionar accidentes. 7. BIBLIOGRAFÍA a) Investigación de accidentes del trabajo y enfermedades profesionales – Guía práctica para inspectores del trabajo, Oficina Internacional del Trabajo – Ginebra: OIT, 2015. b) Instituto Nacional de Seguridad e Higiene en el Trabajo (INSHT), España. Documento “Investigación de accidentes por el método del árbol de causas”. c) Instituto Nacional de Seguridad e Higiene en el Trabajo (INSHT), España. NTP (Nota Técnica de Pre - vención) 274: Investigación de Accidentes: árbol de causas. d) Instituto Nacional de Seguridad e Higiene en el Trabajo (INSHT), España. NTP 442: Investigación de accidentes-incidentes: procedimiento. e) Instituto Nacional de Seguridad e Higiene en el Trabajo (INSHT), España. NTP 592: La gestión integral de los accidentes de trabajo (I): tratamiento documental e investigación de accidentes. f) Instituto Nacional de Seguridad e Higiene en el Trabajo (INSHT), España. NTP 1046: Investigación de accidentes: recogida de testimonios. g) Investigación de accidentes del trabajo a través del Método del Árbol de Causas – Manual para formación de investigadores OIT. h) Guía Técnica de Apoyo, Investigación de accidentes del trabajo - Unidad de Seguridad y Salud en el trabajo, Dirección del Trabajo año 2018.",
+      "text_chars": 2009,
+      "needs_visual_review": false
+    },
+    {
+      "page": 13,
+      "section": "18\t CAE\t–\tCalificación\tActividad\tEconómica",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "ANEXO N°1:",
+        "FORMATO DE RECOPILACIÓN DE INFORMACIÓN PRELIMINAR",
+        "18\t CAE\t–\tCalificación\tActividad\tEconómica"
+      ],
+      "text": "ANEXO N°1: FORMATO DE RECOPILACIÓN DE INFORMACIÓN PRELIMINAR Antecedentes de la Empresa: Razón Social: RUT: Representante Legal: RUT: Fono: e-mail: CAE18 OAL Contacto en la empresa: Fono: e-mail: Antecedentes del Accidente: Nombre del accidentado: RUT: Nombre de testigos del accidente: Ubicación y características del lugar del accidente: Descripción del Accidente: 18 CAE – Calificación Actividad Económica",
+      "text_chars": 408,
+      "needs_visual_review": true
+    },
+    {
+      "page": 14,
+      "section": "2.2. Desarrollando la tarea de la forma habitual ¿era",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "ANEXO N°2:",
+        "EJEMPLO DE FORMULARIO A UTILIZAR PARA LA ETAPA DE “RECOLECCIÓN DE LA",
+        "INFORMACIÓN”",
+        "2.2. Desarrollando la tarea de la forma habitual ¿era"
+      ],
+      "text": "ANEXO N°2: EJEMPLO DE FORMULARIO A UTILIZAR PARA LA ETAPA DE “RECOLECCIÓN DE LA INFORMACIÓN” TAREA (Actividad que realizaba la persona accidentada en el momento del accidente) 1. ¿La tarea que desarrollaba en el momento del accidente era propia de su puesto de trabajo· Sí No OBS: Si la respuesta es “si”, pasar a 2, y si es “no” pasar a 3 2. ¿La tarea que desarrollaba era habitual· (si se realiza varias veces durante el desarrollo normal del trabajo) Sí No OBS: Si la respuesta es “si”, pasar a 2.1, y si es “no” pasar a 3 2.1. ¿Se realizaba la tarea habitual de la misma manera con la que se venía realizando normalmente· Sí No OBS: Si la respuesta es “no”, pasar a 2.3 2.2. Desarrollando la tarea de la forma habitual ¿era posible que ocurriera el accidente· Sí No OBS: Pasar a 3 directamente. 2.3. ¿Por qué la persona accidentada realizaba la tarea habitual de diferente manera· (sólo completar si la respuesta en 2.1 es no) No era posible realizarla de la forma habitual. Desconocía la forma habitual de realizar la tarea. Había recibido instrucciones de realizarla de esta manera. Otros (especificar): ___ __________________ __________________ __________________ __________________ _________ 3. ¿Con qué frecuencia el(la) trabajador(a) accidentado(a) había desarrollado durante su vida laboral esta misma tarea· Era la primera vez De manera esporádica Frecuentemente 4. ¿El(la) trabajador(a) accidentado(a) había recibido en la empresa instrucciones sobre cómo realizar la tarea· Sí No OBS: Si la respuesta es “si”, pasar a 4.1, y si es “no” pasar a 5",
+      "text_chars": 1559,
+      "needs_visual_review": false
+    },
+    {
+      "page": 15,
+      "section": "6.1. Desarrollando la tarea en el",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "6.1. Desarrollando la tarea en el"
+      ],
+      "text": "4.1. ¿Qué tipo de instrucciones· Escritas Verbales Ambas 4.2. ¿De quién recibió las instrucciones· Instrucciones del empleador Instrucciones del jefe Instrucciones del encargado Instrucciones de compañeros 4.3. ¿Estaba realizando la tarea de acuerdo con esas instrucciones· Sí No 5. ¿La tarea se realiza habitualmente con algún tipo de equipo de protección personal (EPP)·: Sí No OBS: Si la respuesta es “si”, indicar cuáles y pasar a 5.1, y si es “no” pasar a 6 (ítem “LUGAR”) _____________________________________________________________________________________ _____________________________________________________________________________________ ___________________________________________ 5.1. ¿El equipo de protección personal es el adecuado al riesgo que cubre· Sí No 5.2. ¿La persona accidentada utilizaba estos equipos en el momento del accidente· Sí No 5.3. ¿Hubiera evitado el accidente la utilización de algún otro equipo de protección personal· Sí No LUGAR (Espacio físico en el que sucedió el accidente) 6. ¿La tarea se realizaba en el lugar habitual de trabajo· Sí No OBS: Si la respuesta es “si”, pasar a 6.1, y si es “no”, pasar a 6.2 6.1. Desarrollando la tarea en el lugar habitual ¿era posible que ocurriera el accidente· Sí No OBS: Pasar a 7 directamente. 6.2. ¿Por qué la persona accidentada no realizaba la tarea en el lugar habitual de trabajo· (sólo completar si la respuesta en 6 es no) No era posible realizarla en el lugar habitual. Desconocía el lugar habitual. Había recibido instrucciones de realizarla en otro lugar. Otros (especificar): _________________________________________ ________________________________________________________ __________________________",
+      "text_chars": 1695,
+      "needs_visual_review": false
+    },
+    {
+      "page": 16,
+      "section": "8.1. Desarrollando la tarea en el momento habitual ¿era posible que ocurriera el accidente·",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "TIEMPO (Momento en el que sucedió el accidente)",
+        "8.1. Desarrollando la tarea en el momento habitual ¿era posible que ocurriera el accidente·"
+      ],
+      "text": "7. ¿Existe relación entre el accidente ocurrido y alguna de las circunstancias siguientes asociadas a las instalaciones existentes en el lugar en donde sucedió el accidente· (marque todas las que correspondan) Protección frente a contactos eléctricos directos defectuosa o inexistente. Protección frente a contactos eléctricos indirectos defectuosa o inexistente. Focos de ignición no controlados. Inexistencia de compartimentación de áreas de riesgo. Insuficiencia de compartimentación de áreas de riesgo. Sistemas de detección incendios-transmisión de alarmas incorrectos. Instalaciones de extinción de incendios incorrectas. Otros (especificar): _____________________________________________________________________ _____________________________________________________________________________________ ___________________________________________________________ _______________________________________________________________________ TIEMPO (Momento en el que sucedió el accidente) 8. ¿La tarea relacionada con el accidente se estaba realizando en el momento habitual en que solía realizarse· Sí No OBS: Si la respuesta es “si”, pasar a 8.1, y si es “no”, pasar a 8.2 8.1. Desarrollando la tarea en el momento habitual ¿era posible que ocurriera el accidente· Sí No OBS: Pasar a 9 directamente 8.2. ¿Por qué la persona accidentada no realizaba la tarea en el momento habitual· (sólo completar si la respuesta en 8 es no) Había surgido algún imprevisto. Había recibido instrucciones. Otros (especificar): __________________ __________________ __________________ __________________ _________________ _________________ _____",
+      "text_chars": 1624,
+      "needs_visual_review": false
+    },
+    {
+      "page": 17,
+      "section": "10.2. Utilizando el equipo de",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "EQUIPO DE TRABAJO (toda máquina, herramienta, accesorio y/o vehículo, que se utilizaba cuando",
+        "10.2. Utilizando el equipo de"
+      ],
+      "text": "9. ¿Existe relación entre el accidente ocurrido y alguna de las circunstancias siguientes· (marque todas las que correspondan) Realizando horas extra Doblando un turno Realizando una jornada superior a la ordinaria Después de una pausa Otros (especificar): _____________________________________________________________________________________ _____________________________________________________________________________________ ___________________________________________ EQUIPO DE TRABAJO (toda máquina, herramienta, accesorio y/o vehículo, que se utilizaba cuando sucedió el accidente) 10. ¿Se estaba utilizando equipo(s) de trabajo durante la realización de la tarea relacionada con el accidente· Sí No OBS: Si la respuesta es “si”, indicar cuáles y pasar a 10.1, y si es “no” pasar a 11 _____________________________________________________________________________________ _____________________________________________________________________________________ ___________________________________________ 10.1. ¿El equipo de trabajo utilizado era el habitual para el desarrollo de la tarea (el que se utiliza normalmente para esa tarea)· Sí No OBS: Si la respuesta es “no”, pasar a 10.3 10.2. Utilizando el equipo de trabajo habitual ¿era posible que ocurriera el accidente· Sí No OBS: Pasar a 11 directamente. 10.3. ¿Por qué la persona accidentada no utilizaba el equipo de trabajo habitual· (sólo completar si la respuesta en 10.1 es no) Desconocía la existencia de un equipo habitual. El equipo habitual lo estaba utilizando otra persona. El equipo habitual estaba estropeado o en mal estado. Otros (especificar): ______________________________ ______________________________ ______________________________",
+      "text_chars": 1712,
+      "needs_visual_review": false
+    },
+    {
+      "page": 18,
+      "section": "12.1 Indique el tipo de sustancia y/o",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "MATERIALES, SUSTANCIAS Y/O PRODUCTOS",
+        "12.1 Indique el tipo de sustancia y/o"
+      ],
+      "text": "11. ¿Existe relación entre el accidente ocurrido y alguna de las circunstancias siguientes asociadas a equipos de trabajo· (marque todas las que correspondan) Órganos móviles alejados del punto de operación accesible. Zona de operación desprotegida o parcialmente protegida. Arranque intempestivo. Anulación de protectores. Inexistencia de elementos o dispositivos de control (indicador nivel, limitador de carga, etc.). Ausencia de alarmas (puesta en marcha máquinas peligrosas, marcha atrás vehículos, etc.). Paro de emergencia inexistente. Paro de emergencia no accesible. Ausencia de medios para la consignación de la máquina. Ausencia de protecciones antivuelco (R.O.P .S.) en máquinas automotrices. Deficiencia de protecciones antivuelco en máquinas automotrices. Ausencia de pantallas de protección contra caída de materiales. Deficiencia de cabina de protección contra caída de materiales. Otros (especificar): _______________________________________________________________________ ______________ _____________________________________________________________________________________ ___________________________________________ MATERIALES, SUSTANCIAS Y/O PRODUCTOS 12. ¿Estaba involucrado en el accidente alguna sustancia o producto· Sí No OBS: Si la respuesta es “si”, pasar a 12.1, y si es “no” pasar a 13 12.1 Indique el tipo de sustancia y/o producto involucrado (marque todas las que correspondan) Sustancia/producto explosivo Sustancia/producto inflamable Sustancia/producto tóxico Sustancia/producto corrosivo Sustancia/producto irritante Sustancia/producto sensibilizante por inhalación o cutánea Sustancia/producto que reacciona peligrosamente con el agua Otros (especificar): _________________________ _________________________ _________________________ _________ 12.2. ¿Es habitual la utilización o presencia de esa sustancia/producto para el desarrollo de la tarea relacionada con el accidente· Sí No OBS: Si la respuesta es “no”, pasar a 12.3. De lo contrario pasar a 13. 12.3. ¿Por qué se estaba utilizando una sustancia/ producto que no era de uso habitual· Porque la habitual estaba agotada. Normalmente no se utiliza ninguna sustancia, pero por circunstancias excepcionales se estaba utilizando. Otros (especificar: _________________ _________________ _________________ _________________ _________________ _________________ ______",
+      "text_chars": 2355,
+      "needs_visual_review": false
+    },
+    {
+      "page": 19,
+      "section": "14. Marque todas las alternativas que tengan relación entre el accidente ocurrido y las siguientes circunstancias asociadas",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "AMBIENTE DE TRABAJO",
+        "14. Marque todas las alternativas que tengan relación entre el accidente ocurrido y las siguientes circunstancias asociadas"
+      ],
+      "text": "13. ¿Existe relación entre el accidente ocurrido y alguna de las circunstancias siguientes asociadas a Materiales· (marque todas las que correspondan) Materiales muy pesados en relación con los medios de protección utilizados. Materiales con aristas, perfiles cortantes. Inestabilidad en almacenamiento por apilado. Manipulación manual de cargas Otros (especificar): _____________________________________________________________________________________ _____________________________________________________________________________________ ___________________________________________ AMBIENTE DE TRABAJO 14. Marque todas las alternativas que tengan relación entre el accidente ocurrido y las siguientes circunstancias asociadas a condiciones ambientales. Factores de riesgo asociados a condiciones ambientales Presencia durante el accidente Sí No Presencia Habitual Sí No Agresión térmica por frío/calor Nivel de ruido elevado Iluminación incorrecta (insuficiente, deslumbramientos, efecto estroboscópico, etc.) Nivel de vibración que provoca pérdida de tacto o fatiga. Exposición ambiental a sustancias / productos tóxicos Exposición a contaminantes biológicos. Agresiones por seres vivos. Otros (especificar): __________________________ __________________________ __________________________ __________________",
+      "text_chars": 1310,
+      "needs_visual_review": false
+    },
+    {
+      "page": 20,
+      "section": "16. Marque todas las alternativas que tengan relación entre el accidente ocurrido y las siguientes circunstancias asociadas",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "FACTORES MÚSCULO ESQUELÉTICOS",
+        "15. Marque todas las alternativas que tengan relación entre el accidente ocurrido y las siguientes circunstancias asociadas",
+        "ORGANIZACIÓN DEL TRABAJO",
+        "16. Marque todas las alternativas que tengan relación entre el accidente ocurrido y las siguientes circunstancias asociadas"
+      ],
+      "text": "FACTORES MÚSCULO ESQUELÉTICOS 15. Marque todas las alternativas que tengan relación entre el accidente ocurrido y las siguientes circunstancias asociadas a factores músculo esqueléticos. Factores de riesgo Presencia durante el accidente Sí No Presencia Habitual Sí No Exceso de esfuerzo físico Manipulación de cargas Posturas forzadas Movimientos repetitivos Otros (especificar): __________________________ __________________________ __________________________ __________________ ORGANIZACIÓN DEL TRABAJO 16. Marque todas las alternativas que tengan relación entre el accidente ocurrido y las siguientes circunstancias asociadas a organización del trabajo. Condiciones Presencia durante el accidente Sí No Presencia Habitual Sí No Simultaneidad de tareas por el mismo operario Trabajo a velocidad o ritmo elevado Primas por productividad Trabajo monótono Trabajo aislado/solitario Falta de supervisión Trabajo a turnos Trabajo nocturno Trabajo temporal Exceso de horas de trabajo Exceso de esfuerzo mental Otros (especificar): __________________________ __________________________ __________________________ __________________",
+      "text_chars": 1126,
+      "needs_visual_review": false
+    },
+    {
+      "page": 21,
+      "section": "ASPECTOS CONSTRUCTIVOS DE UN DIAGRAMA POR EL MÉTODO DEL “ÁRBOL DE",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "ANEXO N°3:",
+        "ASPECTOS CONSTRUCTIVOS DE UN DIAGRAMA POR EL MÉTODO DEL “ÁRBOL DE"
+      ],
+      "text": "ANEXO N°3: ASPECTOS CONSTRUCTIVOS DE UN DIAGRAMA POR EL MÉTODO DEL “ÁRBOL DE CAUSAS” El diagrama del árbol puede ser construido desde arriba hacia abajo o bien, desde la derecha hacia la izquierda, comenzando siempre el desarrollo con el último hecho, para luego, poder leerse en forma cronológica. Figura N°1: Ejemplo de un diagrama de “árbol de causas La nomenclatura a utilizar para efectos de confección del diagrama, se presenta en la figura N°2: Figura N°2: Nomenclatura de un diagrama",
+      "text_chars": 491,
+      "needs_visual_review": true
+    },
+    {
+      "page": 22,
+      "section": "METODOLOGÍA ARBOL DE CAUSAS",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS"
+      ],
+      "text": "De forma de evidenciar de forma gráfica las relaciones entre los hechos (factores) que han contribuido a que se produzca el accidente, será necesario relacionarlos de manera lógica, a través de las siguientes formas: • Encadenamiento o cadena: Para que se produzca el hecho (x) basta con una sola causa (y) y su relación es tal que sin esta causa el hecho no se hubiera producido. Lo representaremos de esta manera: Figura N°3: Encadenamiento • Conjunción: El hecho “x” no se produciría si el hecho “y” no se hubiera producido previamente, pero la sola aparición del hecho y no entraña la producción del primero, sino para que se produzca es necesario que concurran “y” y “z”: Figura N°4: Conjunción “y” y “z” son hechos independientes, no están relacionados entre sí. Para que se produzca “y” no es necesario “z” y viceversa. • Disyunción: Dos o más hechos (x1, x2, etc.) tienen una sola causa, y ésta, es necesaria y suficiente para que se produzcan x1, x2, etc.: Figura N°5: Disyunción",
+      "text_chars": 988,
+      "needs_visual_review": false
+    },
+    {
+      "page": 23,
+      "section": "METODOLOGÍA ARBOL DE CAUSAS",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS"
+      ],
+      "text": "• Hechos independientes: También puede darse el caso de que no exista ninguna relación entre dos hechos, es decir que sean independientes: Figura N°6: Hechos independientes",
+      "text_chars": 172,
+      "needs_visual_review": true
+    },
+    {
+      "page": 24,
+      "section": "24 Indicar si corresponde a muerte del trabajador, desaparecido producto del accidente, maniobras de reanimación, maniobras de rescate,",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "ANEXO N°4:",
+        "FORMATO DE INFORME PARA LA INVESTIGACIÓN DE ACCIDENTES",
+        "1. Antecedentes Generales",
+        "19 Indicar si corresponde a una empresa pública o privada.",
+        "20 Indicar si corresponde a una empresa principal, contratista, subcontratista o de servicios transitorios.",
+        "21 Alacalufe, Atacameño, aimara, Colla, Diaguita, Mapuche, quechua, Rapa Nui, Yamana (Yagán), otro.",
+        "22 Corresponde a remuneración fija, remuneración variable o honorarios.",
+        "23 Indicar si corresponde a empleador, trabajador dependiente, trabajador independiente, familiar no remunerado o trabajador voluntario.",
+        "24 Indicar si corresponde a muerte del trabajador, desaparecido producto del accidente, maniobras de reanimación, maniobras de rescate,"
+      ],
+      "text": "ANEXO N°4: FORMATO DE INFORME PARA LA INVESTIGACIÓN DE ACCIDENTES 1. Antecedentes Generales Datos del empleador Nombre de la empresa o Razón Social: Actividad económica: Organismo Administrador de Ley N°16744: Dirección (Avenida/calle): Número: Comuna: Ciudad /Región: Teléfono Mail N° de Trabajadores: Propiedad de la empresa19: Tipo de empresa20: Promedio anual de trabajadores: Datos del trabajador/a accidentado Nombre Completo: C.I: Fecha de nacimiento. (D- M-A): Lugar de nacimiento: Pueblo originario21: Nacionalidad Sexo: Edad: Profesión u oficio: Fecha de ingreso: Fecha de contrato: Tipo de ingreso22 Categoría ocupacional23: Antigüedad en el puesto: Dirección (avenida/calle): Número: Comuna: Ciudad /Región: Teléfono fijo de trabajador accidentado: Teléfono móvil de trabajador accidentado: Persona de contacto del accidentado: Número de telefónico del contacto: Datos del accidente Fecha del accidente: __/__ /___ Día de la semana: Hora del día: Horas de trabajo: Dirección lugar del accidente: Comuna Criterio gravedad724 Fecha defunción (si corresponde): Lugar de defunción (si corresponde): 19 20 21 22 2324 19 Indicar si corresponde a una empresa pública o privada. 20 Indicar si corresponde a una empresa principal, contratista, subcontratista o de servicios transitorios. 21 Alacalufe, Atacameño, aimara, Colla, Diaguita, Mapuche, quechua, Rapa Nui, Yamana (Yagán), otro. 22 Corresponde a remuneración fija, remuneración variable o honorarios. 23 Indicar si corresponde a empleador, trabajador dependiente, trabajador independiente, familiar no remunerado o trabajador voluntario. 24 Indicar si corresponde a muerte del trabajador, desaparecido producto del accidente, maniobras de reanimación, maniobras de rescate, caída de altura de más de 1.8 mts., amputación traumática, número de trabajadores afecta el desarrollo normal de la faena o accidente en condición hiperbárica.",
+      "text_chars": 1895,
+      "needs_visual_review": false
+    },
+    {
+      "page": 25,
+      "section": "3. Esquema árbol de causas",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "2. Construcción del relato",
+        "2.1 Texto Final.",
+        "2.2 Lista de Hechos.",
+        "3. Esquema árbol de causas"
+      ],
+      "text": "2. Construcción del relato 2.1 Texto Final. 2.2 Lista de Hechos. etc 3. Esquema árbol de causas",
+      "text_chars": 95,
+      "needs_visual_review": true
+    },
+    {
+      "page": 26,
+      "section": "4. Determinación de causas y medidas de control",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "4. Determinación de causas y medidas de control"
+      ],
+      "text": "4. Determinación de causas y medidas de control Hechos* Causa asociada** N° de Medida***Medidas adoptadasRelacionada con (puesto, equipo, taller) Plazo de implementación Responsable de implementación (Glosa)Código * = Proveniente del listado de hechos del ítem III. ** = Obtenidas a partir de la aplicación del punto 5.3.3 de la presente guía. *** = Asignada en forma correlativa.",
+      "text_chars": 380,
+      "needs_visual_review": true
+    },
+    {
+      "page": 27,
+      "section": "5.2. Responsable de la Investigación.",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "5. EQUIPO RESPONSABLE DE LA INVESTIGACIÓN",
+        "5.1. Participantes del comité.",
+        "5.2. Responsable de la Investigación."
+      ],
+      "text": "5. EQUIPO RESPONSABLE DE LA INVESTIGACIÓN 5.1. Participantes del comité. N° Nombre y Apellidos Cargo /Puesto Institución a la que pertenece (empresa, OAL, Autoridad) Antigüedad en la institución Firma 5.2. Responsable de la Investigación. Nombre y Apellidos Cargo /Puesto Institución a la que pertenece (empresa, OAL, Autoridad) Firma Fecha de Emisión del Informe:",
+      "text_chars": 364,
+      "needs_visual_review": true
+    },
+    {
+      "page": 28,
+      "section": "SEGUIMIENTO DE LA IMPLEMENTACIÓN DE LA MEDIDA DE CONTROL",
+      "headings": [
+        "GUIA PARA LA INVESTIGACIÓN DE ACCIDENTES.",
+        "METODOLOGÍA ARBOL DE CAUSAS",
+        "ANEXO N°5:",
+        "SEGUIMIENTO DE LA IMPLEMENTACIÓN DE LA MEDIDA DE CONTROL"
+      ],
+      "text": "ANEXO N°5: SEGUIMIENTO DE LA IMPLEMENTACIÓN DE LA MEDIDA DE CONTROL N° de Medida de Control* Fecha real de implementación Aplicación Razones de la no implementación o demora en su concreciónSi No * = Correspondiente al número correlativo de medida presentado en la Tabla del Anexo 4, punto 4.",
+      "text_chars": 292,
+      "needs_visual_review": true
+    }
+  ]
+}

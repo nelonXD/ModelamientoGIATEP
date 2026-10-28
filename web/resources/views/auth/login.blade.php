@@ -2,12 +2,21 @@
 <div class='mb-8 lg:hidden'><span class='text-3xl font-black text-blue-900'>GIATEP</span><p class='mt-2 text-sm text-slate-600'>Gestión e investigación de accidentes del trabajo y enfermedades profesionales</p></div>
 <div class='card p-6 sm:p-10'>
     <p class='eyebrow'>Bienvenido</p><h2 class='mt-2 text-3xl font-bold'>Iniciar sesión</h2><p class='mt-2 text-slate-600'>Primero ingresa tu RUT para continuar.</p>
-    <form method='POST' action='{{ route('login.store') }}' class='mt-8 grid gap-5' data-submit-form data-login-form data-check-rut-url='{{ route('login.check-rut') }}'>@csrf
+    <form method='POST' action='{{ route('login.store') }}' class='mt-8 grid gap-5' data-submit-form data-login-form data-check-rut-url='{{ route('login.check-rut') }}' data-first-login-url='{{ route('login.first-access') }}'>@csrf
         <div data-login-rut-step><label for='rut' class='label'>RUT</label><input id='rut' name='rut' value='{{ old('rut') }}' autocomplete='username' class='input' placeholder='12.345.678-5' required data-login-rut aria-describedby='rut-client-error'>@error('rut')<p class='error'>{{ $message }}</p>@enderror<p id='rut-client-error' class='error hidden' data-rut-error>Ingresa un RUT válido.</p></div>
         <button class='btn-primary w-full' type='button' data-login-continue>Continuar</button>
         <div class='hidden' data-login-password-step>
             <div class='mb-5 flex items-center justify-between gap-3 rounded-xl bg-sky-50 px-4 py-3'><div><p class='text-xs font-bold uppercase tracking-wide text-sky-800'>Usuario</p><p class='font-bold text-slate-950' data-login-rut-summary></p></div><button type='button' class='text-sm font-bold text-blue-800 hover:underline' data-login-change-rut>Cambiar</button></div>
-            <label for='password' class='label'>Contraseña</label><div class='relative'><input id='password' name='password' type='password' autocomplete='current-password' class='input pr-24' required disabled><button type='button' class='password-toggle' data-password-toggle='password'>Mostrar</button></div>@error('password')<p class='error'>{{ $message }}</p>@enderror
+            <div data-existing-login>
+                <label for='password' class='label'>Contraseña</label><div class='relative'><input id='password' name='password' type='password' autocomplete='current-password' class='input pr-24' required disabled><button type='button' class='password-toggle' data-password-toggle='password'>Mostrar</button></div>@error('password')<p class='error'>{{ $message }}</p>@enderror
+            </div>
+            <div class='hidden space-y-4' data-first-access>
+                <div class='rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950'>El directorio institucional confirmó tus datos. Revisa tu perfil y crea las credenciales que usarás en GIATEP.</div>
+                <dl class='grid gap-2 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm sm:grid-cols-2' data-first-access-profile></dl>
+                <label for='first-access-email' class='label'>Correo electrónico</label><input id='first-access-email' name='email' type='email' value='{{ old('email') }}' autocomplete='email' class='input' maxlength='254' disabled>@error('email')<p class='error'>{{ $message }}</p>@enderror
+                <div><label for='first-access-password' class='label'>Crea una contraseña</label><div class='relative'><input id='first-access-password' name='password' type='password' autocomplete='new-password' class='input pr-24' minlength='8' disabled><button type='button' class='password-toggle' data-password-toggle='first-access-password'>Mostrar</button></div>@error('password')<p class='error'>{{ $message }}</p>@enderror</div>
+                <label for='first-access-password-confirmation' class='label'>Confirma la contraseña</label><input id='first-access-password-confirmation' name='password_confirmation' type='password' autocomplete='new-password' class='input' minlength='8' disabled>
+            </div>
             <button class='btn-primary mt-5 w-full' type='submit' data-submit-button>Ingresar</button>
         </div>
         <noscript><p class='error'>Debes habilitar JavaScript para continuar con el inicio de sesión.</p></noscript>

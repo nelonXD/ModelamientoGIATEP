@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\OriginalGiatepSchema;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -44,7 +45,17 @@ return new class extends Migration
 
     public function up(): void
     {
+        if (OriginalGiatepSchema::isActive()) {
+            return;
+        }
+
         if (DB::connection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
+        // The physical GIATEP schema is already Spanish and has independent
+        // normalized tables. Never rename those tables to fit the prototype.
+        if (Schema::hasTable('USUARIO') && Schema::hasTable('CASO') && Schema::hasTable('DEPENDENCIA')) {
             return;
         }
 
@@ -68,7 +79,15 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (OriginalGiatepSchema::isActive()) {
+            return;
+        }
+
         if (DB::connection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
+        if (Schema::hasTable('USUARIO') && Schema::hasTable('CASO') && Schema::hasTable('DEPENDENCIA')) {
             return;
         }
 

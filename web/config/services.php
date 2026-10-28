@@ -39,7 +39,19 @@ return [
         'url' => env('LM_STUDIO_URL', 'http://127.0.0.1:1234/v1'),
         'model' => env('LM_STUDIO_MODEL'),
         'token' => env('LM_STUDIO_API_TOKEN'),
-        'timeout' => env('LM_STUDIO_TIMEOUT', 120),
+        'timeout' => env('LM_STUDIO_TIMEOUT', 300),
+    ],
+
+    'groq' => [
+        'url' => env('GROQ_API_URL', 'https://api.groq.com/openai/v1'),
+        'model' => env('GROQ_MODEL', 'openai/gpt-oss-120b'),
+        'key' => env('GROQ_API_KEY'),
+        'timeout' => env('GROQ_TIMEOUT', 300),
+    ],
+
+    'institution_directory' => [
+        'url' => env('GIATEP_DIRECTORY_API_URL', 'http://127.0.0.1:8091/api/v1'),
+        'timeout' => env('GIATEP_DIRECTORY_API_TIMEOUT', 3),
     ],
 
 ];

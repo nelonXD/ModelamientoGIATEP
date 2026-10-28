@@ -41,7 +41,7 @@ class ModulePagesTest extends TestCase
             ->get(route($routeName))
             ->assertOk()
             ->assertSee($title)
-            ->assertSee('Sistema Institucional GIATEP');
+            ->assertSee('GIATEP');
     }
 
     public function test_role_without_permission_cannot_open_module_page(): void

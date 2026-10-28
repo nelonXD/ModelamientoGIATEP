@@ -33,7 +33,7 @@
                     <select class='input text-sm py-2' data-filter-status>
                         <option value=''>Todos los estados</option>
                         @foreach($caseStatuses as $status)
-                            <option value='{{ $status->value }}'>{{ $status->label }}</option>
+                            <option value='{{ $status }}'>{{ $status }}</option>
                         @endforeach
                     </select>
                 </label>
@@ -43,55 +43,54 @@
                     <thead class='bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-600'>
                         <tr>
                             <th class='py-3.5 px-4'>Expediente</th>
-                            <th class='py-3.5 px-4'>Tipo de caso</th>
-                            <th class='py-3.5 px-4'>Persona afectada</th>
-                            <th class='py-3.5 px-4'>Empleador / Centro</th>
-                            <th class='py-3.5 px-4'>Fecha</th>
+                            <th class='py-3.5 px-4'>RUT</th>
+                            <th class='py-3.5 px-4'>Nombre</th>
+                            <th class='py-3.5 px-4'>Tipo</th>
                             <th class='py-3.5 px-4'>Estado</th>
                             <th class='py-3.5 px-4 text-center'>Acciones</th>
                         </tr>
                     </thead>
                     <tbody class='divide-y divide-slate-100 bg-white' data-case-list>
                         @forelse($cases as $case)
-                            <tr class='transition hover:bg-slate-50/80' data-case-row data-case-folio='{{ $case['folio'] }}' data-case-type='{{ $case['type'] }}' data-case-status='{{ $case['status'] }}' data-has-investigation='{{ $case['has_investigation'] ? 'true' : 'false' }}'>
+                            <tr class='cursor-pointer transition hover:bg-slate-50/80' title='Doble clic para ver antecedentes' data-case-row data-case-preview-target='case-preview-{{ $loop->iteration }}' data-case-folio='{{ $case['folio'] }}' data-case-type='{{ $case['type'] }}' data-case-status='{{ $case['status'] }}' data-has-investigation='{{ $case['has_investigation'] ? 'true' : 'false' }}'>
                                 <td class='whitespace-nowrap py-4 px-4 font-bold text-slate-950'>
                                     <span class='text-blue-950 font-black text-sm'>{{ $case['folio'] }}</span>
                                     <span class='mt-1.5 hidden w-fit rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-amber-900' data-form-review>Formulario por actualizar</span>
+                                </td>
+                                <td class='whitespace-nowrap py-4 px-4 font-mono text-xs text-slate-700'>{{ $case['workerRut'] }}</td>
+                                <td class='py-4 px-4'>
+                                    <strong class='font-bold text-slate-900 block'>{{ $case['person'] }}</strong>
+                                    <span class='text-xs text-slate-500 block mt-0.5'>{{ $case['jobTitle'] }}</span>
                                 </td>
                                 <td class='py-4 px-4'>
                                     <span class='inline-flex rounded-full px-2.5 py-1 text-xs font-bold leading-none border {{ str_contains(strtolower($case['type']), 'enfermedad') ? 'bg-amber-50 text-amber-900 border-amber-200' : 'bg-blue-50 text-blue-900 border-blue-200' }}' data-case-type-label>
                                         {{ $case['type'] }}
                                     </span>
-                                </td>
-                                <td class='py-4 px-4'>
-                                    <strong class='font-bold text-slate-900 block'>{{ $case['person'] }}</strong>
-                                    <span class='text-xs text-slate-500 block font-mono mt-0.5'>{{ $case['workerRut'] }} · {{ $case['jobTitle'] }}</span>
-                                </td>
-                                <td class='py-4 px-4'>
-                                    <span class='font-semibold text-slate-800 block text-xs'>{{ $case['establishment'] }}</span>
-                                    <span class='text-[11px] text-slate-500 block'>{{ $case['employerName'] }}</span>
+                                    @unless($case['requires_investigation'])
+                                        <span class='mt-1 block text-[11px] font-semibold text-slate-500' data-investigation-not-applicable>No aplica investigación</span>
+                                    @endunless
                                 </td>
                                 <td class='py-4 px-4 whitespace-nowrap'>
-                                    <span class='font-semibold text-slate-800 block text-xs'>{{ $case['date'] }}</span>
-                                    <span class='text-[11px] text-sky-800 block font-medium'>{{ count($case['evidenceFiles']) }} {{ count($case['evidenceFiles']) === 1 ? 'evidencia' : 'evidencias' }}</span>
-                                </td>
-                                <td class='py-4 px-4 whitespace-nowrap'>
-                                    <span class='inline-flex rounded-full px-2.5 py-1 text-xs font-bold border {{ $case['status'] === 'Cerrado' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : ($case['status'] === 'Con observaciones' ? 'bg-amber-50 text-amber-900 border-amber-200' : ($case['status'] === 'En investigación' ? 'bg-blue-50 text-blue-900 border-blue-200' : 'bg-slate-100 text-slate-700 border-slate-200')) }}'>
+                                    <span class='inline-flex rounded-full px-2.5 py-1 text-xs font-bold border {{ $case['status'] === 'Cerrado' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : ($case['status'] === 'En investigación' ? 'bg-blue-50 text-blue-900 border-blue-200' : ($case['status'] === 'Registrado' ? 'bg-cyan-50 text-cyan-900 border-cyan-200' : 'bg-slate-100 text-slate-700 border-slate-200')) }}'>
                                         {{ $case['status'] }}
                                     </span>
                                 </td>
                                 <td class='py-4 px-4'>
                                     <div class='flex min-w-44 flex-col gap-1.5'>
                                         @if($case['has_investigation'])
-                                            <button type='button' disabled class='cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 px-3 py-1.5 text-center text-xs font-bold text-slate-400 opacity-70' title='Este caso ya cuenta con una investigación iniciada ({{ $case['investigation_id'] ?? 'en curso' }}).' data-investigation-disabled>Iniciar investigación</button>
                                             <a href='{{ route('modules.investigations.index', ['case' => $case['folio']]) }}' class='text-center text-[11px] font-bold text-emerald-800 hover:text-emerald-950 hover:underline'>Ver expediente en curso ({{ $case['investigation_id'] ?? 'INV' }}) →</a>
                                         @elseif(! $case['requires_investigation'])
                                             <button type='button' disabled class='cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 px-3 py-1.5 text-center text-xs font-bold text-slate-400 opacity-70' title='Este tipo de caso no requiere investigación bajo la Ley 16.744.' data-investigation-not-applicable>Investigación no aplica</button>
                                         @else
-                                            <a href='{{ route('modules.investigations.index', ['case' => $case['folio'], 'case_type' => $case['type']]) }}' class='rounded-lg bg-emerald-700 px-3 py-1.5 text-center text-xs font-bold text-white shadow-sm hover:bg-emerald-800' data-investigation-link>Iniciar investigación</a>
+                                            <form method='POST' action='{{ route('modules.investigations.start', ['case' => $case['folio']]) }}' data-investigation-form>
+                                                @csrf
+                                                <input type='hidden' name='case_type' value='{{ $case['type'] }}' data-investigation-case-type>
+                                                <button type='submit' class='w-full rounded-lg bg-emerald-700 px-3 py-1.5 text-center text-xs font-bold text-white shadow-sm hover:bg-emerald-800'>Iniciar investigación</button>
+                                            </form>
                                         @endif
                                         <div class='flex items-center gap-1.5 mt-0.5'>
-                                            <button type='button' class='btn-secondary flex-1 py-1 px-2 text-[11px] font-semibold text-slate-700 hover:bg-slate-50' data-case-preview='case-preview-{{ $loop->iteration }}'>Ver antecedentes</button>
+                                            <a href='{{ route('modules.cases.edit', ['case' => $case['folio']]) }}' class='btn-secondary flex-1 py-1 px-2 text-center text-[11px] font-semibold text-slate-700 hover:bg-slate-50'>✎ Editar caso</a>
+                                            <a href='{{ route('modules.cases.evidence.index', ['case' => $case['folio']]) }}' class='btn-secondary py-1 px-2 text-center text-[11px] font-semibold text-emerald-800 hover:bg-emerald-50'>Ver evidencia</a>
                                             <button type='button' class='btn-secondary py-1 px-2 text-[11px] font-semibold text-blue-900 hover:bg-blue-50' title='Editar tipo de caso' data-change-case-type>✎ Editar tipo de caso</button>
                                             @if(auth()->user()->hasPermission('observations.read'))
                                                 <a href='{{ route('modules.observations.index', ['case' => $case['folio']]) }}' class='btn-secondary py-1 px-2 text-[11px] font-semibold text-violet-800 hover:bg-violet-50' title='Ver observaciones'>Observaciones</a>
@@ -101,8 +100,8 @@
                                 </td>
                             </tr>
 
-                            <dialog id='case-preview-{{ $loop->iteration }}' class='m-auto w-[calc(100%-2rem)] max-w-2xl rounded-2xl border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/50' data-case-preview-dialog data-case-folio='{{ $case['folio'] }}'>
-                                <div class='border-b border-slate-200 px-6 py-5 bg-slate-50/50'>
+                            <dialog id='case-preview-{{ $loop->iteration }}' class='fixed inset-y-0 right-0 left-0 m-0 h-auto w-auto max-h-none max-w-none rounded-none border-0 bg-white p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/50 lg:rounded-l-2xl lg:rounded-r-none' data-case-preview-dialog data-case-folio='{{ $case['folio'] }}'>
+                                <div class='shrink-0 border-b border-slate-200 px-6 py-5 bg-slate-50/50'>
                                     <div class='flex items-start justify-between gap-4'>
                                         <div>
                                             <span class='text-[10px] font-bold uppercase tracking-wider text-sky-700'>Expediente Oficial · Ley 16.744</span>
@@ -112,7 +111,7 @@
                                         <button type='button' class='flex size-8 items-center justify-center rounded-full bg-slate-100 text-lg font-bold text-slate-500 hover:bg-slate-200 transition' aria-label='Cerrar previsualización' data-close-dialog>×</button>
                                     </div>
                                 </div>
-                                <div class='max-h-[65vh] space-y-4 overflow-y-auto p-6'>
+                                <div class='min-h-0 flex-1 space-y-4 overflow-y-auto p-6'>
                                     <section class='rounded-xl border border-slate-200 p-4 bg-white'>
                                         <h3 class='text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-2'>Datos del empleador</h3>
                                         <dl class='mt-3 grid gap-3 sm:grid-cols-2 text-xs'>
@@ -155,15 +154,18 @@
                                         </ul>
                                     </section>
                                 </div>
-                                <div class='flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 px-6 py-4 sm:flex-row sm:justify-end'>
+                                <div class='shrink-0 flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 px-6 py-4 sm:flex-row sm:justify-end'>
                                     <button type='button' class='btn-secondary text-xs py-2 px-4' data-close-dialog>Cerrar</button>
                                     @if($case['has_investigation'])
-                                        <button type='button' disabled class='btn-secondary cursor-not-allowed opacity-50 text-xs py-2 px-4' title='Este caso ya cuenta con una investigación iniciada'>Iniciar investigación</button>
                                         <a href='{{ route('modules.investigations.index', ['case' => $case['folio']]) }}' class='btn-primary inline-flex text-xs py-2 px-4'>Ver expediente en curso ({{ $case['investigation_id'] ?? 'INV' }}) →</a>
                                     @elseif(! $case['requires_investigation'])
                                         <button type='button' disabled class='btn-secondary cursor-not-allowed opacity-50 text-xs py-2 px-4' title='Este tipo de caso no requiere investigación bajo la Ley 16.744.'>Investigación no aplica</button>
                                     @else
-                                        <a href='{{ route('modules.investigations.index', ['case' => $case['folio']]) }}' class='btn-primary inline-flex text-xs py-2 px-4' data-investigation-link>Iniciar investigación →</a>
+                                        <form method='POST' action='{{ route('modules.investigations.start', ['case' => $case['folio']]) }}' data-investigation-form>
+                                            @csrf
+                                            <input type='hidden' name='case_type' value='{{ $case['type'] }}' data-investigation-case-type>
+                                            <button type='submit' class='btn-primary inline-flex text-xs py-2 px-4'>Iniciar investigación →</button>
+                                        </form>
                                     @endif
                                 </div>
                             </dialog>
@@ -217,8 +219,18 @@
 
     @push('scripts')
         <script>
-            document.querySelectorAll('[data-case-preview]').forEach((button) => button.addEventListener('click', () => document.getElementById(button.dataset.casePreview)?.showModal()));
+            document.querySelectorAll('[data-case-row]').forEach((row) => row.addEventListener('dblclick', (event) => {
+                if (event.target.closest('a, button, input, select, textarea, form')) return;
+                document.getElementById(row.dataset.casePreviewTarget)?.showModal();
+            }));
             document.querySelectorAll('[data-close-dialog]').forEach((button) => button.addEventListener('click', () => button.closest('dialog')?.close()));
+            document.querySelectorAll('[data-case-preview-dialog]').forEach((dialog) => dialog.addEventListener('click', (event) => {
+                if (event.target !== dialog) return;
+                const bounds = dialog.getBoundingClientRect();
+                const clickedInsidePanel = event.clientX >= bounds.left && event.clientX <= bounds.right
+                    && event.clientY >= bounds.top && event.clientY <= bounds.bottom;
+                if (! clickedInsidePanel) dialog.close();
+            }));
 
             (() => {
                 const typeStorageKey = 'giatep.demo.case-types';
@@ -257,11 +269,11 @@
                     if (! actionsDiv) return;
 
                     const currentType = row.dataset.caseType;
-                    const link = actionsDiv.querySelector('[data-investigation-link]');
+                    const form = actionsDiv.querySelector('[data-investigation-form]');
                     const notApplicableBtn = actionsDiv.querySelector('[data-investigation-not-applicable]');
 
                     if (nonInvestigableTypes.includes(currentType)) {
-                        if (link) {
+                        if (form) {
                             const btn = document.createElement('button');
                             btn.type = 'button';
                             btn.disabled = true;
@@ -269,23 +281,20 @@
                             btn.title = 'Este tipo de caso no requiere investigación bajo la Ley 16.744.';
                             btn.dataset.investigationNotApplicable = '';
                             btn.textContent = 'Investigación no aplica';
-                            link.replaceWith(btn);
+                            form.replaceWith(btn);
                         }
                     } else {
                         if (notApplicableBtn) {
-                            const newLink = document.createElement('a');
-                            const url = new URL('{{ route('modules.investigations.index') }}', window.location.origin);
-                            url.searchParams.set('case', row.dataset.caseFolio);
-                            url.searchParams.set('case_type', currentType);
-                            newLink.href = url.toString();
-                            newLink.className = 'rounded-lg bg-emerald-700 px-3 py-1.5 text-center text-xs font-bold text-white shadow-sm hover:bg-emerald-800';
-                            newLink.dataset.investigationLink = '';
-                            newLink.textContent = 'Iniciar investigación';
-                            notApplicableBtn.replaceWith(newLink);
-                        } else if (link && link.href) {
-                            const url = new URL(link.href, window.location.origin);
-                            url.searchParams.set('case_type', currentType);
-                            link.href = url.toString();
+                            const newForm = document.createElement('form');
+                            newForm.method = 'POST';
+                            newForm.action = '{{ route('modules.investigations.start', ['case' => '__CASE_FOLIO__']) }}'.replace('__CASE_FOLIO__', encodeURIComponent(row.dataset.caseFolio));
+                            newForm.dataset.investigationForm = '';
+                            newForm.innerHTML = `<input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="case_type" data-investigation-case-type><button type="submit" class="w-full rounded-lg bg-emerald-700 px-3 py-1.5 text-center text-xs font-bold text-white shadow-sm hover:bg-emerald-800">Iniciar investigación</button>`;
+                            newForm.querySelector('[data-investigation-case-type]').value = currentType;
+                            notApplicableBtn.replaceWith(newForm);
+                        } else if (form) {
+                            const caseTypeField = form.querySelector('[data-investigation-case-type]');
+                            if (caseTypeField) caseTypeField.value = currentType;
                         }
                     }
                 };
@@ -315,14 +324,11 @@
                     if (button) openTypeDialog(button.closest('[data-case-row]'));
                 });
 
-                document.addEventListener('click', (event) => {
-                    const link = event.target.closest('[data-investigation-link]');
-                    if (! link) return;
-                    if (link.hasAttribute('disabled') || link.getAttribute('aria-disabled') === 'true') {
+                document.addEventListener('submit', (event) => {
+                    const form = event.target.closest('[data-investigation-form]');
+                    if (form && ! window.confirm('Se iniciará una investigación para este caso. ¿Deseas continuar?')) {
                         event.preventDefault();
-                        return;
                     }
-                    if (! window.confirm('Se iniciará una investigación para este caso. ¿Deseas continuar?')) event.preventDefault();
                 });
 
                 typeSelect.addEventListener('change', updateTypeWarning);
