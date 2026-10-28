@@ -167,7 +167,7 @@ PROMPT;
         foreach ($facts as $id => $fact) {
             $description = (string) $fact['description'];
             $score = 0;
-            if (preg_match('/\\b(lesi[oó]n|golpe|dolor|herid\\w*|fractur\\w*|quemad\\w*|contus\\w*|esguinc\\w*|amput\\w*|fallec\\w*|muerte|intoxic\\w*)\\b/iu', $description) === 1) {
+            if (preg_match('/\\b(lesi[oó]n|golpe\\w*|dolor|herid\\w*|fractur\\w*|quemad\\w*|contus\\w*|esguinc\\w*|amput\\w*|fallec\\w*|muerte|intoxic\\w*)\\b/iu', $description) === 1) {
                 $score += 10;
             }
             if (preg_match('/\\b(cay[oó]|resbal[oó]|tropez[oó]|colision[oó]|impact[oó]|atrap\\w*|exposici[oó]n)\\b/iu', $description) === 1) {

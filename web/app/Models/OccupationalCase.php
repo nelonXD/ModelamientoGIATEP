@@ -225,7 +225,7 @@ class OccupationalCase extends Model
     {
         return Attribute::get(function (mixed $value): mixed {
             if (! $this->usesOriginalSchema()) {
-                return $value;
+                return $value ? Carbon::parse($value) : null;
             }
 
             $date = $this->accident()?->Fecha_Accidente
@@ -329,7 +329,11 @@ class OccupationalCase extends Model
 
     public function evidences(): HasMany
     {
-        return $this->hasMany(CaseEvidence::class, 'Id_Caso', 'Id_Caso');
+        return $this->hasMany(
+            CaseEvidence::class,
+            OriginalGiatepSchema::isActive() ? 'Id_Caso' : 'occupational_case_id',
+            OriginalGiatepSchema::isActive() ? 'Id_Caso' : 'id',
+        );
     }
 
     public function investigation(): HasOne

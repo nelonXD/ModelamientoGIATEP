@@ -94,9 +94,11 @@ class Investigation extends Model
     protected function updatedAt(): Attribute
     {
         return Attribute::make(
-            get: fn (mixed $value, array $attributes): mixed => $this->usesOriginalSchema()
-                ? (isset($attributes['Fecha_Creacion']) ? Carbon::parse($attributes['Fecha_Creacion']) : null)
-                : $value,
+            get: function (mixed $value, array $attributes): mixed {
+                $date = $this->usesOriginalSchema() ? ($attributes['Fecha_Creacion'] ?? null) : $value;
+
+                return $date ? Carbon::parse($date) : null;
+            },
             set: fn (mixed $value): array => $this->usesOriginalSchema() ? ['Fecha_Creacion' => $value] : ['updated_at' => $value],
         );
     }

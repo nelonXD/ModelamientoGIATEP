@@ -47,6 +47,9 @@ jobs:
 
       - name: Ejecutar migraciones
         run: php artisan migrate --force
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
 
       - name: Ejecutar pruebas
         run: php artisan test --compact

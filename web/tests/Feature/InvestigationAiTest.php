@@ -190,7 +190,7 @@ class InvestigationAiTest extends TestCase
         ]];
         Http::fake(['*/chat/completions' => Http::response(['choices' => [['message' => ['content' => json_encode($tree, JSON_THROW_ON_ERROR)]]]])]);
 
-        $this->actingAs($user)->postJson(route('modules.investigations.ai.tree'), ['story' => 'Caso de prueba.', 'facts' => $facts])
+        $this->actingAs($user)->postJson(route('modules.investigations.ai.tree'), ['story' => 'Caso de prueba con hechos y antecedentes registrados.', 'facts' => $facts])
             ->assertOk()->assertJsonPath('prompt_version', 'mac-etapas-v17')
             ->assertJsonPath('tree.final_node_id', 'H4')
             ->assertJsonPath('tree.edges.0.link_type', 'aparente')

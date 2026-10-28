@@ -18,11 +18,13 @@ class InterviewAnswer extends Model
 
     public function getKeyName(): string
     {
+
         return OriginalGiatepSchema::isActive() ? 'Id_Respuesta' : parent::getKeyName();
     }
 
     public function getIncrementing(): bool
     {
+
         return OriginalGiatepSchema::isActive() ? true : parent::getIncrementing();
     }
 
@@ -38,9 +40,15 @@ class InterviewAnswer extends Model
 
     protected function value(): Attribute
     {
-        return Attribute::get(fn (mixed $value, array $attributes): mixed => OriginalGiatepSchema::isActive()
-            ? (($attributes['Texto_Respuesta'] ?? null) === null ? null : (json_decode($attributes['Texto_Respuesta'], true) ?? $attributes['Texto_Respuesta']))
-            : $value);
+        return Attribute::get(function (mixed $value, array $attributes): mixed {
+            $storedValue = OriginalGiatepSchema::isActive()
+                ? ($attributes['Texto_Respuesta'] ?? null)
+                : $value;
+
+            return is_string($storedValue)
+                ? (json_decode($storedValue, true) ?? $storedValue)
+                : $storedValue;
+        });
     }
 
     public function question(): BelongsTo
@@ -51,5 +59,10 @@ class InterviewAnswer extends Model
     protected function casts(): array
     {
         return ['value' => 'array'];
+    }
+
+    public function getValueAttribute($value)
+    {
+        return is_string($value) ? json_decode($value, true) : $value;
     }
 }
