@@ -70,12 +70,14 @@ class DemoWorkspace
                         'worker' => $case->worker_name,
                         'establishment' => $case->establishment?->name ?? 'Establecimiento de salud',
                         'status' => match ($investigation->status) {
-                            'En investigación', 'En desarrollo', 'En curso' => 'En proceso',
-                            'Concluida', 'Cerrado' => 'Realizada',
+                            'En investigación', 'Borrador' => 'En desarrollo',
+                            'En curso' => 'En desarrollo',
+                            'Concluida' => 'Completada',
+                            'Cerrado' => 'Cerrado',
                             default => $investigation->status,
                         },
                         'progress' => match ($investigation->status) {
-                            'Concluida', 'Cerrado' => 100,
+                            'Concluida', 'Cerrado', 'Completada' => 100,
                             'Con observaciones' => 85,
                             'En desarrollo' => 65,
                             default => 30,
@@ -176,12 +178,13 @@ class DemoWorkspace
                     'worker' => $case->worker_name,
                     'establishment' => $case->establishment?->name ?? 'Establecimiento de salud',
                     'status' => match ($investigation->status) {
-                        'En investigación', 'En desarrollo', 'En curso' => 'En proceso',
-                        'Concluida', 'Cerrado' => 'Realizada',
+                        'En investigación', 'Borrador', 'En curso' => 'En desarrollo',
+                        'Concluida' => 'Completada',
+                        'Cerrado' => 'Cerrado',
                         default => $investigation->status,
                     },
                     'progress' => match ($investigation->status) {
-                        'Concluida', 'Cerrado' => 100,
+                        'Concluida', 'Cerrado', 'Completada' => 100,
                         'Con observaciones' => 85,
                         'En desarrollo' => 65,
                         default => 30,
@@ -192,7 +195,7 @@ class DemoWorkspace
                     'final_story' => $investigation->final_story,
                     'has_facts' => $includeDetails && ($investigation->facts->isNotEmpty() || $investigation->causalNodes->isNotEmpty()),
                     'pending' => match ($investigation->status) {
-                        'Concluida', 'Cerrado' => 'Sin pendientes (Expediente regularizado)',
+                        'Concluida', 'Cerrado', 'Completada' => 'Sin pendientes (Expediente regularizado)',
                         'Con observaciones' => 'Responder observaciones de Jefatura / Alta Dirección',
                         'En desarrollo' => 'Completar árbol de causas y validar medidas',
                         default => 'Recopilar entrevistas y evidencias',

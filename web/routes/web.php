@@ -48,6 +48,7 @@ Route::middleware('auth')->group(function (): void {
         Route::post('/casos', [CaseController::class, 'store'])->name('cases.store');
         Route::get('/casos/{case:folio}/editar', [CaseController::class, 'edit'])->name('cases.edit');
         Route::patch('/casos/{case:folio}', [CaseController::class, 'update'])->name('cases.update');
+        Route::post('/casos/{case:folio}/cerrar', [CaseController::class, 'close'])->name('cases.close');
         Route::get('/casos/{case:folio}/evidencias', [CaseController::class, 'evidence'])->name('cases.evidence.index');
         Route::post('/casos/{case:folio}/evidencias', [CaseController::class, 'storeEvidence'])->name('cases.evidence.store');
         Route::get('/casos/{case:folio}/evidencias/{evidence}', [CaseController::class, 'downloadEvidence'])->name('cases.evidence.download');
@@ -55,6 +56,9 @@ Route::middleware('auth')->group(function (): void {
         Route::delete('/casos/{case:folio}/evidencias/{evidence}', [CaseController::class, 'deleteEvidence'])->name('cases.evidence.delete');
         Route::get('/investigaciones', InvestigationController::class)->name('investigations.index');
         Route::post('/investigaciones/{case:folio}/iniciar', [InvestigationController::class, 'start'])->name('investigations.start');
+        Route::post('/investigaciones/{case:folio}/flujo', [InvestigationController::class, 'workflow'])->name('investigations.workflow');
+        Route::post('/investigaciones/{case:folio}/observaciones', [ObservationController::class, 'store'])->name('investigations.observations.store');
+        Route::post('/investigaciones/observaciones/{observation}/responder', [ObservationController::class, 'reply'])->name('investigations.observations.reply');
         Route::post('/investigaciones/relato-final', [AiAnalysisController::class, 'storeFinalStory'])->name('investigations.story.store');
         Route::post('/investigaciones/analisis-externo/prompt', [AiAnalysisController::class, 'externalAnalysisPrompt'])->name('investigations.external.prompt');
         Route::post('/investigaciones/analisis-externo/importar', [AiAnalysisController::class, 'importExternalAnalysis'])->middleware('throttle:5,1')->name('investigations.external.import');

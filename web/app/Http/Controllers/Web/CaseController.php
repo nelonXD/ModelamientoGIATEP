@@ -27,23 +27,31 @@ class CaseController extends Controller
     {
         abort_unless($request->user()->hasPermission('cases.read'), 403);
 
-        $relations = OriginalGiatepSchema::isActive() ? ['evidences', 'establishment'] : ['evidences', 'establishment', 'investigation'];
-        $cases = OccupationalCase::query()->with($relations)->when(OriginalGiatepSchema::isActive(), fn ($query) => $query->orderByDesc('Id_Caso'), fn ($query) => $query->latest())->get()->map(fn (OccupationalCase $case): array => [
-            'folio' => $case->folio, 'type' => $case->case_type, 'person' => $case->worker_name,
-            'workerRut' => $case->worker_rut, 'jobTitle' => $case->job_title, 'workplace' => $case->workplace,
-            'phone' => $case->worker_phone, 'employerName' => $case->employer_name, 'employerRut' => $case->employer_rut,
-            'administrator' => $case->administrator, 'establishment' => $case->establishment?->name ?? $case->workplace,
-            'employerAddress' => $case->employer_address, 'date' => $case->event_date?->format('d-m-Y') ?? '',
-            'time' => $case->event_time ? substr((string) $case->event_time, 0, 5) : '', 'location' => $case->event_location,
-            'status' => ! OriginalGiatepSchema::isActive() && $case->investigation && in_array($case->status, ['Borrador', 'Registrado'], true)
-                ? 'En investigación'
-                : $case->status,
-            'summary' => $case->narrative, 'witnesses' => $case->witnesses,
-            'evidenceFiles' => $case->evidences->map(fn ($file): array => ['name' => $file->original_name, 'type' => $file->mime_type, 'size' => $file->size])->all(),
-            'has_investigation' => ! OriginalGiatepSchema::isActive() && $case->investigation !== null || in_array($case->status, ['En investigación', 'Con observaciones', 'Seguimiento de medidas', 'Cerrado']),
-            'investigation_id' => OriginalGiatepSchema::isActive() ? null : $case->investigation?->folio,
-            'requires_investigation' => ! in_array($case->case_type, ['Accidente o enfermedad común', 'Accidente común', 'Enfermedad común']),
-        ]);
+        $relations = OriginalGiatepSchema::isActive() ? ['evidences', 'establishment'] : ['evidences', 'establishment', 'investigation.measures'];
+        $cases = OccupationalCase::query()->with($relations)->when(OriginalGiatepSchema::isActive(), fn ($query) => $query->orderByDesc('Id_Caso'), fn ($query) => $query->latest())->get()->map(function (OccupationalCase $case) use ($request): array {
+            $requiresInvestigation = ! in_array(mb_strtolower($case->case_type), ['accidente de trayecto', 'accidente o enfermedad común', 'accidente común', 'enfermedad común'], true);
+            $measuresComplete = OriginalGiatepSchema::isActive() || ! $case->investigation || $case->investigation->measures->every(fn ($measure): bool => in_array(mb_strtolower((string) $measure->status), ['implementada', 'cumplida', 'completada', 'cerrada'], true));
+            $canClose = $request->user()->hasRole('prevencion') || $request->user()->hasRole('cphs') || $request->user()->hasRole('delegado') || $request->user()->hasRole('jefatura') || $request->user()->hasRole('alta-direccion');
+            $canClose = $canClose && $case->status !== 'Cerrado' && ((! $requiresInvestigation) || ($case->investigation?->status === 'Completada' && $measuresComplete));
+
+            return [
+                'folio' => $case->folio, 'type' => $case->case_type, 'person' => $case->worker_name,
+                'workerRut' => $case->worker_rut, 'jobTitle' => $case->job_title, 'workplace' => $case->workplace,
+                'phone' => $case->worker_phone, 'employerName' => $case->employer_name, 'employerRut' => $case->employer_rut,
+                'administrator' => $case->administrator, 'establishment' => $case->establishment?->name ?? $case->workplace,
+                'employerAddress' => $case->employer_address, 'date' => $case->event_date?->format('d-m-Y') ?? '',
+                'time' => $case->event_time ? substr((string) $case->event_time, 0, 5) : '', 'location' => $case->event_location,
+                'status' => ! OriginalGiatepSchema::isActive() && $case->investigation && in_array($case->status, ['Borrador', 'Registrado'], true)
+                    ? 'En investigación'
+                    : $case->status,
+                'summary' => $case->narrative, 'witnesses' => $case->witnesses,
+                'evidenceFiles' => $case->evidences->map(fn ($file): array => ['name' => $file->original_name, 'type' => $file->mime_type, 'size' => $file->size])->all(),
+                'has_investigation' => ! OriginalGiatepSchema::isActive() && $case->investigation !== null || in_array($case->status, ['En investigación', 'Con observaciones', 'Seguimiento de medidas', 'Cerrado']),
+                'investigation_id' => OriginalGiatepSchema::isActive() ? null : $case->investigation?->folio,
+                'requires_investigation' => $requiresInvestigation,
+                'can_close' => $canClose,
+            ];
+        });
 
         $caseTypes = $this->catalogs()->get('case_type', collect());
         $caseStatuses = ['Borrador', 'Registrado', 'En investigación', 'Cerrado'];
@@ -123,6 +131,28 @@ class CaseController extends Controller
         });
 
         return to_route('modules.cases.index')->with('demo_status', "Caso {$case->folio} guardado correctamente. Ya puedes revisarlo en la lista antes de iniciar una investigación.");
+    }
+
+    public function close(Request $request, OccupationalCase $case): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user->hasRole('prevencion') || $user->hasRole('cphs') || $user->hasRole('delegado') || $user->hasRole('jefatura') || $user->hasRole('alta-direccion'), 403);
+        $requiresInvestigation = ! in_array(mb_strtolower($case->case_type), ['accidente de trayecto', 'accidente o enfermedad común', 'accidente común', 'enfermedad común'], true);
+        abort_if($case->status === 'Cerrado', 409, 'El caso ya está cerrado.');
+        if ($requiresInvestigation) {
+            $investigationQuery = $case->investigation();
+            if (! OriginalGiatepSchema::isActive()) {
+                $investigationQuery->with('measures');
+            }
+            $investigation = $investigationQuery->firstOrFail();
+            abort_unless($investigation->status === 'Completada', 409, 'La investigación debe estar completada antes de cerrar el caso.');
+            if (! OriginalGiatepSchema::isActive()) {
+                abort_if($investigation->measures->contains(fn ($measure): bool => ! in_array(mb_strtolower((string) $measure->status), ['implementada', 'cumplida', 'completada', 'cerrada'], true)), 409, 'Completa las medidas del plan de acción antes de cerrar el caso.');
+            }
+        }
+        $case->update(['status' => 'Cerrado']);
+
+        return to_route('modules.cases.index')->with('demo_status', "Caso {$case->folio} cerrado correctamente.");
     }
 
     public function edit(Request $request, OccupationalCase $case): View

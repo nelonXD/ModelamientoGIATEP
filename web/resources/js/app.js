@@ -1261,6 +1261,9 @@ document.querySelectorAll('[data-unsaved-form]').forEach((form) => {
 
 const investigationForm = document.querySelector('[data-investigation-form]');
 const linkedCaseId = new URLSearchParams(window.location.search).get('case');
+if (investigationForm?.dataset.investigationReadonly === 'true') {
+    investigationForm.querySelectorAll('input:not([name="workflow_action"]):not([name="_token"]), textarea, select, button:not([name="workflow_action"])').forEach((control) => { control.disabled = true; });
+}
 if (investigationForm && linkedCaseId) {
     const casesStorageKey = 'giatep.demo.cases';
     const investigationsStorageKey = 'giatep.demo.investigations';
@@ -1307,7 +1310,8 @@ if (investigationForm && linkedCaseId) {
         Object.entries(caseMapping).forEach(([name, value]) => setFieldValue(name, value));
     }
     try {
-        const draft = JSON.parse(localStorage.getItem(draftStorageKey) || '{}');
+        const serverDraft = JSON.parse(investigationForm.dataset.serverDraft || '{}');
+        const draft = Object.keys(serverDraft).length ? { fields: serverDraft } : JSON.parse(localStorage.getItem(draftStorageKey) || '{}');
         Object.entries(draft.fields || {}).forEach(([name, value]) => setFieldValue(name, value));
     } catch (error) {
         localStorage.removeItem(draftStorageKey);

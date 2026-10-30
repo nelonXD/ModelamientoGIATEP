@@ -24,7 +24,7 @@ class AiAnalysisController extends Controller
 {
     public function askCaseAgent(Request $request, LmStudioCaseAgent $agent): JsonResponse
     {
-        abort_unless($request->user()->hasPermission('investigations.read'), 403);
+        abort_unless($request->user()->hasRole('cphs') || $request->user()->hasRole('delegado') || $request->user()->hasRole('prevencion'), 403);
         $validated = $request->validate([
             'case_folio' => ['required', 'string', $this->caseFolioExistsRule()],
             'question' => ['required', 'string', 'min:5', 'max:2000'],
@@ -42,7 +42,7 @@ class AiAnalysisController extends Controller
 
     public function generateFinalStory(Request $request, LmStudioFinalStoryGenerator $generator): JsonResponse
     {
-        abort_unless($request->user()->hasPermission('investigations.read'), 403);
+        abort_unless($request->user()->hasRole('cphs') || $request->user()->hasRole('delegado') || $request->user()->hasRole('prevencion'), 403);
         $validated = $request->validate([
             'case_folio' => ['required', 'string', $this->caseFolioExistsRule()],
             'model' => ['nullable', 'string', 'max:255'],
@@ -62,7 +62,7 @@ class AiAnalysisController extends Controller
 
     public function storeFinalStory(Request $request): JsonResponse
     {
-        abort_unless($request->user()->hasPermission('investigations.read'), 403);
+        abort_unless($request->user()->hasRole('cphs') || $request->user()->hasRole('delegado') || $request->user()->hasRole('prevencion'), 403);
         $validated = $request->validate([
             'case_folio' => ['required', 'string', $this->caseFolioExistsRule()],
             'story' => ['required', 'string', 'min:30', 'max:30000'],
@@ -77,7 +77,7 @@ class AiAnalysisController extends Controller
                     $sequence = (int) Investigation::query()->lockForUpdate()->max('Codigo_Investigacion') + 1;
                     $investigation = $case->investigation()->create([
                         'folio' => 'INV-'.now()->year.'-'.str_pad((string) $sequence, 3, '0', STR_PAD_LEFT),
-                        'owner_id' => $request->user()->getKey(), 'status' => 'En investigación',
+                        'owner_id' => $request->user()->getKey(), 'status' => 'En desarrollo',
                         'created_at' => now(), 'final_story' => $case->narrative,
                     ]);
                 }
@@ -85,8 +85,10 @@ class AiAnalysisController extends Controller
                 $investigation = Investigation::firstOrCreate(['occupational_case_id' => $case->id], [
                     'folio' => 'INV-'.now()->year.'-'.str_pad((string) (Investigation::query()->lockForUpdate()->count() + 1), 3, '0', STR_PAD_LEFT),
                     'owner_id' => $request->user()->id,
+                    'status' => 'En desarrollo',
                 ]);
             }
+            $this->ensureInvestigationEditable($investigation);
             $investigation->update(['final_story' => $validated['story']]);
 
             return $investigation;
@@ -97,7 +99,7 @@ class AiAnalysisController extends Controller
 
     public function externalAnalysisPrompt(Request $request, LmStudioFinalStoryGenerator $generator): JsonResponse
     {
-        abort_unless($request->user()->hasPermission('investigations.read'), 403);
+        abort_unless($request->user()->hasRole('cphs') || $request->user()->hasRole('delegado') || $request->user()->hasRole('prevencion'), 403);
         $validated = $request->validate([
             'case_folio' => ['required', 'string', $this->caseFolioExistsRule()],
             'story' => ['nullable', 'string', 'max:30000'],
@@ -116,7 +118,7 @@ class AiAnalysisController extends Controller
 
     public function importExternalAnalysis(Request $request, LmStudioFinalStoryGenerator $storyGenerator, StagedLmStudioInvestigationAnalyzer $analyzer): JsonResponse
     {
-        abort_unless($request->user()->hasPermission('investigations.read'), 403);
+        abort_unless($request->user()->hasRole('cphs') || $request->user()->hasRole('delegado') || $request->user()->hasRole('prevencion'), 403);
         $validated = $request->validate([
             'case_folio' => ['required', 'string', $this->caseFolioExistsRule()],
             'story' => ['required', 'string', 'min:30', 'max:30000'],
@@ -140,7 +142,7 @@ class AiAnalysisController extends Controller
 
     public function analyze(Request $request, LmStudioInvestigationAnalyzer $analyzer): JsonResponse
     {
-        abort_unless($request->user()->hasPermission('investigations.read'), 403);
+        abort_unless($request->user()->hasRole('cphs') || $request->user()->hasRole('delegado') || $request->user()->hasRole('prevencion'), 403);
         $validated = $request->validate(['story' => ['required', 'string', 'min:30', 'max:30000']]);
         $startedAt = hrtime(true);
         $promptId = DB::table('ai_prompts')->where('nombre', 'analisis-investigacion')->where('activo', true)->value('id');
@@ -170,7 +172,7 @@ class AiAnalysisController extends Controller
 
     public function models(Request $request, LmStudioModelCatalog $catalog): JsonResponse
     {
-        abort_unless($request->user()->hasPermission('investigations.read'), 403);
+        abort_unless($request->user()->hasRole('cphs') || $request->user()->hasRole('delegado') || $request->user()->hasRole('prevencion'), 403);
 
         return response()->json([
             ...$catalog->list(),
@@ -182,7 +184,7 @@ class AiAnalysisController extends Controller
 
     public function analyzeFacts(Request $request, StagedLmStudioInvestigationAnalyzer $analyzer): JsonResponse
     {
-        abort_unless($request->user()->hasPermission('investigations.read'), 403);
+        abort_unless($request->user()->hasRole('cphs') || $request->user()->hasRole('delegado') || $request->user()->hasRole('prevencion'), 403);
         $validated = $request->validate([
             'case_folio' => ['nullable', 'string', $this->caseFolioExistsRule()],
             'story' => ['required', 'string', 'min:30', 'max:30000'],
@@ -195,7 +197,7 @@ class AiAnalysisController extends Controller
 
     public function analyzeTree(Request $request, StagedLmStudioInvestigationAnalyzer $analyzer): JsonResponse
     {
-        abort_unless($request->user()->hasPermission('investigations.read'), 403);
+        abort_unless($request->user()->hasRole('cphs') || $request->user()->hasRole('delegado') || $request->user()->hasRole('prevencion'), 403);
         $validated = $request->validate([
             'case_folio' => ['nullable', 'string', $this->caseFolioExistsRule()],
             'story' => ['required', 'string', 'min:30', 'max:30000'],
@@ -214,7 +216,7 @@ class AiAnalysisController extends Controller
 
     public function analyzeMeasures(Request $request, StagedLmStudioInvestigationAnalyzer $analyzer): JsonResponse
     {
-        abort_unless($request->user()->hasPermission('investigations.read'), 403);
+        abort_unless($request->user()->hasRole('cphs') || $request->user()->hasRole('delegado') || $request->user()->hasRole('prevencion'), 403);
         $validated = $request->validate([
             'case_folio' => ['nullable', 'string', $this->caseFolioExistsRule()],
             'story' => ['required', 'string', 'min:30', 'max:30000'],
@@ -240,7 +242,7 @@ class AiAnalysisController extends Controller
 
     public function analyzeFactorBatch(Request $request, StagedLmStudioInvestigationAnalyzer $analyzer): JsonResponse
     {
-        abort_unless($request->user()->hasPermission('investigations.read'), 403);
+        abort_unless($request->user()->hasRole('cphs') || $request->user()->hasRole('delegado') || $request->user()->hasRole('prevencion'), 403);
         $validated = $request->validate([
             'case_folio' => ['nullable', 'string', $this->caseFolioExistsRule()],
             'story' => ['required', 'string', 'min:30', 'max:30000'],
@@ -322,7 +324,7 @@ class AiAnalysisController extends Controller
 
     public function store(Request $request, StagedLmStudioInvestigationAnalyzer $analyzer): JsonResponse
     {
-        abort_unless($request->user()->hasPermission('investigations.read'), 403);
+        abort_unless($request->user()->hasRole('cphs') || $request->user()->hasRole('delegado') || $request->user()->hasRole('prevencion'), 403);
         $validated = $request->validate([
             'case_folio' => ['required', 'string', $this->caseFolioExistsRule()], 'story' => ['required', 'string', 'max:30000'],
             'model' => ['nullable', 'string', 'max:255'], 'facts' => ['required', 'array', 'min:1'], 'facts.*' => ['required', 'string', 'max:2000'],
@@ -387,7 +389,9 @@ class AiAnalysisController extends Controller
             $investigation = Investigation::firstOrCreate(['occupational_case_id' => $case->id], [
                 'folio' => 'INV-'.now()->year.'-'.str_pad((string) (Investigation::query()->lockForUpdate()->count() + 1), 3, '0', STR_PAD_LEFT),
                 'owner_id' => $request->user()->id,
+                'status' => 'En desarrollo',
             ]);
+            $this->ensureInvestigationEditable($investigation);
             $investigation->update(['final_story' => $validated['story'], 'ai_model' => $validated['model'] ?? null, 'ai_analyzed_at' => now()]);
             $investigation->facts()->delete();
             $investigation->causalNodes()->delete();
@@ -452,7 +456,7 @@ class AiAnalysisController extends Controller
 
     public function storeInterview(Request $request): JsonResponse
     {
-        abort_unless($request->user()->hasPermission('investigations.read'), 403);
+        abort_unless($request->user()->hasRole('cphs') || $request->user()->hasRole('delegado') || $request->user()->hasRole('prevencion'), 403);
         if (OriginalGiatepSchema::isActive()) {
             return $this->storeOriginalInterview($request);
         }
@@ -472,7 +476,9 @@ class AiAnalysisController extends Controller
             $investigation = Investigation::firstOrCreate(['occupational_case_id' => $case->id], [
                 'folio' => 'INV-'.now()->year.'-'.str_pad((string) (Investigation::query()->lockForUpdate()->count() + 1), 3, '0', STR_PAD_LEFT),
                 'owner_id' => $request->user()->id,
+                'status' => 'En desarrollo',
             ]);
+            $this->ensureInvestigationEditable($investigation);
             $form = QuestionnaireForm::query()->where('tipo', $validated['questionnaire_type'])->where('estado', 'activo')->with('questions')->latest('version')->first();
             $interview = $investigation->interviews()->create([
                 'questionnaire_form_id' => $form?->id, 'questionnaire_type' => $validated['questionnaire_type'],
@@ -525,9 +531,10 @@ class AiAnalysisController extends Controller
                 $sequence = (int) Investigation::query()->max('Codigo_Investigacion') + 1;
                 $investigation = $case->investigation()->create([
                     'folio' => 'INV-'.now()->year.'-'.str_pad((string) $sequence, 3, '0', STR_PAD_LEFT),
-                    'owner_id' => $request->user()->getKey(), 'status' => 'En investigación', 'created_at' => now(),
+                    'owner_id' => $request->user()->getKey(), 'status' => 'En desarrollo', 'created_at' => now(),
                 ]);
             }
+            $this->ensureInvestigationEditable($investigation);
 
             $rut = $validated['interviewee_rut'];
             DB::table('testigo')->updateOrInsert(['Rut_Testigo' => $rut], [
@@ -597,5 +604,10 @@ class AiAnalysisController extends Controller
         });
 
         return response()->json(['message' => 'Entrevista guardada correctamente.', 'id' => $declarationId]);
+    }
+
+    private function ensureInvestigationEditable(Investigation $investigation): void
+    {
+        abort_unless($investigation->status === 'En desarrollo', 409, 'La investigación ya está en revisión o completada y no admite cambios.');
     }
 }

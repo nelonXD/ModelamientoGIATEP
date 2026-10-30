@@ -127,6 +127,34 @@
         </section>
     @endif
 
+    <section class="card p-6 shadow-sm sm:p-8">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+            <div><h3 class="text-lg font-black text-slate-950">Observaciones de la investigación</h3><p class="mt-1 text-sm text-slate-600">Comentarios generales sobre cualquier aspecto del expediente.</p></div>
+            <span class="text-xs font-semibold text-slate-500">{{ $reportObservations->count() }} registradas por Jefatura / Alta Dirección</span>
+        </div>
+        @forelse($reportObservations as $observation)
+            <article class="mt-5 rounded-xl border border-slate-200 p-4">
+                <div class="flex flex-wrap justify-between gap-2"><strong>{{ $observation->author_name }} · {{ $observation->author_role }}</strong><span class="text-xs text-slate-500">{{ \Illuminate\Support\Carbon::parse($observation->created_at)->format('d-m-Y H:i') }} · {{ ucfirst($observation->status) }}</span></div>
+                <p class="mt-3 whitespace-pre-line text-sm leading-6 text-slate-700">{{ $observation->body }}</p>
+                @foreach($observation->replies as $reply)
+                    <div class="ml-4 mt-4 border-l-2 border-sky-300 pl-4">
+                        <p class="text-xs font-bold text-sky-900">Respuesta de {{ $reply->author_name }} · {{ $reply->author_role }} <span class="font-normal text-slate-500">{{ \Illuminate\Support\Carbon::parse($reply->created_at)->format('d-m-Y H:i') }}</span></p>
+                        <p class="mt-2 whitespace-pre-line text-sm text-slate-700">{{ $reply->body }}</p>
+                    </div>
+                @endforeach
+            </article>
+        @empty
+            <p class="mt-4 text-sm text-slate-500">Aún no hay observaciones en esta investigación.</p>
+        @endforelse
+        @if($reportInvestigation && in_array($reportInvestigation->status, ['En desarrollo', 'En validación'], true))
+            <form method="POST" action="{{ route('modules.investigations.observations.store', ['case' => $caseData['folio']]) }}" class="mt-6 space-y-3 border-t border-slate-200 pt-5">
+                @csrf
+                <label><span class="label">Nueva observación</span><textarea class="input" name="body" rows="4" maxlength="5000" required placeholder="Escriba una observación sobre cualquier aspecto de la investigación."></textarea></label>
+                <button class="btn-primary" type="submit">Enviar observación al equipo investigador</button>
+            </form>
+        @endif
+    </section>
+
     @if($reportInterviews->isEmpty() && $reportFacts->isEmpty() && $reportNodes->isEmpty() && $reportMeasures->isEmpty() && ! ($case?->evidences?->isNotEmpty()))
         <p class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">El expediente aún no contiene entrevistas, evidencias o análisis guardados para mostrar.</p>
     @endif

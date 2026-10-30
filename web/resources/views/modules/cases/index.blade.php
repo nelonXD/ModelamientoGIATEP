@@ -88,6 +88,12 @@
                                                 <button type='submit' class='w-full rounded-lg bg-emerald-700 px-3 py-1.5 text-center text-xs font-bold text-white shadow-sm hover:bg-emerald-800'>Iniciar investigación</button>
                                             </form>
                                         @endif
+                                        @if($case['can_close'])
+                                            <form method='POST' action='{{ route('modules.cases.close', ['case' => $case['folio']]) }}' onsubmit="return confirm('¿Confirma el cierre de este caso? Esta acción marca el caso como cerrado.')">
+                                                @csrf
+                                                <button type='submit' class='w-full rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-center text-xs font-bold text-emerald-800 hover:bg-emerald-100'>Cerrar caso</button>
+                                            </form>
+                                        @endif
                                         <div class='flex items-center gap-1.5 mt-0.5'>
                                             <a href='{{ route('modules.cases.edit', ['case' => $case['folio']]) }}' class='btn-secondary flex-1 py-1 px-2 text-center text-[11px] font-semibold text-slate-700 hover:bg-slate-50'>✎ Editar caso</a>
                                             <a href='{{ route('modules.cases.evidence.index', ['case' => $case['folio']]) }}' class='btn-secondary py-1 px-2 text-center text-[11px] font-semibold text-emerald-800 hover:bg-emerald-50'>Ver evidencia</a>
@@ -165,6 +171,12 @@
                                             @csrf
                                             <input type='hidden' name='case_type' value='{{ $case['type'] }}' data-investigation-case-type>
                                             <button type='submit' class='btn-primary inline-flex text-xs py-2 px-4'>Iniciar investigación →</button>
+                                        </form>
+                                    @endif
+                                    @if($case['can_close'])
+                                        <form method='POST' action='{{ route('modules.cases.close', ['case' => $case['folio']]) }}' onsubmit="return confirm('¿Confirma el cierre de este caso? Esta acción marca el caso como cerrado.')">
+                                            @csrf
+                                            <button type='submit' class='btn-primary inline-flex text-xs py-2 px-4'>Cerrar caso</button>
                                         </form>
                                     @endif
                                 </div>
@@ -260,7 +272,7 @@
                     typeWarning.classList.toggle('hidden', ! changesForm);
                 };
 
-                const nonInvestigableTypes = ['Accidente o enfermedad común', 'Accidente común', 'Enfermedad común'];
+                const nonInvestigableTypes = ['Accidente de trayecto', 'Accidente o enfermedad común', 'Accidente común', 'Enfermedad común'];
                 const updateInvestigationLink = (row) => {
                     const hasInvestigation = row.dataset.hasInvestigation === 'true';
                     if (hasInvestigation) return;

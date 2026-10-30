@@ -10,13 +10,15 @@ use App\Support\OriginalGiatepSchema;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class InvestigationController extends Controller
 {
     public function start(Request $request, OccupationalCase $case): RedirectResponse
     {
-        abort_unless($request->user()->hasPermission('investigations.read'), 403);
+        abort_unless($request->user()->hasRole('cphs') || $request->user()->hasRole('delegado') || $request->user()->hasRole('prevencion'), 403);
+        abort_if(in_array(mb_strtolower($case->case_type), ['accidente de trayecto', 'accidente común', 'enfermedad común', 'accidente o enfermedad común'], true), 422, 'Este tipo de caso no requiere investigación.');
 
         $investigation = DB::transaction(function () use ($case, $request) {
             $lockedCase = OccupationalCase::query()->whereKey($case->getKey())->lockForUpdate()->firstOrFail();
@@ -28,7 +30,7 @@ class InvestigationController extends Controller
                 $investigation = $lockedCase->investigation()->create([
                     'folio' => 'INV-'.now()->year.'-'.str_pad((string) $sequence, 3, '0', STR_PAD_LEFT),
                     'owner_id' => $request->user()->id,
-                    'status' => 'En investigación',
+                    'status' => 'En desarrollo',
                     'final_story' => $lockedCase->narrative,
                     'created_at' => now(),
                 ]);
@@ -49,6 +51,47 @@ class InvestigationController extends Controller
         ]))->with('demo_status', "Investigación {$investigation->folio} iniciada correctamente.");
     }
 
+    public function workflow(Request $request, OccupationalCase $case): RedirectResponse
+    {
+        $action = $request->string('workflow_action')->toString();
+        $user = $request->user();
+        $investigation = $case->investigation()->firstOrFail();
+
+        if ($action === 'submit') {
+            abort_unless($user->hasRole('cphs') || $user->hasRole('delegado') || $user->hasRole('prevencion'), 403);
+            abort_unless($investigation->status === 'En desarrollo', 409);
+            $investigation->update(['status' => 'En validación']);
+            DB::table('investigation_events')->insert(['investigation_folio' => $investigation->folio, 'actor_rut' => $user->rut, 'actor_name' => $user->name, 'actor_role' => $user->roles->pluck('name')->implode(', '), 'event' => 'Enviada a validación', 'created_at' => now()]);
+
+            return back()->with('demo_status', 'La investigación fue enviada a Prevención para su validación.');
+        }
+
+        if ($action === 'close') {
+            abort_unless($user->hasRole('prevencion') || $user->hasRole('cphs') || $user->hasRole('delegado'), 403);
+            abort_unless($investigation->status === 'En validación', 409);
+            $pending = DB::table('investigation_observations')->where('investigation_folio', $investigation->folio)->where('status', 'pendiente')->exists();
+            abort_if($pending, 422, 'Responde las observaciones pendientes antes de cerrar la investigación.');
+            $investigation->update(['status' => 'Completada']);
+            DB::table('investigation_events')->insert(['investigation_folio' => $investigation->folio, 'actor_rut' => $user->rut, 'actor_name' => $user->name, 'actor_role' => $user->roles->pluck('name')->implode(', '), 'event' => 'Investigación cerrada y completada', 'created_at' => now()]);
+
+            return back()->with('demo_status', 'La investigación quedó completada y bloqueada para edición.');
+        }
+
+        abort_unless($action === 'save', 422);
+        abort_unless($user->hasRole('cphs') || $user->hasRole('delegado') || $user->hasRole('prevencion'), 403);
+        abort_unless($investigation->status === 'En desarrollo', 409);
+        $payload = collect($request->except(['_token', 'workflow_action', 'return_to']))
+            ->map(fn ($value) => is_array($value) ? array_slice($value, 0, 100) : mb_substr((string) $value, 0, 20000))
+            ->all();
+        DB::table('investigation_drafts')->updateOrInsert(
+            ['investigation_folio' => $investigation->folio],
+            ['payload' => json_encode($payload, JSON_UNESCAPED_UNICODE), 'updated_by_rut' => $user->rut, 'updated_at' => now(), 'created_at' => now()],
+        );
+        DB::table('investigation_events')->insert(['investigation_folio' => $investigation->folio, 'actor_rut' => $user->rut, 'actor_name' => $user->name, 'actor_role' => $user->roles->pluck('name')->implode(', '), 'event' => 'Cambios guardados durante el desarrollo', 'created_at' => now()]);
+
+        return back()->with('demo_status', 'Los cambios de la investigación se guardaron. Sigue En desarrollo.');
+    }
+
     /**
      * Handle the incoming request.
      */
@@ -63,6 +106,9 @@ class InvestigationController extends Controller
         $leadershipReport = $request->user()->hasRole('jefatura') || $request->user()->hasRole('alta-direccion');
         $reportCase = null;
         $reportInvestigation = null;
+        $reportObservations = collect();
+        $canReplyObservation = false;
+        $investigationDraft = [];
 
         if ($caseFolio !== '') {
             $case = $demo['cases']->firstWhere('id', $caseFolio) ?? $this->caseFromModule($caseFolio);
@@ -125,6 +171,24 @@ class InvestigationController extends Controller
             }
         }
 
+        if ($selected && ($selected['id'] ?? '') !== 'INV-NUEVA' && Schema::hasTable('investigation_observations')) {
+            if (Schema::hasTable('investigation_drafts')) {
+                $storedDraft = DB::table('investigation_drafts')->where('investigation_folio', $selected['id'])->value('payload');
+                $investigationDraft = is_string($storedDraft) ? (json_decode($storedDraft, true) ?: []) : (array) $storedDraft;
+            }
+            $observationQuery = DB::table('investigation_observations')->where('investigation_folio', $selected['id'])->whereNull('parent_id');
+            if ($leadershipReport) {
+                $observationQuery->where('author_rut', $request->user()->rut);
+            }
+            $reportObservations = $observationQuery->orderBy('created_at')->get();
+            foreach ($reportObservations as $observation) {
+                $observation->replies = DB::table('investigation_observations')->where('parent_id', $observation->id)->orderBy('created_at')->get();
+            }
+            $caseInvestigation = OccupationalCase::where('folio', $caseFolio)->with('investigation.owner')->first()?->investigation;
+            $canReplyObservation = $caseInvestigation?->owner?->rut === $request->user()->rut
+                && ($request->user()->hasRole('cphs') || $request->user()->hasRole('delegado') || $request->user()->hasRole('prevencion'));
+        }
+
         return view('demo.workspace', [
             'module' => 'investigations',
             'selected' => $selected,
@@ -135,6 +199,9 @@ class InvestigationController extends Controller
             'leadershipReport' => $leadershipReport,
             'reportCase' => $reportCase,
             'reportInvestigation' => $reportInvestigation,
+            'reportObservations' => $reportObservations,
+            'canReplyObservation' => $canReplyObservation,
+            'investigationDraft' => $investigationDraft,
         ]);
     }
 

@@ -560,9 +560,9 @@ $statusClass = fn ($status) => match ($status) {
                     <div class="flex gap-2"><button type="button" data-section-target="inv-0" class="btn-secondary px-3 py-1.5 text-xs">Editar información</button><a href="{{ route('modules.observations.index', ['case' => $selected['case_id']]) }}" class="btn-secondary px-3 py-1.5 text-xs">Agregar observación</a></div>
                 </div>
                 <!-- Contenido de la Investigación -->
-                <form method="POST" action="{{ route('demo.action', 'investigations') }}" class="card min-w-0 shadow-sm" data-unsaved-form data-investigation-form>
+                <form method="POST" action="{{ route('modules.investigations.workflow', ['case' => $selected['case_id']]) }}" class="card min-w-0 shadow-sm" data-unsaved-form data-investigation-form data-investigation-readonly="{{ $selected['status'] !== 'En desarrollo' ? 'true' : 'false' }}" data-server-draft="{{ json_encode($investigationDraft ?? [], JSON_HEX_APOS | JSON_HEX_QUOT) }}">
                     @csrf
-                    <input type="hidden" name="action" value="Borrador de investigación guardado">
+                    <input type="hidden" name="workflow_action" value="save" data-investigation-workflow-action>
                     <input type="hidden" name="return_to" value="{{ url()->current() }}">
 
                     <header class="border-b border-slate-200 bg-slate-50/70 p-6">
@@ -1148,13 +1148,50 @@ $statusClass = fn ($status) => match ($status) {
                     </div>
 
                     <footer class="flex flex-wrap justify-between gap-3 border-t bg-slate-50/90 p-5">
-                        <button class="btn-secondary" name="action" value="Borrador de investigación guardado">Guardar Borrador</button>
+                        @if($selected['status'] === 'En desarrollo')
+                        <button class="btn-secondary" type="submit" onclick="this.form.querySelector('[data-investigation-workflow-action]').value='save'">Guardar cambios</button>
                         <div class="flex gap-2">
-                            <button name="action" value="Correcciones guardadas" class="btn-secondary">Guardar Correcciones</button>
-                            <button name="action" value="Investigación enviada a revisión" class="btn-primary">Enviar a Revisión Formal</button>
+                            <button name="workflow_action" value="submit" class="btn-primary" onclick="return confirm('La investigación pasará a revisión de Prevención. ¿Desea continuar?')">Pasar a revisión</button>
                         </div>
+                        @elseif($selected['status'] === 'En validación')
+                            <div></div>
+                            <div class="flex gap-2">
+                                <button name="workflow_action" value="close" class="btn-primary" onclick="return confirm('Está a punto de cerrar la investigación. Al completarla quedará bloqueada para edición. ¿Desea continuar?')">Cerrar investigación</button>
+                            </div>
+                        @else
+                            <p class="text-sm font-bold text-emerald-800">Investigación completada · Solo lectura</p>
+                        @endif
                     </footer>
                 </form>
+                <section class="card space-y-4 p-6 shadow-sm" aria-label="Observaciones recibidas">
+                    <div><h3 class="text-lg font-black text-slate-950">Observaciones de la investigación</h3><p class="mt-1 text-sm text-slate-600">Responde cada observación en su mismo hilo.</p></div>
+                    @if(auth()->user()->hasRole('prevencion') && in_array($selected['status'], ['En desarrollo', 'En validación'], true))
+                        <form method="POST" action="{{ route('modules.investigations.observations.store', ['case' => $selected['case_id']]) }}" class="rounded-xl border border-sky-200 bg-sky-50 p-4 space-y-3">
+                            @csrf
+                            <label class="label" for="investigation-observation">Registrar observación para el equipo investigador</label>
+                            <textarea id="investigation-observation" class="input" name="body" rows="3" minlength="5" maxlength="5000" required placeholder="Escribe cualquier observación relacionada con esta investigación"></textarea>
+                            <button class="btn-secondary" type="submit">Enviar observación</button>
+                        </form>
+                    @endif
+                    @forelse($reportObservations as $observation)
+                        <article class="rounded-xl border border-slate-200 p-4">
+                            <div class="flex flex-wrap justify-between gap-2"><strong>{{ $observation->author_name }} · {{ $observation->author_role }}</strong><span class="text-xs text-slate-500">{{ $observation->created_at }} · {{ ucfirst($observation->status) }}</span></div>
+                            <p class="mt-3 whitespace-pre-line text-sm text-slate-700">{{ $observation->body }}</p>
+                            @foreach($observation->replies as $reply)
+                                <div class="ml-4 mt-3 border-l-2 border-sky-300 pl-4"><p class="text-xs font-bold">Respuesta de {{ $reply->author_name }} · {{ $reply->author_role }}</p><p class="mt-2 whitespace-pre-line text-sm">{{ $reply->body }}</p></div>
+                            @endforeach
+                            @if($canReplyObservation && in_array($selected['status'], ['En desarrollo', 'En validación'], true))
+                                <form method="POST" action="{{ route('modules.investigations.observations.reply', ['observation' => $observation->id]) }}" class="mt-4 space-y-2">
+                                    @csrf
+                                    <textarea class="input" name="body" rows="3" maxlength="5000" required placeholder="Escribe la respuesta del equipo investigador"></textarea>
+                                    <button class="btn-secondary" type="submit">Responder observación</button>
+                                </form>
+                            @endif
+                        </article>
+                    @empty
+                        <p class="text-sm text-slate-500">No hay observaciones registradas.</p>
+                    @endforelse
+                </section>
             </div>
             @endif
         @else

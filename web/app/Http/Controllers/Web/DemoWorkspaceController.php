@@ -40,6 +40,9 @@ class DemoWorkspaceController extends Controller
             'leadershipReport' => false,
             'reportCase' => null,
             'reportInvestigation' => null,
+            'reportObservations' => collect(),
+            'canReplyObservation' => false,
+            'investigationDraft' => [],
         ]);
     }
 
