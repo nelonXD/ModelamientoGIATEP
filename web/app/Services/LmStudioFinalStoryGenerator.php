@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\InvestigationInterview;
 use App\Models\OccupationalCase;
+use DateTimeInterface;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Arr;
@@ -469,7 +470,7 @@ PROMPT;
     {
         $metadata = array_filter([
             'folio' => $case->folio, 'tipo_de_caso' => $case->case_type, 'persona_afectada' => $case->worker_name,
-            'cargo_registrado' => $case->job_title, 'fecha_registrada' => $case->event_date?->format('Y-m-d'),
+            'cargo_registrado' => $case->job_title, 'fecha_registrada' => $this->formatDate($case->event_date),
             'hora_registrada' => $case->event_time ? substr((string) $case->event_time, 0, 5) : null, 'lugar_registrado' => $case->event_location,
         ], fn (mixed $value): bool => $value !== null && $value !== '');
         $sources = [['id' => 'CASO', 'type' => 'relato_inicial', 'content' => array_filter([
@@ -514,7 +515,7 @@ PROMPT;
                 $sources[] = ['id' => 'ENT-'.str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT), 'type' => 'entrevista', 'content' => array_filter([
                     'fuente' => 'Entrevista '.($index + 1), 'nombre' => $interview->interviewee_name,
                     'cargo' => $interview->interviewee_role, 'tipo_de_testigo_registrado' => $interview->witness_type,
-                    'fecha_de_entrevista' => $interview->interview_date?->format('Y-m-d'), 'respuestas' => $answers,
+                    'fecha_de_entrevista' => $this->formatDate($interview->interview_date), 'respuestas' => $answers,
                 ], fn (mixed $value): bool => $value !== null && $value !== '' && $value !== [])];
             }
         }
@@ -531,5 +532,20 @@ PROMPT;
         unset($source);
 
         return $sources;
+    }
+
+    private function formatDate(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if ($value instanceof DateTimeInterface) {
+            return $value->format('Y-m-d');
+        }
+
+        $timestamp = strtotime((string) $value);
+
+        return $timestamp === false ? null : date('Y-m-d', $timestamp);
     }
 }

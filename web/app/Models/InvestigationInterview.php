@@ -43,23 +43,31 @@ class InvestigationInterview extends Model
         return Attribute::get(fn (): string => 'adapted');
     }
 
-    protected function intervieweeName(): Attribute
-    {
-        return Attribute::get(function (): mixed {
-            if (! OriginalGiatepSchema::isActive()) {
-                return null;
-            }
-            $rut = DB::table('testigo_caso')->where('Id_Testigo_Caso', $this->getAttribute('Id_Testigo_Caso'))->value('Rut_Testigo');
-
-            return $rut ? DB::table('testigo')->where('Rut_Testigo', $rut)->value('Nombre_Testigo') : null;
-        });
-    }
-
     protected function witnessType(): Attribute
     {
-        return Attribute::get(fn (): mixed => OriginalGiatepSchema::isActive()
-            ? DB::table('tipo_entrevistado')->where('Id_Tipo_Entrevistado', $this->getAttribute('Id_Tipo_Entrevistado'))->value('Nombre_Tipo')
-            : null);
+        return Attribute::make(
+            get: fn (mixed $value, array $attributes): mixed => OriginalGiatepSchema::isActive()
+                ? DB::table('tipo_entrevistado')->where('Id_Tipo_Entrevistado', $attributes['Id_Tipo_Entrevistado'] ?? null)->value('Nombre_Tipo')
+                : $value,
+            set: fn (mixed $value): array => OriginalGiatepSchema::isActive() ? [] : ['witness_type' => $value],
+        );
+    }
+
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            get: fn (mixed $value, array $attributes): mixed => OriginalGiatepSchema::isActive()
+                ? $this->intervieweeNameFromOriginalSchema($attributes)
+                : $value,
+            set: fn (mixed $value): array => OriginalGiatepSchema::isActive() ? [] : ['interviewee_name' => $value],
+        );
+    }
+
+    protected function intervieweeNameFromOriginalSchema(array $attributes): mixed
+    {
+        $rut = DB::table('testigo_caso')->where('Id_Testigo_Caso', $attributes['Id_Testigo_Caso'] ?? null)->value('Rut_Testigo');
+
+        return $rut ? DB::table('testigo')->where('Rut_Testigo', $rut)->value('Nombre_Testigo') : null;
     }
 
     protected function intervieweeRole(): Attribute

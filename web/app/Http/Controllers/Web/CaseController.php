@@ -264,10 +264,16 @@ class CaseController extends Controller
     {
         $prefix = 'GIATEP-'.now()->year.'-';
         $folioColumn = OriginalGiatepSchema::isActive() ? 'Folio' : 'folio';
-        $last = OccupationalCase::query()
-            ->whereRaw($folioColumn.' REGEXP ?', ['^'.preg_quote($prefix, '/').'[0-9]{3}$'])
-            ->lockForUpdate()
-            ->max($folioColumn);
+        $query = OccupationalCase::query()->where($folioColumn, 'like', $prefix.'%');
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            $last = $query->lockForUpdate()->pluck($folioColumn)
+                ->filter(fn (string $folio): bool => preg_match('/^'.preg_quote($prefix, '/').'\d{3}$/', $folio) === 1)
+                ->max();
+        } else {
+            $last = $query->whereRaw($folioColumn.' REGEXP ?', ['^'.preg_quote($prefix, '/').'[0-9]{3}$'])
+                ->lockForUpdate()
+                ->max($folioColumn);
+        }
         $sequence = $last ? ((int) substr($last, -3)) + 1 : 1;
 
         return $prefix.str_pad((string) $sequence, 3, '0', STR_PAD_LEFT);

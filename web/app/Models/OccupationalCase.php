@@ -260,7 +260,7 @@ class OccupationalCase extends Model
     {
         return Attribute::get(function (mixed $value): mixed {
             if (! $this->usesOriginalSchema()) {
-                return $value;
+                return is_string($value) ? (json_decode($value, true) ?: []) : ($value ?? []);
             }
 
             $accident = $this->accident();

@@ -217,17 +217,11 @@ class CasePagesTest extends TestCase
             ->assertSee('data-interview-validation', false)
             ->assertSee('Factores musculoesqueléticos')
             ->assertSee('Organización del trabajo')
-            ->assertSee('Generar borrador con el modelo seleccionado')
-            ->assertSee('El texto generado es solo una propuesta')
-            ->assertDontSee('Control de calidad del relato')
-            ->assertDontSee('data-story-quality', false)
-            ->assertSee('Hechos del relato')
-            ->assertSee('Árbol de causas propuesto')
-            ->assertSee('Medidas propuestas')
-            ->assertSee('Guardar propuesta')
-            ->assertSee('data-final-ai-result', false)
-            ->assertSee('data-ai-derived-nav', false)
-            ->assertDontSee('Propuesta IA');
+            ->assertSee('Generar prompt para IA externa')
+            ->assertSee('Revisar con IA local y completar la página')
+            ->assertSee('data-results-editor', false)
+            ->assertSee('data-save-results-editor', false)
+            ->assertSee('Los resultados quedan como borrador hasta que se guarden.');
     }
 
     public function test_changed_case_type_is_forwarded_to_the_investigation(): void

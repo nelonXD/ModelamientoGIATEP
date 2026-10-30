@@ -209,7 +209,7 @@ class InvestigationAiTest extends TestCase
         ]);
         $interview = InvestigationInterview::create([
             'investigation_id' => $investigation->id, 'created_by' => $user->id,
-            'interviewee_name' => 'Testigo Parcial', 'interviewee_role' => 'Auxiliar',
+            'name' => 'Testigo Parcial', 'interviewee_role' => 'Auxiliar',
             'witness_type' => 'Testigo presencial parcial', 'status' => 'Completada',
         ]);
         InterviewAnswer::create([
@@ -232,10 +232,12 @@ class InvestigationAiTest extends TestCase
             ->assertJsonPath('answer', 'El testigo declaró que vio detenerse el carro, pero no observó la molestia. El relato inicial informa una caída en una superficie húmeda.');
 
         Http::assertSentCount(1);
-        Http::assertSent(fn ($request): bool => ! isset($request['tools'])
-            && str_contains($request['messages'][1]['content'], 'Testigo Parcial')
-            && str_contains($request['messages'][1]['content'], 'no observó la molestia')
-            && str_contains($request['messages'][1]['content'], 'CONSULTA DEL PREVENCIONISTA'));
+        $request = Http::recorded()->first()[0];
+        $userMessage = collect($request['messages'])->firstWhere('role', 'user')['content'];
+        $this->assertArrayNotHasKey('tools', $request);
+        $this->assertStringContainsString('Testigo Parcial', $userMessage);
+        $this->assertStringContainsString('no observó la molestia', $userMessage);
+        $this->assertStringContainsString('CONSULTA DEL PREVENCIONISTA', $userMessage);
         $this->assertDatabaseCount('investigation_interviews', 1);
         $this->assertDatabaseCount('interview_answers', 1);
     }
@@ -406,7 +408,7 @@ class InvestigationAiTest extends TestCase
         ]);
         $matias = InvestigationInterview::create([
             'investigation_id' => $investigation->id, 'created_by' => $user->id,
-            'interviewee_name' => 'Matías de prueba', 'interviewee_role' => 'Auxiliar',
+            'name' => 'Matías de prueba', 'interviewee_role' => 'Auxiliar',
             'witness_type' => 'indirect', 'status' => 'Completada',
         ]);
         InterviewAnswer::create([
@@ -415,7 +417,7 @@ class InvestigationAiTest extends TestCase
         ]);
         $rocio = InvestigationInterview::create([
             'investigation_id' => $investigation->id, 'created_by' => $user->id,
-            'interviewee_name' => 'Rocío de prueba', 'interviewee_role' => 'Administrativa',
+            'name' => 'Rocío de prueba', 'interviewee_role' => 'Administrativa',
             'witness_type' => 'context', 'status' => 'Completada',
         ]);
         InterviewAnswer::create([
@@ -452,18 +454,20 @@ class InvestigationAiTest extends TestCase
         $this->assertSame($paragraphs[1]['text']."\n\n".$paragraphs[2]['text']."\n\n".$paragraphs[0]['text'], $result['story']);
         $this->assertTrue($result['quality']['chronology_adjusted']);
         Http::assertSentCount(1);
-        Http::assertSent(fn ($request): bool => $request['model'] === 'lmstudio-community/qwen3.5-4b-GGUF'
-            && str_contains($request['messages'][0]['content'], 'relato final único')
-            && str_contains($request['messages'][0]['content'], 'Distingue declaración, observación directa')
-            && str_contains($request['messages'][1]['content'], 'relato_inicial')
-            && str_contains($request['messages'][1]['content'], 'antecedentes_y_testigos_registrados')
-            && str_contains($request['messages'][1]['content'], 'fuente_documental')
-            && str_contains($request['messages'][1]['content'], 'EVD-TEST')
-            && str_contains($request['messages'][1]['content'], 'Matías de prueba')
-            && str_contains($request['messages'][1]['content'], 'Rocío de prueba')
-            && strpos($request['messages'][1]['content'], 'ENT-01') < strpos($request['messages'][1]['content'], 'EVD-TEST')
-            && $request['response_format']['json_schema']['schema']['properties']['paragraphs']['minItems'] === 1
-            && $request['response_format']['json_schema']['schema']['properties']['paragraphs']['maxItems'] === 6);
+        $request = Http::recorded()->first()[0];
+        $this->assertSame('lmstudio-community/qwen3.5-4b-GGUF', $request['model']);
+        $this->assertStringContainsString('relato final único', $request['messages'][0]['content']);
+        $this->assertStringContainsString('Distingue declaración, observación directa', $request['messages'][0]['content']);
+        $this->assertStringContainsString('relato_inicial', $request['messages'][1]['content']);
+        $this->assertStringContainsString('antecedentes_y_testigos_registrados', $request['messages'][1]['content']);
+        $this->assertStringContainsString('fuente_documental', $request['messages'][1]['content']);
+        $this->assertStringContainsString('EVD-TEST', $request['messages'][1]['content']);
+        $this->assertStringContainsString('Matías de prueba', $request['messages'][1]['content']);
+        $this->assertStringContainsString('Rocío de prueba', $request['messages'][1]['content']);
+        $this->assertLessThan(strpos($request['messages'][1]['content'], 'EVD-TEST'), strpos($request['messages'][1]['content'], 'ENT-01'));
+        $schema = $request['response_format']['json_schema']['schema']['properties']['paragraphs'];
+        $this->assertSame(1, $schema['minItems']);
+        $this->assertSame(6, $schema['maxItems']);
     }
 
     public function test_final_story_rejects_lm_studio_output_truncated_by_token_limit(): void

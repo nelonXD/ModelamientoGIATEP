@@ -121,7 +121,13 @@ class RegistrationRequest extends Model
     {
         return Attribute::make(
             get: fn (mixed $value, array $attributes): mixed => $this->usesOriginalSchema() ? ($attributes['Contrasena_Hash'] ?? null) : $value,
-            set: fn (mixed $value): array => $this->usesOriginalSchema() ? ['Contrasena_Hash' => $value] : ['password' => $value],
+            set: function (mixed $value): array {
+                $hash = is_string($value) && password_get_info($value)['algoName'] !== 'unknown'
+                    ? $value
+                    : bcrypt((string) $value);
+
+                return $this->usesOriginalSchema() ? ['Contrasena_Hash' => $hash] : ['password' => $hash];
+            },
         );
     }
 
@@ -205,6 +211,6 @@ class RegistrationRequest extends Model
 
     protected function casts(): array
     {
-        return ['resolved_at' => 'datetime', 'password' => 'hashed'];
+        return ['resolved_at' => 'datetime'];
     }
 }
