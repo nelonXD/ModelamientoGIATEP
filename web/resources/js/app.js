@@ -40,28 +40,31 @@ const renderCausalTree = (container, tree) => {
     while (queue.length) {
         const consequence = queue.shift();
         edges.filter((edge) => edge.to === consequence).forEach((edge) => {
-            if (!depth.has(edge.from)) {
-                depth.set(edge.from, depth.get(consequence) + 1);
+            const nextDepth = depth.get(consequence) + 1;
+            if (!depth.has(edge.from) || depth.get(edge.from) < nextDepth) {
+                depth.set(edge.from, nextDepth);
                 queue.push(edge.from);
             }
         });
     }
+    const connectedDepth = Math.max(0, ...depth.values());
+    nodes.forEach((node, index) => {
+        if (!depth.has(node.id)) {
+            depth.set(node.id, connectedDepth + 1);
+        }
+    });
     const maxDepth = Math.max(0, ...depth.values());
     const levels = Array.from({ length: maxDepth + 1 }, () => []);
     nodes.forEach((node, index) => {
-        if (!depth.has(node.id)) {
-            depth.set(node.id, maxDepth + 1);
-            levels[maxDepth + 1] ||= [];
-        }
         levels[depth.get(node.id)].push({ ...node, order: index });
     });
-    const width = Math.max(820, ...levels.map((level) => level.length * 250 + 80));
-    const rowHeight = 150;
-    const height = 135 + levels.length * rowHeight;
+    const width = Math.max(680, ...levels.map((level) => level.length * 250 + 80));
+    const rowHeight = 160;
+    const height = 145 + levels.length * rowHeight;
     const svg = document.createElementNS(svgNs, 'svg');
     svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
     svg.setAttribute('role', 'img');
-    svg.setAttribute('aria-label', 'Árbol de causas vertical. El hecho final está arriba y los antecedentes abajo.');
+    svg.setAttribute('aria-label', 'Árbol de causas vertical. El hecho final está arriba y los antecedentes se ramifican hacia abajo.');
     svg.classList.add('causal-graph-svg');
     const defs = document.createElementNS(svgNs, 'defs');
     const marker = document.createElementNS(svgNs, 'marker');
@@ -72,32 +75,34 @@ const renderCausalTree = (container, tree) => {
     arrow.setAttribute('d', 'M0 0 L9 4.5 L0 9 Z'); arrow.setAttribute('class', 'causal-arrow-head');
     marker.append(arrow); defs.append(marker); svg.append(defs);
     const markerId = marker.id;
-    const amberMarker = marker.cloneNode(true);
-    amberMarker.id = `${markerId}-amber`;
-    amberMarker.querySelector('path').classList.add('is-apparent');
-    defs.append(amberMarker);
+    const orangeMarker = marker.cloneNode(true);
+    orangeMarker.id = `${markerId}-orange`;
+    orangeMarker.querySelector('path').classList.add('is-branch');
+    defs.append(orangeMarker);
     const positions = new Map();
     levels.forEach((level, levelIndex) => level.forEach((node, index) => {
-        positions.set(node.id, { x: width * (index + 1) / (level.length + 1), y: 70 + levelIndex * rowHeight });
+        positions.set(node.id, { x: width * (index + 1) / (level.length + 1), y: 48 + levelIndex * rowHeight });
     }));
 
     edges.forEach((edge) => {
-        const source = positions.get(edge.from);
-        const target = positions.get(edge.to);
+        const source = positions.get(edge.to);
+        const target = positions.get(edge.from);
         if (!source || !target) return;
         const path = document.createElementNS(svgNs, 'path');
-        const sourceY = source.y - 43;
-        const targetY = target.y + 43;
+        const sourceY = source.y + 82;
+        const targetY = target.y - 24;
         path.setAttribute('d', `M ${source.x} ${sourceY} C ${source.x} ${(sourceY + targetY) / 2}, ${target.x} ${(sourceY + targetY) / 2}, ${target.x} ${targetY}`);
-        path.setAttribute('marker-end', `url(#${edge.link_type === 'aparente' ? amberMarker.id : markerId})`);
+        const isBranch = edge.logic === 'conjuncion' || edge.logic === 'disyuncion';
+        path.setAttribute('marker-end', `url(#${edge.link_type === 'aparente' || isBranch ? orangeMarker.id : markerId})`);
         path.classList.add('causal-graph-edge');
         if (edge.link_type === 'aparente') path.classList.add('is-apparent');
+        else if (isBranch) path.classList.add('is-branch');
         const title = document.createElementNS(svgNs, 'title');
         title.textContent = `${edge.logic}: ${edge.basis || 'relación causal propuesta'}`;
         path.append(title); svg.append(path);
     });
 
-    const wrap = (value, limit = 25) => {
+    const wrap = (value, limit = 25, maxLines = 3) => {
         const words = String(value || '').split(/\s+/);
         const lines = [];
         let line = '';
@@ -106,8 +111,8 @@ const renderCausalTree = (container, tree) => {
             else line = line ? `${line} ${word}` : word;
         });
         if (line) lines.push(line);
-        const visible = lines.slice(0, 3);
-        if (lines.length > 3) visible[2] = `${visible[2].replace(/[.,;:]$/, '')}…`;
+        const visible = lines.slice(0, maxLines);
+        if (lines.length > maxLines) visible[maxLines - 1] = `${visible[maxLines - 1].replace(/[.,;:]$/, '')}…`;
         return visible;
     };
     levels.forEach((level, levelIndex) => level.forEach((node) => {
@@ -115,27 +120,36 @@ const renderCausalTree = (container, tree) => {
         const group = document.createElementNS(svgNs, 'g');
         group.classList.add('causal-graph-node', node.type === 'permanente' ? 'is-permanent' : 'is-event');
         if (node.id === finalId) group.classList.add('is-final');
-        const shape = document.createElementNS(svgNs, node.type === 'permanente' ? 'rect' : 'ellipse');
-        if (node.type === 'permanente') {
-            shape.setAttribute('x', point.x - 112); shape.setAttribute('y', point.y - 42);
-            shape.setAttribute('width', '224'); shape.setAttribute('height', '84'); shape.setAttribute('rx', '13');
+        const isFinal = node.id === finalId;
+        const shape = document.createElementNS(svgNs, isFinal ? 'polygon' : (node.type === 'permanente' ? 'rect' : 'circle'));
+        if (isFinal) {
+            shape.setAttribute('points', `${point.x},${point.y - 22} ${point.x + 21},${point.y + 17} ${point.x - 21},${point.y + 17}`);
+        } else if (node.type === 'permanente') {
+            shape.setAttribute('x', point.x - 18); shape.setAttribute('y', point.y - 18);
+            shape.setAttribute('width', '36'); shape.setAttribute('height', '36'); shape.setAttribute('rx', '1');
         } else {
-            shape.setAttribute('cx', point.x); shape.setAttribute('cy', point.y);
-            shape.setAttribute('rx', '112'); shape.setAttribute('ry', '42');
+            shape.setAttribute('cx', point.x); shape.setAttribute('cy', point.y); shape.setAttribute('r', '18');
         }
         group.append(shape);
+        const number = document.createElementNS(svgNs, 'text');
+        number.setAttribute('x', point.x); number.setAttribute('y', point.y + (isFinal ? 9 : 5));
+        number.classList.add('causal-graph-number');
+        number.textContent = String(node.id).replace(/^H[-_]?/i, '') || node.id;
+        group.append(number);
+        const card = document.createElementNS(svgNs, 'rect');
+        card.setAttribute('x', point.x - 98); card.setAttribute('y', point.y + 25);
+        card.setAttribute('width', '196'); card.setAttribute('height', '57'); card.setAttribute('rx', '7');
+        card.classList.add('causal-graph-description-card');
+        group.append(card);
         const label = document.createElementNS(svgNs, 'text');
-        label.setAttribute('x', point.x); label.setAttribute('y', point.y - (wrap(node.description).length - 1) * 7);
+        label.setAttribute('x', point.x); label.setAttribute('y', point.y + 43);
         label.classList.add('causal-graph-label');
-        wrap(node.description).forEach((line, lineIndex) => {
+        wrap(node.description, 27, 3).forEach((line, lineIndex) => {
             const span = document.createElementNS(svgNs, 'tspan');
-            span.setAttribute('x', point.x); span.setAttribute('dy', lineIndex === 0 ? '0' : '15'); span.textContent = line;
+            span.setAttribute('x', point.x); span.setAttribute('dy', lineIndex === 0 ? '0' : '14'); span.textContent = line;
             label.append(span);
         });
-        const kind = document.createElementNS(svgNs, 'text');
-        kind.setAttribute('x', point.x); kind.setAttribute('y', point.y + 31);
-        kind.classList.add('causal-graph-kind'); kind.textContent = `${node.id} · ${node.type === 'permanente' ? 'PERMANENTE' : (node.id === finalId ? 'HECHO FINAL' : 'HECHO')}`;
-        group.append(label, kind);
+        group.append(label);
         const title = document.createElementNS(svgNs, 'title'); title.textContent = node.description; group.append(title);
         svg.append(group);
     }));
@@ -337,9 +351,451 @@ document.querySelectorAll('[data-tabs]').forEach((tabs) => {
 
 document.querySelectorAll('[data-section-target]').forEach((button) => button.addEventListener('click', () => {
     const workspace = button.closest('[data-demo-workspace]');
-    workspace.querySelectorAll('[data-section-target]').forEach((item) => item.classList.toggle('section-link-active', item === button));
+    workspace.querySelectorAll('[data-section-target]').forEach((item) => {
+        const isActive = item.dataset.sectionTarget === button.dataset.sectionTarget;
+        const isProgressStep = item.matches('[data-investigation-progress] [data-section-target]');
+        if (! isProgressStep) {
+            item.classList.toggle('section-link-active', isActive);
+        }
+        item.setAttribute('aria-current', isActive ? 'step' : 'false');
+
+        const number = item.querySelector('[data-progress-number]');
+        if (number) {
+            number.classList.toggle('bg-blue-950', isActive);
+            number.classList.toggle('text-white', isActive);
+            number.classList.toggle('bg-slate-200', ! isActive);
+            number.classList.toggle('text-slate-600', ! isActive);
+        }
+
+        if (isProgressStep) {
+            item.classList.toggle('border-blue-200', isActive);
+            item.classList.toggle('bg-blue-50', isActive);
+        }
+    });
     workspace.querySelectorAll('[data-section]').forEach((section) => section.classList.toggle('hidden', section.dataset.section !== button.dataset.sectionTarget));
 }));
+
+document.querySelectorAll('[data-external-analysis]').forEach((panel) => {
+    const workspace = panel.closest('[data-demo-workspace]');
+    const story = panel.querySelector('[data-analysis-story]');
+    const promptOutput = panel.querySelector('[data-external-prompt]');
+    const externalResponse = panel.querySelector('[data-external-response]');
+    const modelSelect = panel.querySelector('[data-local-model]');
+    const status = panel.querySelector('[data-analysis-status]');
+    const resultPanel = panel.querySelector('[data-analysis-result]');
+    const saveButton = panel.querySelector('[data-save-external-analysis]');
+    if (! workspace || ! story || ! promptOutput || ! externalResponse || ! modelSelect) return;
+
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    let importedAnalysis = null;
+    let questionnaireOptions = [];
+
+    const requestJson = async (url, payload) => {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            body: JSON.stringify(payload),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (! response.ok) throw new Error(data.message || Object.values(data.errors || {}).flat().join(' ') || `Error HTTP ${response.status}`);
+        return data;
+    };
+
+    const collectQuestionnaireOptions = () => {
+        const form = workspace.querySelector('[data-adapted-questionnaire]');
+        if (! form) return [];
+        const fields = new Map();
+        form.querySelectorAll('input[type="radio"][name], input[type="checkbox"][name]').forEach((input) => {
+            const name = input.name;
+            if (! name || name === '_token') return;
+            const label = input.closest('label')?.innerText?.trim() || input.value;
+            if (! fields.has(name)) {
+                const section = input.closest('fieldset');
+                const question = input.closest('[data-branch-question]')?.querySelector(':scope > p')?.innerText?.trim()
+                    || input.closest('tr')?.querySelector('td:first-child')?.innerText?.trim()
+                    || input.closest('[data-development-question]')?.querySelector('label')?.innerText?.trim()
+                    || section?.querySelector('legend')?.innerText?.trim() || '';
+                fields.set(name, { field: name, type: input.type, question, options: [] });
+            }
+            if (! fields.get(name).options.includes(label)) fields.get(name).options.push(label);
+        });
+        // Solo enviar opciones para preguntas con respuestas guardadas. El formulario
+        // puede mostrar decenas de campos vacíos que no aportan contexto a la importación.
+        return [...fields.values()].filter((field) => {
+            const selected = [...form.querySelectorAll(`input[name="${CSS.escape(field.field)}"]:checked`)];
+            return field.options.length > 0 && selected.length > 0;
+        }).map((field) => ({ ...field, selected_values: [...form.querySelectorAll(`input[name="${CSS.escape(field.field)}"]:checked`)].map((input) => input.closest('label')?.innerText?.trim() || input.value) }));
+    };
+
+    const setBusy = (busy, message) => {
+        panel.querySelectorAll('[data-create-external-prompt], [data-copy-external-prompt], [data-import-external]').forEach((button) => { button.disabled = busy; });
+        if (message) status.textContent = message;
+    };
+
+    const textNode = (tag, text, classes = '') => {
+        const element = document.createElement(tag);
+        element.className = classes;
+        element.textContent = text || '';
+        return element;
+    };
+
+    const showAnalysis = (analysis) => {
+        const factsHost = workspace.querySelector('[data-derived-facts]');
+        const treeHost = workspace.querySelector('[data-derived-tree]');
+        const measuresHost = workspace.querySelector('[data-derived-measures]');
+        const facts = Array.isArray(analysis.facts) ? analysis.facts : [];
+        const tree = analysis.tree || { nodes: [], edges: [] };
+        const nodes = Array.isArray(tree.nodes) ? tree.nodes : [];
+        const edges = Array.isArray(tree.edges) ? tree.edges : [];
+        const measures = Array.isArray(analysis.measures) ? analysis.measures : [];
+
+        if (factsHost) {
+            factsHost.replaceChildren();
+            facts.forEach((fact, index) => {
+                const card = document.createElement('div');
+                card.className = 'rounded-xl border border-slate-200 bg-white p-4';
+                card.append(textNode('strong', `H-${String(index + 1).padStart(2, '0')} · ${fact.classification || 'hecho'} · ${fact.evidence_status || 'pendiente'}`, 'mr-2 rounded bg-sky-100 px-2 py-1 text-xs text-sky-900'));
+                card.append(textNode('p', fact.description, 'mt-2 font-semibold text-slate-800'));
+                if (fact.evidence) card.append(textNode('p', `Respaldo: “${fact.evidence}”`, 'mt-2 text-xs text-slate-600'));
+                if (fact.source) card.append(textNode('p', `Fuente: ${fact.source}`, 'mt-1 text-xs text-slate-500'));
+                factsHost.append(card);
+            });
+            if (facts.length === 0) factsHost.append(textNode('p', 'No se validaron hechos con respaldo suficiente. Revisa las verificaciones pendientes.', 'empty-state p-4 text-center'));
+        }
+
+        if (treeHost) {
+            treeHost.replaceChildren();
+            if (nodes.length > 0 && nodes.some((node) => node.id === tree.final_node_id)) {
+                const viewport = document.createElement('div');
+                viewport.className = 'causal-graph-viewport';
+                treeHost.append(viewport);
+                renderCausalTree(viewport, tree);
+            } else {
+                treeHost.append(textNode('p', 'No se pudo identificar un hecho final con respaldo suficiente.', 'rounded-xl border border-amber-200 bg-amber-50 p-4 text-center text-amber-900'));
+            }
+        }
+
+        if (measuresHost) {
+            measuresHost.replaceChildren();
+            measures.forEach((measure) => {
+                const row = document.createElement('tr');
+                const related = (measure.related_node_ids || []).join(', ');
+                [measure.description, measure.category, measure.responsible, measure.due_date || 'Por definir', related || ''].forEach((value) => row.append(textNode('td', value, '')));
+                row.append(textNode('td', 'Pendiente de revisión', ''));
+                measuresHost.append(row);
+            });
+            if (measures.length === 0) {
+                const row = document.createElement('tr');
+                const cell = textNode('td', 'No se propusieron medidas vinculadas a causas revisadas.', 'py-4 text-center text-slate-600');
+                cell.colSpan = 6;
+                row.append(cell);
+                measuresHost.append(row);
+            }
+        }
+
+        panel.querySelector('[data-result-fact-count]').textContent = String(facts.length);
+        panel.querySelector('[data-result-node-count]').textContent = String(nodes.length);
+        panel.querySelector('[data-result-measure-count]').textContent = String(measures.length);
+        const warnings = [...(analysis.quality_warnings || []), ...(analysis.pending_verifications || []).map((item) => `Por verificar: ${item}`)];
+        const warningsList = panel.querySelector('[data-analysis-warnings]');
+        warningsList.replaceChildren();
+        warnings.forEach((warning) => warningsList.append(textNode('li', warning)));
+        if (warningsList.childElementCount === 0) warningsList.append(textNode('li', 'Sin advertencias ni verificaciones pendientes reportadas.'));
+        const questionnaireSelections = analysis.questionnaire_selections || [];
+        const questionnaireBox = panel.querySelector('[data-questionnaire-proposals]');
+        const questionnaireList = panel.querySelector('[data-questionnaire-selections]');
+        questionnaireList.replaceChildren();
+        questionnaireSelections.forEach((selection) => {
+            questionnaireList.append(textNode('li', `${selection.field}: ${(selection.selected_values || []).join(', ')}${selection.evidence ? ` · Respaldo: “${selection.evidence}”` : ''}`));
+        });
+        questionnaireBox.classList.toggle('hidden', questionnaireSelections.length === 0);
+        resultPanel.classList.remove('hidden');
+        saveButton.disabled = facts.length === 0;
+        if (facts.length > 0) {
+            workspace.querySelectorAll('[data-ai-derived-nav]').forEach((button) => {
+                button.disabled = false;
+                button.removeAttribute('title');
+                button.classList.remove('cursor-not-allowed', 'opacity-45');
+            });
+        }
+        importedAnalysis = analysis;
+    };
+
+    const loadModels = async () => {
+        if (! workspace.dataset.modelsUrl) return;
+        try {
+            const response = await fetch(workspace.dataset.modelsUrl, { headers: { 'Accept': 'application/json' } });
+            if (! response.ok) return;
+            const data = await response.json();
+            (data.models || []).forEach((model) => {
+                const option = document.createElement('option');
+                option.value = model.id;
+                option.textContent = model.name || model.id;
+                modelSelect.append(option);
+                if (model.id === data.configured_model) option.selected = true;
+            });
+            if (! data.connected) status.textContent = 'No se pudo consultar LM Studio. Se usará el modelo configurado si está disponible.';
+        } catch {
+            status.textContent = 'No se pudo consultar la lista de modelos. Puedes intentar con el modelo configurado.';
+        }
+    };
+    loadModels();
+
+    panel.querySelector('[data-create-external-prompt]')?.addEventListener('click', async () => {
+        if (story.value.trim().length < 30) { status.textContent = 'El relato debe tener al menos 30 caracteres.'; story.focus(); return; }
+        setBusy(true, 'Preparando prompt con las fuentes del expediente…');
+        try {
+            questionnaireOptions = collectQuestionnaireOptions();
+            const data = await requestJson(workspace.dataset.externalPromptUrl, {
+                case_folio: workspace.dataset.caseFolio,
+                story: story.value.trim(),
+                questionnaire_options: questionnaireOptions,
+            });
+            promptOutput.value = data.prompt || '';
+            panel.querySelector('[data-copy-external-prompt]').disabled = ! promptOutput.value;
+            status.textContent = 'Prompt listo. Cópialo en la IA externa y pega aquí su respuesta.';
+        } catch (error) {
+            status.textContent = error.message;
+        } finally { setBusy(false); }
+    });
+
+    panel.querySelector('[data-copy-external-prompt]')?.addEventListener('click', async () => {
+        try {
+            await navigator.clipboard.writeText(promptOutput.value);
+            status.textContent = 'Prompt copiado.';
+        } catch { status.textContent = 'No se pudo copiar automáticamente; selecciona y copia el texto.'; }
+    });
+
+    panel.querySelector('[data-import-external]')?.addEventListener('click', async () => {
+        if (story.value.trim().length < 30 || externalResponse.value.trim().length < 10) { status.textContent = 'Completa el relato y pega la respuesta de la IA externa.'; return; }
+        setBusy(true, 'LM Studio está contrastando la respuesta con las fuentes…');
+        try {
+            const data = await requestJson(workspace.dataset.externalImportUrl, {
+                case_folio: workspace.dataset.caseFolio,
+                story: story.value.trim(),
+                external_response: externalResponse.value.trim(),
+                model: modelSelect.value || null,
+                questionnaire_options: questionnaireOptions,
+            });
+            showAnalysis(data);
+            status.textContent = 'Revisión terminada. Los resultados están disponibles en Hechos, Árbol y Medidas.';
+            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (error) {
+            status.textContent = error.message;
+        } finally { setBusy(false); }
+    });
+
+    saveButton?.addEventListener('click', async () => {
+        if (! importedAnalysis?.facts?.length) return;
+        saveButton.disabled = true;
+        status.textContent = 'Guardando la propuesta revisada…';
+        const tree = importedAnalysis.tree || { final_node_id: '', nodes: [], edges: [] };
+        const nodes = tree.nodes || [];
+        const finalNode = nodes.find((node) => node.id === tree.final_node_id);
+        const payload = {
+            case_folio: workspace.dataset.caseFolio,
+            story: story.value.trim(),
+            model: importedAnalysis.model || modelSelect.value || null,
+            facts: importedAnalysis.facts.map((fact) => fact.description),
+            fact_details: importedAnalysis.facts,
+            tree: {
+                final: finalNode?.description || '',
+                origin: '',
+                causes: nodes.filter((node) => node.id !== tree.final_node_id).map((node) => node.description),
+                graph: tree,
+            },
+            factor_codes: [],
+            measures: (importedAnalysis.measures || []).map((measure) => ({
+                description: measure.description,
+                category: measure.category,
+                responsible: measure.responsible || 'Pendiente de asignar',
+                due_date: measure.due_date || null,
+                criterion: measure.criterion || '',
+                related_node_ids: measure.related_node_ids || [],
+            })),
+            quality_warnings: importedAnalysis.quality_warnings || [],
+            prompt_version: importedAnalysis.prompt_version || null,
+        };
+        try {
+            const data = await requestJson(workspace.dataset.analysisStoreUrl, payload);
+            status.textContent = data.message || 'Análisis guardado correctamente.';
+        } catch (error) {
+            status.textContent = error.message;
+            saveButton.disabled = false;
+        }
+    });
+
+    const editor = workspace.querySelector('[data-results-editor]');
+    const editorBody = editor?.querySelector('[data-results-editor-body]');
+    if (editor && editorBody && workspace.dataset.analysisStoreUrl) {
+        let activeKind = 'facts';
+        const graphElement = workspace.querySelector('[data-tree-graph-json]');
+        let graph = {};
+        try { graph = JSON.parse(graphElement?.dataset.treeGraphJson || '{}'); } catch { graph = {}; }
+        let facts = [...workspace.querySelectorAll('[data-derived-facts] > div')]
+            .map((row) => row.querySelector('p')?.innerText.trim() || [...row.childNodes].filter((node) => node.nodeType === Node.TEXT_NODE).map((node) => node.textContent).join(' ').replace(/^\s*/, '').trim())
+            .filter((value) => value && !value.includes('Aún no se han constatado'))
+            .map((description) => ({ description, classification: 'hecho', evidence_status: 'declarado', evidence: '', source: 'Relato de la investigación' }));
+        let nodes = Array.isArray(graph.nodes) ? graph.nodes.map((node) => ({ ...node })) : [];
+        let edges = Array.isArray(graph.edges) ? graph.edges.map((edge) => ({ ...edge })) : [];
+        let finalId = graph.final_node_id || '';
+        if (!nodes.length) {
+            const legacy = [...workspace.querySelectorAll('[data-derived-tree] .cause-node')].map((node, index) => ({
+                id: `n${index + 1}`, type: node.classList.contains('cause-final') ? 'hecho' : 'permanente', description: node.querySelector('p')?.innerText.trim() || '',
+            })).filter((node) => node.description);
+            nodes = legacy;
+            finalId = nodes.find((node) => node.type === 'hecho')?.id || nodes[0]?.id || '';
+            edges = nodes.filter((node) => node.id !== finalId).map((node) => ({ from: node.id, to: finalId, link_type: 'causal', logic: 'cadena', basis: 'Relación revisada por el investigador', evidence: '' }));
+        }
+        let measures = [...workspace.querySelectorAll('[data-derived-measures] tr')].map((row) => {
+            const cells = [...row.querySelectorAll('td')];
+            const fullDescription = cells[0]?.innerText.trim() || '';
+            if (!fullDescription || fullDescription.includes('Aún no hay medidas')) return null;
+            const description = fullDescription.split(/\nCriterio de cobertura y estabilidad:/i)[0].split(/\nFactores relacionados:/i)[0].split(/\nCausas abordadas:/i)[0].trim();
+            const criterion = fullDescription.match(/Criterio de cobertura y estabilidad:\s*([^\n]+)/i)?.[1]?.trim() || '';
+            const references = fullDescription.match(/(?:Factores relacionados|Causas abordadas):\s*([^\n]+)/i)?.[1] || '';
+            const related_node_ids = references.split(/[;,]/).map((value) => value.trim()).filter((value) => nodes.some((node) => node.id === value));
+            const displayedDate = cells[3]?.innerText.trim() || '';
+            const dateParts = displayedDate.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+            const due_date = dateParts ? `${dateParts[3]}-${dateParts[2]}-${dateParts[1]}` : '';
+            return { description, category: cells[1]?.innerText.trim() || 'Administrativa', responsible: cells[2]?.innerText.trim() || 'Pendiente de asignar', due_date, criterion, related_node_ids };
+        }).filter(Boolean);
+        const safe = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+        const input = (label, value, key, type = 'text') => `<label class="block text-xs font-bold text-slate-600">${label}<input class="input mt-1" type="${type}" data-key="${key}" value="${safe(value)}"></label>`;
+        const area = (label, value, key) => `<label class="block text-xs font-bold text-slate-600">${label}<textarea class="input mt-1" rows="2" data-key="${key}">${safe(value)}</textarea></label>`;
+        const section = (title, key, rows) => `<section class="rounded-xl border border-slate-200 p-4"><div class="mb-3 flex items-center justify-between"><h4 class="font-black">${title}</h4><button type="button" class="btn-secondary" data-add="${key}">Agregar</button></div><div class="space-y-3" data-list="${key}">${rows}</div></section>`;
+        const renderEditor = () => {
+            const nodeRows = nodes.map((node, index) => `<div class="rounded-lg bg-slate-50 p-3"><div class="mb-2 flex justify-between"><strong>Nodo ${safe(node.id)} ${node.id === finalId ? '· Hecho final' : ''}</strong><button type="button" class="text-sm font-bold text-red-700" data-delete="node:${index}">Eliminar</button></div><div class="grid gap-2 sm:grid-cols-3"><label class="text-xs font-bold text-slate-600">Tipo<select class="input mt-1" data-key="node:${index}:type"><option value="hecho" ${node.type === 'hecho' ? 'selected' : ''}>Hecho</option><option value="permanente" ${node.type === 'permanente' ? 'selected' : ''}>Hecho permanente</option></select></label>${node.id === finalId ? '<span class="self-center text-xs text-red-700">El hecho final se muestra arriba</span>' : `<label class="text-xs font-bold text-slate-600">Hecho final<select class="input mt-1" data-final-select="${index}"><option value="0">No</option><option value="1" ${node.id === finalId ? 'selected' : ''}>Sí</option></select></label>`}</div>${area('Descripción', node.description, `node:${index}:description`)}</div>`).join('');
+            const edgeRows = edges.map((edge, index) => `<div class="rounded-lg bg-slate-50 p-3"><div class="mb-2 flex justify-between"><strong>Vínculo ${index + 1}</strong><button type="button" class="text-sm font-bold text-red-700" data-delete="edge:${index}">Eliminar</button></div><div class="grid gap-2 sm:grid-cols-2"><label class="text-xs font-bold">Antecedente<select class="input mt-1" data-key="edge:${index}:from">${nodes.map((node) => `<option value="${safe(node.id)}" ${node.id === edge.from ? 'selected' : ''}>${safe(node.id)} · ${safe(node.description)}</option>`).join('')}</select></label><label class="text-xs font-bold">Consecuencia<select class="input mt-1" data-key="edge:${index}:to">${nodes.map((node) => `<option value="${safe(node.id)}" ${node.id === edge.to ? 'selected' : ''}>${safe(node.id)} · ${safe(node.description)}</option>`).join('')}</select></label></div><div class="mt-2 grid gap-2 sm:grid-cols-2"><label class="text-xs font-bold">Vínculo<select class="input mt-1" data-key="edge:${index}:link_type"><option value="causal" ${edge.link_type === 'causal' ? 'selected' : ''}>Causal</option><option value="aparente" ${edge.link_type === 'aparente' ? 'selected' : ''}>Aparente</option></select></label><label class="text-xs font-bold">Lógica<select class="input mt-1" data-key="edge:${index}:logic"><option value="cadena">Cadena</option><option value="conjuncion" ${edge.logic === 'conjuncion' ? 'selected' : ''}>Conjunción</option><option value="disyuncion" ${edge.logic === 'disyuncion' ? 'selected' : ''}>Disyunción</option></select></label></div>${area('Fundamento', edge.basis, `edge:${index}:basis`)}</div>`).join('');
+            const measureRows = measures.map((measure, index) => `<div class="rounded-lg bg-slate-50 p-3"><div class="mb-2 flex justify-between"><strong>Medida ${index + 1}</strong><button type="button" class="text-sm font-bold text-red-700" data-delete="measure:${index}">Eliminar</button></div>${area('Descripción', measure.description, `measure:${index}:description`)}<div class="mt-2 grid gap-2 sm:grid-cols-2">${input('Jerarquía de control', measure.category, `measure:${index}:category`)}${input('Responsable', measure.responsible, `measure:${index}:responsible`)}${input('Fecha límite', measure.due_date, `measure:${index}:due_date`, 'date')}${input('Criterio de cobertura y estabilidad', measure.criterion, `measure:${index}:criterion`)}</div><label class="mt-2 block text-xs font-bold">Causas relacionadas<select multiple class="input mt-1 min-h-24" data-key="measure:${index}:related_node_ids">${nodes.filter((node) => node.id !== finalId).map((node) => `<option value="${safe(node.id)}" ${(measure.related_node_ids || []).includes(node.id) ? 'selected' : ''}>${safe(node.id)} · ${safe(node.description)}</option>`).join('')}</select></label></div>`).join('');
+            const editorContent = activeKind === 'tree'
+                ? section('Nodos del árbol causal', 'nodes', nodeRows) + section('Vínculos causales', 'edges', edgeRows)
+                : section('Medidas de control', 'measures', measureRows);
+            editorBody.innerHTML = editorContent;
+            editor.querySelector('[data-results-editor-title]').textContent = activeKind === 'tree' ? 'Editar árbol causal' : 'Editar medidas de control';
+            editor.querySelector('[data-save-results-editor]').textContent = `Guardar ${activeKind === 'tree' ? 'árbol' : 'medidas'}`;
+        };
+        const factsHost = workspace.querySelector('[data-derived-facts]');
+        const factsEditButton = workspace.querySelector('[data-facts-edit]');
+        const factsAddButton = workspace.querySelector('[data-fact-add]');
+        const factsSaveButton = workspace.querySelector('[data-facts-save]');
+        const factsCancelButton = workspace.querySelector('[data-facts-cancel]');
+        const factsStatus = workspace.querySelector('[data-facts-status]');
+        let factsEditing = false;
+        let factsOriginal = null;
+        const renderFacts = () => {
+            if (!factsHost) return;
+            factsHost.replaceChildren();
+            if (!facts.length) {
+                const empty = document.createElement('p');
+                empty.className = 'empty-state py-6 text-center';
+                empty.textContent = 'Aún no se han constatado hechos para esta investigación.';
+                factsHost.append(empty);
+            }
+            facts.forEach((fact, index) => {
+                const row = document.createElement('div');
+                row.className = 'rounded-xl border border-slate-200 bg-slate-50 p-4 font-semibold text-slate-800';
+                const badge = document.createElement('span');
+                badge.className = 'mr-2 rounded bg-sky-700 px-2 py-0.5 text-xs text-white';
+                badge.textContent = `H-${String(index + 1).padStart(2, '0')}`;
+                if (factsEditing) {
+                    const heading = document.createElement('div');
+                    heading.className = 'mb-2 flex items-center justify-between gap-3';
+                    const label = document.createElement('div');
+                    label.append(badge);
+                    const remove = document.createElement('button');
+                    remove.type = 'button'; remove.className = 'text-sm font-bold text-red-700 hover:text-red-900'; remove.textContent = 'Eliminar';
+                    remove.addEventListener('click', () => {
+                        if (!window.confirm(`¿Eliminar el hecho H-${String(index + 1).padStart(2, '0')} de la lista?`)) return;
+                        facts.splice(index, 1); renderFacts();
+                    });
+                    heading.append(label, remove);
+                    row.append(heading);
+                    const textarea = document.createElement('textarea');
+                    textarea.className = 'input mt-2 min-h-20 w-full bg-white';
+                    textarea.setAttribute('aria-label', `Editar hecho H-${String(index + 1).padStart(2, '0')}`);
+                    textarea.value = fact.description;
+                    textarea.addEventListener('input', () => { facts[index].description = textarea.value; });
+                    row.append(textarea);
+                } else {
+                    row.append(badge);
+                    row.append(document.createTextNode(` ${fact.description}`));
+                }
+                factsHost.append(row);
+            });
+        };
+        factsEditButton?.addEventListener('click', () => {
+            factsOriginal = JSON.parse(JSON.stringify(facts)); factsEditing = true;
+            factsEditButton.classList.add('hidden'); factsAddButton?.classList.remove('hidden'); factsSaveButton?.classList.remove('hidden'); factsCancelButton?.classList.remove('hidden'); factsStatus?.classList.remove('hidden');
+            if (factsStatus) factsStatus.textContent = 'Edita los textos directamente en la lista. Agregar y eliminar solo está disponible en este modo.';
+            renderFacts();
+        });
+        factsAddButton?.addEventListener('click', () => {
+            facts.push({ description: '', classification: 'hecho', evidence_status: 'declarado', evidence: '', source: 'Relato de la investigación' });
+            renderFacts();
+            const fields = factsHost?.querySelectorAll('textarea'); fields?.[fields.length - 1]?.focus();
+        });
+        factsCancelButton?.addEventListener('click', () => {
+            facts = factsOriginal || facts; factsEditing = false;
+            factsEditButton?.classList.remove('hidden'); factsAddButton?.classList.add('hidden'); factsSaveButton?.classList.add('hidden'); factsCancelButton?.classList.add('hidden'); factsStatus?.classList.add('hidden');
+            renderFacts();
+        });
+        factsSaveButton?.addEventListener('click', async () => {
+            if (!facts.length || facts.some((fact) => !fact.description.trim())) { if (factsStatus) factsStatus.textContent = 'Completa cada hecho y deja al menos uno en la lista.'; return; }
+            if (!nodes.length || !nodes.some((node) => node.id === finalId) || nodes.some((node) => !node.description.trim()) || edges.some((edge) => edge.from === edge.to || !nodes.some((node) => node.id === edge.from) || !nodes.some((node) => node.id === edge.to))) { if (factsStatus) factsStatus.textContent = 'No se puede guardar hasta que el árbol causal tenga nodos y vínculos válidos.'; return; }
+            if (measures.some((measure) => !measure.description.trim() || !measure.category.trim() || !measure.responsible.trim())) { if (factsStatus) factsStatus.textContent = 'Completa descripción, jerarquía y responsable de todas las medidas.'; return; }
+            factsSaveButton.disabled = true; if (factsStatus) factsStatus.textContent = 'Guardando hechos…';
+            const finalNode = nodes.find((node) => node.id === finalId);
+            const payload = { case_folio: workspace.dataset.caseFolio, story: workspace.dataset.investigationStory || story.value.trim() || facts.map((fact) => fact.description).join(' '), model: 'edicion-manual', manual_entry: true,
+                facts: facts.map((fact) => fact.description.trim()), fact_details: facts.map((fact) => ({ ...fact, description: fact.description.trim() })),
+                tree: { final: finalNode.description, origin: '', causes: nodes.filter((node) => node.id !== finalId).map((node) => node.description), graph: { final_node_id: finalId, nodes, edges } }, factor_codes: [],
+                measures: measures.map((measure) => ({ ...measure, due_date: measure.due_date || null, related_node_ids: measure.related_node_ids || [] })) };
+            try { await requestJson(workspace.dataset.analysisStoreUrl, payload); window.location.reload(); }
+            catch (error) { if (factsStatus) factsStatus.textContent = error.message || 'No se pudieron guardar los hechos.'; factsSaveButton.disabled = false; }
+        });
+        editorBody.addEventListener('input', (event) => {
+            const key = event.target.dataset.key;
+            if (!key) return;
+            const [kind, rawIndex, field] = key.split(':'); const index = Number(rawIndex); const collection = { fact: facts, node: nodes, edge: edges, measure: measures }[kind];
+            if (!collection?.[index]) return;
+            collection[index][field] = field === 'related_node_ids' ? [...event.target.selectedOptions].map((option) => option.value) : event.target.value;
+        });
+        editorBody.addEventListener('change', (event) => {
+            if (event.target.dataset.finalSelect !== undefined) { finalId = nodes[Number(event.target.dataset.finalSelect)]?.id || finalId; renderEditor(); }
+        });
+        editorBody.addEventListener('click', (event) => {
+            const add = event.target.closest('[data-add]')?.dataset.add;
+            if (add === 'facts') facts.push({ description: '', classification: 'hecho', evidence_status: 'declarado', evidence: '', source: 'Relato de la investigación' });
+            if (add === 'nodes') { const id = `n${Date.now().toString(36)}`; nodes.push({ id, type: 'hecho', description: '' }); if (!finalId) finalId = id; }
+            if (add === 'edges' && nodes.length > 1) edges.push({ from: nodes.find((node) => node.id !== finalId)?.id || nodes[0].id, to: finalId, link_type: 'causal', logic: 'cadena', basis: 'Relación causal revisada', evidence: '' });
+            if (add === 'measures') measures.push({ description: '', category: 'Administrativa', responsible: '', due_date: '', criterion: '', related_node_ids: [] });
+            const remove = event.target.closest('[data-delete]')?.dataset.delete;
+            if (remove) { const [kind, rawIndex] = remove.split(':'); const index = Number(rawIndex); const collection = { fact: facts, node: nodes, edge: edges, measure: measures }[kind]; const deleted = collection?.[index]; collection?.splice(index, 1); if (kind === 'node' && deleted) { edges = edges.filter((edge) => edge.from !== deleted.id && edge.to !== deleted.id); if (deleted.id === finalId) finalId = nodes[0]?.id || ''; } }
+            if (add || remove) renderEditor();
+        });
+        workspace.querySelectorAll('[data-open-results-editor]').forEach((button) => button.addEventListener('click', () => {
+            activeKind = button.dataset.openResultsEditor || 'tree';
+            button.closest('[data-section]')?.append(editor);
+            renderEditor(); editor.classList.remove('hidden'); editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }));
+        editor.querySelector('[data-close-results-editor]')?.addEventListener('click', () => editor.classList.add('hidden'));
+        editor.querySelector('[data-save-results-editor]')?.addEventListener('click', async (event) => {
+            const button = event.currentTarget; const status = editor.querySelector('[data-results-editor-status]');
+            if (!facts.length || facts.some((fact) => !fact.description.trim())) { status.textContent = 'Agrega al menos un hecho y completa sus descripciones.'; return; }
+            if (!nodes.length || !nodes.some((node) => node.id === finalId) || nodes.some((node) => !node.description.trim())) { status.textContent = 'El árbol necesita nodos descritos y un hecho final seleccionado.'; return; }
+            if (edges.some((edge) => edge.from === edge.to || !nodes.some((node) => node.id === edge.from) || !nodes.some((node) => node.id === edge.to))) { status.textContent = 'Revisa los vínculos: antecedente y consecuencia deben ser distintos y existir.'; return; }
+            if (measures.some((measure) => !measure.description.trim() || !measure.category.trim() || !measure.responsible.trim())) { status.textContent = 'Completa descripción, jerarquía y responsable de cada medida.'; return; }
+            button.disabled = true; status.textContent = 'Guardando los resultados…';
+            const finalNode = nodes.find((node) => node.id === finalId);
+            const payload = { case_folio: workspace.dataset.caseFolio, story: workspace.dataset.investigationStory || story.value.trim() || facts.map((fact) => fact.description).join(' '), model: 'edicion-manual', manual_entry: true,
+                facts: facts.map((fact) => fact.description.trim()), fact_details: facts.map((fact) => ({ ...fact, description: fact.description.trim() })),
+                tree: { final: finalNode.description, origin: '', causes: nodes.filter((node) => node.id !== finalId).map((node) => node.description), graph: { final_node_id: finalId, nodes, edges } }, factor_codes: [],
+                measures: measures.map((measure) => ({ ...measure, due_date: measure.due_date || null, related_node_ids: measure.related_node_ids || [] })) };
+            try { const result = await requestJson(workspace.dataset.analysisStoreUrl, payload); status.textContent = result.message || 'Cambios guardados.'; window.location.reload(); }
+            catch (error) { status.textContent = error.message || 'No se pudieron guardar los cambios.'; button.disabled = false; }
+        });
+    }
+});
 
 document.querySelectorAll('[data-interview-form]').forEach((form) => {
     const witnessType = form.querySelector('[data-witness-type]');
@@ -734,630 +1190,6 @@ document.querySelectorAll('[data-interviews-workspace]').forEach((workspace) => 
     });
 });
 
-document.querySelectorAll('[data-final-story-ai]').forEach((section) => {
-    const stageButtons = [...section.querySelectorAll('[data-ai-stage]')];
-    const loading = section.querySelector('[data-final-ai-loading]');
-    const error = section.querySelector('[data-final-ai-error]');
-    const result = section.querySelector('[data-final-ai-result]');
-    const story = section.querySelector('[name="final_story"]');
-    const draftButton = section.querySelector('[data-generate-final-story]');
-    const draftLoading = section.querySelector('[data-story-generate-loading]');
-    const storySaveButton = section.querySelector('[data-save-final-story]');
-    const storySaved = section.querySelector('[data-final-story-saved]');
-    const saveButton = result.querySelector('[data-save-ai-proposal]');
-    const modelSelector = section.querySelector('[data-ai-model]');
-    const modelStatus = section.querySelector('[data-ai-model-status]');
-    const modelRefresh = section.querySelector('[data-ai-model-refresh]');
-    const providerButtons = [...section.querySelectorAll('[data-ai-provider]')];
-    const providerLabel = section.querySelector('[data-ai-provider-label]');
-    const providerLocation = section.querySelector('[data-ai-provider-location]');
-    const investigation = section.closest('form');
-    let reviewedFacts = [];
-    let causalTree = null;
-    let measuresReady = false;
-    let busy = false;
-    let inputRevision = 0;
-    let modelUnavailable = true;
-    let loadingModels = false;
-    let selectedProvider = 'lm_studio';
-    let groqAvailable = false;
-    let groqModel = 'openai/gpt-oss-120b';
-    let proposalMetadata = {};
-    const changeNotice = section.querySelector('[data-ai-change-notice]');
-    const requestHeaders = { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content };
-    const showError = (message) => {
-        error.textContent = message;
-        error.classList.remove('hidden');
-    };
-    const showChangeNotice = (message) => {
-        changeNotice.textContent = message;
-        changeNotice.classList.toggle('hidden', ! message);
-    };
-    const postJson = async (url, data, fallbackMessage) => {
-        const response = await fetch(url, { method: 'POST', headers: requestHeaders, body: JSON.stringify(data) });
-        const payload = await response.json().catch(() => null);
-        if (response.status === 419) throw new Error('La sesión venció. Copie los cambios sin guardar y vuelva a ingresar antes de intentarlo otra vez.');
-        if (! response.ok || ! payload) {
-            const details = Object.values(payload?.errors || {}).flat().filter((item) => typeof item === 'string');
-            throw new Error(details[0] || payload?.message || fallbackMessage);
-        }
-        return payload;
-    };
-    const refreshControls = () => {
-        draftButton.disabled = busy || loadingModels || modelUnavailable;
-        storySaveButton.disabled = busy;
-        modelSelector.disabled = busy || loadingModels || modelUnavailable || selectedProvider === 'groq';
-        modelRefresh.disabled = busy || loadingModels;
-        providerButtons.forEach((button) => {
-            button.disabled = busy || loadingModels || (button.dataset.aiProvider === 'groq' && ! groqAvailable);
-            button.setAttribute('aria-pressed', String(button.dataset.aiProvider === selectedProvider));
-        });
-        stageButtons.forEach((button) => {
-            const stage = button.dataset.aiStage;
-            const providerUnavailable = selectedProvider === 'groq' ? ! groqAvailable : modelUnavailable;
-            button.disabled = busy || loadingModels || providerUnavailable || (stage !== 'facts' && ! factsPayload().length) || (stage === 'measures' && ! causalTree);
-        });
-        saveButton.disabled = busy || ! measuresReady;
-        result.querySelectorAll('input, textarea, select, [data-ai-fact] button').forEach((control) => { control.disabled = busy; });
-        investigation.querySelectorAll('[data-save-interview]').forEach((button) => { button.disabled = busy; });
-        section.setAttribute('aria-busy', String(busy));
-    };
-    const renderMetadata = (stage, payload) => {
-        if (stage !== 'story') proposalMetadata[stage] = {
-            model: payload.model || '', prompt_version: payload.prompt_version || '',
-            quality_warnings: (Array.isArray(payload.quality_warnings) ? payload.quality_warnings : []).map((warning) => typeof warning === 'string' ? warning : warning?.message).filter(Boolean),
-        };
-        const target = section.querySelector(`[data-ai-metadata="${stage}"]`);
-        if (! target) return;
-        target.replaceChildren();
-        const summary = document.createElement('p');
-        summary.className = 'font-semibold';
-        summary.textContent = [payload.model ? `Modelo: ${payload.model}` : '', payload.prompt_version ? `Versión: ${payload.prompt_version}` : ''].filter(Boolean).join(' · ');
-        if (summary.textContent) target.append(summary);
-        const warnings = [...(Array.isArray(payload.quality_warnings) ? payload.quality_warnings : []), ...(Array.isArray(payload.quality_adjustments) ? payload.quality_adjustments : [])];
-        if (warnings.length) {
-            const list = document.createElement('ul'); list.className = 'mt-2 list-disc space-y-1 pl-5 text-amber-900';
-            warnings.forEach((warning) => {
-                const text = typeof warning === 'string' ? warning : warning?.message;
-                if (! text) return;
-                const row = document.createElement('li'); row.textContent = text; list.append(row);
-            });
-            if (list.childElementCount) target.append(list);
-        }
-        const references = Array.isArray(payload.source_references) ? payload.source_references : [];
-        if (references.length) {
-            const details = document.createElement('details'); details.className = 'mt-2';
-            const title = document.createElement('summary'); title.className = 'cursor-pointer font-semibold'; title.textContent = 'Fuentes utilizadas por párrafo'; details.append(title);
-            const catalog = new Map((payload.source_catalog || []).map((source) => [source.id, source.label || source.id]));
-            references.forEach((reference, index) => {
-                const row = document.createElement('p'); row.className = 'mt-2';
-                row.textContent = `Párrafo ${index + 1}: ${(reference.source_ids || []).map((id) => `${id} · ${catalog.get(id) || 'fuente registrada'}`).join('; ')}`;
-                details.append(row);
-            });
-            target.append(details);
-        }
-        target.classList.toggle('hidden', target.childElementCount === 0);
-    };
-
-    const loadAvailableModels = async () => {
-        if (! modelSelector) return;
-        const workspace = section.closest('[data-demo-workspace]');
-        const response = await fetch(workspace.dataset.aiModelsUrl, { headers: { 'Accept': 'application/json' } });
-        if (! response.ok) throw new Error('No se pudo consultar la configuración de los proveedores IA.');
-        const payload = await response.json();
-        groqAvailable = Boolean(payload.groq_available);
-        groqModel = payload.groq_model || 'openai/gpt-oss-120b';
-        let savedModel = '';
-        try { savedModel = localStorage.getItem('giatep.ai.investigation.model') || ''; } catch { /* El almacenamiento del navegador puede estar deshabilitado. */ }
-        const preferredModel = savedModel || payload.configured_model || '';
-        const models = [...(payload.models || [])];
-        if (payload.configured_model && ! models.some((model) => model.id === payload.configured_model)) {
-            models.unshift({ id: payload.configured_model, name: `${payload.configured_model} (configurado)` });
-        }
-        modelSelector.replaceChildren();
-        models.forEach((model) => {
-            const option = document.createElement('option');
-            option.value = model.id;
-            option.textContent = model.name || model.id;
-            modelSelector.append(option);
-        });
-        if (! models.length) {
-            const option = document.createElement('option');
-            option.value = '';
-            option.textContent = 'No se encontraron modelos';
-            modelSelector.append(option);
-            modelUnavailable = true;
-            refreshControls();
-            modelStatus.textContent = payload.connected ? 'No hay modelos disponibles para la API de LM Studio.' : 'No se pudo conectar con LM Studio. Inícialo y recarga esta página.';
-            if (! groqAvailable) modelStatus.textContent += ' Groq no está disponible: configura GROQ_API_KEY en el servidor.';
-            return;
-        }
-        modelUnavailable = false;
-        modelSelector.value = models.some((model) => model.id === preferredModel) ? preferredModel : models[0].id;
-        modelStatus.textContent = payload.connected ? 'Selecciona un modelo disponible; si uno descargado no aparece, activa la carga dinámica (JIT) en LM Studio. La elección se recordará en este navegador.' : 'Se usa el modelo configurado; no se pudo consultar LM Studio.';
-        if (! groqAvailable) modelStatus.textContent += ' Groq no está disponible: configura GROQ_API_KEY en el servidor.';
-        refreshControls();
-    };
-    const refreshModels = async () => {
-        if (busy || loadingModels) return;
-        loadingModels = true;
-        refreshControls();
-        const previousModel = modelSelector.value;
-        try {
-            await loadAvailableModels();
-            if (previousModel && modelSelector.value !== previousModel) modelSelector.dispatchEvent(new Event('change'));
-        } catch {
-            modelStatus.textContent = 'No se pudo consultar LM Studio. Revise que el servidor local esté iniciado y pulse «Actualizar modelos disponibles».';
-        } finally {
-            loadingModels = false;
-            refreshControls();
-        }
-    };
-    modelRefresh.addEventListener('click', refreshModels);
-    modelSelector?.addEventListener('change', () => {
-        try { localStorage.setItem('giatep.ai.investigation.model', modelSelector.value); } catch { /* La selección sigue vigente en esta página. */ }
-        inputRevision++;
-        resetLaterStages();
-        showChangeNotice('Modelo cambiado. Genere nuevamente los hechos, el árbol y las medidas con el modelo seleccionado. El relato se conservó.');
-    });
-    providerButtons.forEach((button) => button.addEventListener('click', () => {
-        const nextProvider = button.dataset.aiProvider;
-        if (busy || nextProvider === selectedProvider || (nextProvider === 'groq' && ! groqAvailable)) return;
-        selectedProvider = nextProvider;
-        inputRevision++;
-        resetLaterStages();
-        const usingGroq = selectedProvider === 'groq';
-        providerLabel.textContent = usingGroq ? 'Groq · GPT-OSS 120B' : 'LM Studio';
-        providerLocation.textContent = usingGroq ? 'API externa; solo texto, sin archivos adjuntos' : 'Procesamiento en el servidor local';
-        showChangeNotice(`Motor cambiado a ${usingGroq ? `Groq (${groqModel})` : 'LM Studio'}. Genere nuevamente los hechos, el árbol y las medidas.`);
-        refreshControls();
-    }));
-
-    const saveFinalStory = async (value = story.value.trim()) => {
-        if (! value) throw new Error('Escriba el relato final antes de guardarlo.');
-        const workspace = section.closest('[data-demo-workspace]');
-        const payload = await postJson(workspace.dataset.storyStoreUrl, { case_folio: workspace.dataset.caseFolio, story: value }, 'No fue posible guardar el relato final.');
-        if (story.value.trim() === value) storySaved.classList.remove('hidden');
-        return payload;
-    };
-
-    draftButton.addEventListener('click', async () => {
-        if (busy) return;
-        busy = true;
-        const revision = inputRevision;
-        const selectedModel = modelSelector?.value || '';
-        refreshControls();
-        const workspace = section.closest('[data-demo-workspace]');
-        error.classList.add('hidden');
-        draftLoading.textContent = 'Generando un nuevo borrador con LM Studio…';
-        draftLoading.classList.remove('hidden');
-        draftButton.disabled = true;
-        draftButton.textContent = 'Generando borrador…';
-        const startedAt = Date.now();
-        const timer = setInterval(() => {
-            draftLoading.textContent = `Generando un nuevo borrador con LM Studio… (${Math.floor((Date.now() - startedAt) / 1000)}s)`;
-        }, 1000);
-
-        try {
-            const payload = await postJson(workspace.dataset.storyGenerateUrl, { case_folio: workspace.dataset.caseFolio, model: selectedModel }, 'No fue posible generar el borrador.');
-            if (inputRevision !== revision) {
-                draftLoading.classList.add('hidden');
-                showChangeNotice('El relato se editó durante la generación. Se conservaron sus cambios; genere un nuevo borrador si desea reemplazarlos.');
-                return;
-            }
-            if (typeof payload.story !== 'string' || ! payload.story.trim()) {
-                throw new Error('LM Studio respondió sin contenido. El relato anterior se conservó; vuelve a intentarlo.');
-            }
-
-            story.value = payload.story.trim();
-            story.dispatchEvent(new Event('input', { bubbles: true }));
-            renderMetadata('story', payload);
-            story.focus();
-            draftLoading.textContent = `Borrador generado con ${payload.model}${payload.interviews_used ? `; se consideraron ${payload.interviews_used} entrevistas guardadas` : '; no hay entrevistas guardadas para este caso'}. Revísalo antes de continuar.`;
-            storySaved.classList.add('hidden');
-        } catch (exception) {
-            draftLoading.classList.add('hidden');
-            showError(`${exception.message} El relato anterior se conservó.`);
-        } finally {
-            clearInterval(timer);
-            busy = false;
-            refreshControls();
-            draftButton.textContent = 'Generar borrador con modelo seleccionado';
-        }
-    });
-
-    storySaveButton.addEventListener('click', async () => {
-        if (busy) return;
-        busy = true;
-        refreshControls();
-        error.classList.add('hidden');
-        storySaveButton.disabled = true;
-        try {
-            await saveFinalStory();
-        } catch (exception) {
-            error.textContent = exception.message;
-            error.classList.remove('hidden');
-        } finally {
-            busy = false;
-            refreshControls();
-        }
-    });
-
-    const factsPayload = () => [...result.querySelectorAll('[name="ai_facts[]"]')].map((input) => ({
-        description: input.value.trim(), classification: input.closest('[data-ai-fact]')?.dataset.classification || 'hecho',
-        evidence_status: input.closest('[data-ai-fact]')?.dataset.evidenceStatus || 'no_verificado',
-        evidence: input.closest('[data-ai-fact]')?.dataset.evidence || '',
-        source: input.closest('[data-ai-fact]')?.dataset.source || 'Fuente no identificada',
-        source_ids: JSON.parse(input.closest('[data-ai-fact]')?.dataset.sourceIds || '[]'),
-    })).filter((fact) => fact.description);
-
-    const clearSavedStatus = () => {
-        result.querySelector('[data-ai-saved-status]').classList.add('hidden');
-        saveButton.textContent = 'Guardar propuesta';
-    };
-    const invalidateTree = () => {
-        causalTree = null;
-        measuresReady = false;
-        delete proposalMetadata.tree;
-        delete proposalMetadata.measures;
-        result.dataset.treeGraph = '';
-        result.querySelector('[data-ai-stage-panel="tree"]').classList.add('hidden');
-        result.querySelector('[data-ai-stage-panel="measures"]').classList.add('hidden');
-        clearSavedStatus();
-        refreshControls();
-    };
-    const resetLaterStages = () => {
-        reviewedFacts = []; causalTree = null;
-        measuresReady = false;
-        proposalMetadata = {};
-        result.classList.add('hidden');
-        result.querySelector('[data-ai-stage-panel="tree"]').classList.add('hidden');
-        result.querySelector('[data-ai-stage-panel="measures"]').classList.add('hidden');
-        result.querySelector('[data-ai-facts]').replaceChildren();
-        result.querySelector('[data-ai-pending-list]')?.replaceChildren();
-        result.querySelector('[data-ai-pending-verifications]')?.classList.add('hidden');
-        result.querySelector('[data-ai-tree-diagram]').replaceChildren();
-        result.querySelector('[data-ai-factors]').replaceChildren();
-        result.querySelector('[data-ai-measures]').replaceChildren();
-        result.dataset.treeGraph = '';
-        section.querySelectorAll('[data-ai-metadata]:not([data-ai-metadata="story"])').forEach((target) => { target.replaceChildren(); target.classList.add('hidden'); });
-        clearSavedStatus();
-        refreshControls();
-    };
-
-    story.addEventListener('input', () => {
-        storySaved.classList.add('hidden');
-        inputRevision++;
-        const hadResults = reviewedFacts.length > 0 || causalTree;
-        resetLaterStages();
-        section.querySelector('[data-ai-metadata="story"]').classList.add('hidden');
-        if (hadResults) showChangeNotice('El relato cambió. Genere otra vez los hechos, el árbol y las medidas para analizar el texto actualizado.');
-    });
-
-    result.querySelector('[data-ai-facts]').addEventListener('input', (event) => {
-        const input = event.target.closest('[name="ai_facts[]"], [data-ai-fact-classification]');
-        if (! input) return;
-        const wrapper = input.closest('[data-ai-fact]');
-        inputRevision++;
-        if (input.matches('[data-ai-fact-classification]')) {
-            wrapper.dataset.classification = input.value;
-        } else {
-            wrapper.dataset.evidenceStatus = 'no_verificado';
-            wrapper.dataset.source = 'Editado por investigador; revisar respaldo';
-            wrapper.dataset.sourceIds = '[]';
-            wrapper.dataset.evidence = '';
-            wrapper.querySelector('[data-fact-evidence]')?.remove();
-        }
-        const caption = wrapper.querySelector('.label');
-        const index = [...wrapper.parentElement.children].indexOf(wrapper) + 1;
-        caption.textContent = `${wrapper.dataset.classification === 'permanente' ? 'Condición permanente' : 'Hecho puntual'} ${index} · ${wrapper.dataset.evidenceStatus === 'no_verificado' ? 'pendiente de verificación' : wrapper.dataset.evidenceStatus} · fuente: ${wrapper.dataset.source}`;
-        invalidateTree();
-        showChangeNotice('Los hechos cambiaron. Revise su respaldo y genere nuevamente el árbol y las medidas.');
-    });
-
-    const renderFacts = (items) => {
-        const facts = result.querySelector('[data-ai-facts]');
-        facts.replaceChildren(...items.map((item, index) => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'rounded-xl border border-slate-200 bg-white p-4';
-            wrapper.dataset.aiFact = '';
-            wrapper.dataset.classification = item.classification || 'hecho';
-            wrapper.dataset.evidenceStatus = item.evidence_status || 'no_verificado';
-            wrapper.dataset.evidence = item.evidence || '';
-            wrapper.dataset.source = item.source || 'Fuente no identificada';
-            wrapper.dataset.sourceIds = JSON.stringify(item.source_ids || []);
-            const header = document.createElement('div'); header.className = 'mb-2 flex items-center justify-between gap-3';
-            const caption = document.createElement('span'); caption.className = 'label';
-            const statusLabels = { verificado: 'verificado', declarado: 'declarado · sin corroboración independiente', no_verificado: 'pendiente de verificación' };
-            caption.textContent = `${wrapper.dataset.classification === 'permanente' ? 'Condición permanente' : 'Hecho puntual'} ${index + 1} · ${statusLabels[wrapper.dataset.evidenceStatus] || 'pendiente de verificación'} · fuente: ${wrapper.dataset.source}`;
-            const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'btn-secondary shrink-0 px-2 py-1 text-xs'; remove.textContent = 'Quitar';
-            remove.addEventListener('click', () => {
-                wrapper.remove();
-                inputRevision++;
-                [...facts.querySelectorAll('[data-ai-fact] .label')].forEach((label, factIndex) => {
-                    const item = label.closest('[data-ai-fact]');
-                    label.textContent = `${item.dataset.classification === 'permanente' ? 'Condición permanente' : 'Hecho puntual'} ${factIndex + 1} · ${statusLabels[item.dataset.evidenceStatus] || 'pendiente de verificación'} · fuente: ${item.dataset.source}`;
-                });
-                invalidateTree();
-                showChangeNotice('Se quitó un hecho. Genere nuevamente el árbol y las medidas con los hechos restantes.');
-            });
-            header.append(caption, remove);
-            const label = document.createElement('label'); label.className = 'block';
-            const input = document.createElement('textarea'); input.className = 'input leading-relaxed'; input.name = 'ai_facts[]'; input.value = item.description; input.rows = 2;
-            input.setAttribute('aria-label', `Descripción del hecho ${index + 1}`);
-            label.append(input); wrapper.append(header, label);
-            const classification = document.createElement('select'); classification.className = 'input mt-2 max-w-xs text-xs'; classification.dataset.aiFactClassification = '';
-            classification.setAttribute('aria-label', `Tipo del hecho ${index + 1}`);
-            [['hecho', 'Hecho puntual'], ['permanente', 'Condición permanente']].forEach(([value, text]) => {
-                const option = document.createElement('option'); option.value = value; option.textContent = text; classification.append(option);
-            });
-            classification.value = wrapper.dataset.classification;
-            wrapper.append(classification);
-            if (item.evidence) {
-                const evidence = document.createElement('p'); evidence.className = 'text-xs text-slate-600';
-                evidence.dataset.factEvidence = '';
-                evidence.textContent = `Fragmento literal: “${item.evidence}”`; wrapper.append(evidence);
-            }
-            return wrapper;
-        }));
-        if (items.length === 0) {
-            const empty = document.createElement('p'); empty.className = 'rounded-xl border border-dashed border-amber-300 bg-amber-50 p-4 text-xs text-amber-900';
-            empty.textContent = 'No se identificaron hechos utilizables con el relato entregado. Revise las verificaciones pendientes y agregue antecedentes antes de construir el árbol.';
-            facts.append(empty);
-        }
-    };
-
-    const renderPendingVerifications = (items = []) => {
-        const section = result.querySelector('[data-ai-pending-verifications]');
-        const list = result.querySelector('[data-ai-pending-list]');
-        list.replaceChildren(...items.map((item) => {
-            const row = document.createElement('li'); row.textContent = item; return row;
-        }));
-        section.classList.toggle('hidden', items.length === 0);
-    };
-
-    const renderMeasures = (payload) => {
-        const factors = result.querySelector('[data-ai-factors]');
-        factors.replaceChildren(...payload.factors.map((factor) => {
-            const label = document.createElement('label');
-            label.className = 'flex items-start gap-3 rounded-xl border border-sky-200 bg-white p-4';
-            label.innerHTML = '<input type="checkbox" class="mt-1 size-4 accent-blue-800" name="ai_factor_codes[]" checked><span><strong class="block text-blue-950"></strong><span class="mt-1 block text-sm text-slate-700"></span><small class="mt-1 block text-xs text-slate-500"></small></span>';
-            label.querySelector('input').value = factor.code;
-            label.querySelector('strong').textContent = `${factor.code} · ${factor.category}`;
-            label.querySelector('span span').textContent = factor.label;
-            label.querySelector('small').textContent = factor.explanation;
-            return label;
-        }));
-        if (! payload.factors.length) {
-            const empty = document.createElement('p'); empty.className = 'text-sm text-slate-600';
-            empty.textContent = 'El relato no respalda con claridad ningún factor de la matriz disponible.'; factors.append(empty);
-        }
-        const measures = result.querySelector('[data-ai-measures]');
-        measures.replaceChildren(...payload.measures.map((measure) => {
-            const row = document.createElement('div');
-            row.className = 'grid gap-3 rounded-xl bg-slate-50 p-4 lg:grid-cols-[1fr_11rem_12rem_11rem]'; row.dataset.aiMeasure = '';
-            row.innerHTML = '<label><span class="label">Medida</span><textarea class="input" name="ai_measure_description[]" rows="2"></textarea></label><label><span class="label">Categoría</span><input class="input" name="ai_measure_category[]"></label><label><span class="label">Responsable</span><input class="input" name="ai_measure_owner[]"></label><label><span class="label">Plazo</span><input type="date" class="input" name="ai_measure_due[]"></label><label class="lg:col-span-2"><span class="label">Criterio de cobertura y estabilidad</span><textarea class="input" name="ai_measure_criterion[]" rows="2"></textarea></label><label class="lg:col-span-2"><span class="label">Causas abordadas (IDs de nodo)</span><input class="input" name="ai_measure_nodes[]"></label>';
-            row.querySelector('[name="ai_measure_description[]"]').value = measure.description;
-            row.querySelector('[name="ai_measure_category[]"]').value = measure.category;
-            row.querySelector('[name="ai_measure_owner[]"]').value = measure.responsible;
-            row.querySelector('[name="ai_measure_due[]"]').value = measure.due_date || '';
-            row.querySelector('[name="ai_measure_criterion[]"]').value = measure.criterion || '';
-            row.querySelector('[name="ai_measure_nodes[]"]').value = (measure.related_node_ids || []).join(', ');
-            return row;
-        }));
-        if (! payload.measures.length) {
-            const empty = document.createElement('p');
-            empty.className = 'text-sm text-slate-600';
-            empty.textContent = 'No se proponen medidas todavía: el análisis no encontró factores causales respaldados que permitan recomendar una acción específica. Revise las verificaciones pendientes y complete la investigación antes de definir medidas.';
-            measures.append(empty);
-        }
-    };
-
-    const runStage = async (stage) => {
-        if (busy) return;
-        if (! story.value.trim()) { error.textContent = 'Escriba el relato final antes de iniciar el análisis.'; error.classList.remove('hidden'); story.focus(); return; }
-        if (stage !== 'facts' && ! factsPayload().length) { error.textContent = 'Genere y revise primero los hechos.'; error.classList.remove('hidden'); return; }
-        if (stage === 'measures' && ! causalTree) { error.textContent = 'Genere y revise primero el árbol.'; error.classList.remove('hidden'); return; }
-
-        const revision = inputRevision;
-        const storySnapshot = story.value.trim();
-        const facts = factsPayload();
-        const selectedModel = modelSelector?.value || '';
-        const body = { case_folio: section.closest('[data-demo-workspace]').dataset.caseFolio, story: storySnapshot, model: selectedProvider === 'groq' ? '' : selectedModel, provider: selectedProvider, ...(stage !== 'facts' ? { facts } : {}), ...(stage === 'measures' ? { tree: structuredClone(causalTree) } : {}) };
-        const assertInputsCurrent = () => {
-            if (inputRevision !== revision) throw new Error('Los datos se editaron mientras se procesaba la etapa. El resultado recibido se descartó; vuelva a generar con los datos actuales.');
-        };
-        busy = true;
-        refreshControls();
-
-        error.classList.add('hidden');
-        const workspace = section.closest('[data-demo-workspace]');
-        const activeButton = stageButtons.find((item) => item.dataset.aiStage === stage);
-        const originalLabel = activeButton.textContent;
-        activeButton.textContent = 'Procesando…';
-        loading.classList.remove('hidden');
-        let elapsedSeconds = 0;
-        let loadingStatus = `Generando ${stage === 'facts' ? 'hechos' : stage === 'tree' ? 'árbol' : 'medidas'} con ${selectedProvider === 'groq' ? 'Groq' : 'LM Studio'}…`;
-        loading.textContent = `${loadingStatus} (0s)`;
-        const timer = setInterval(() => {
-            elapsedSeconds++;
-            loading.textContent = `${loadingStatus} (${elapsedSeconds}s)`;
-        }, 1000);
-        try {
-            await saveFinalStory(storySnapshot);
-            assertInputsCurrent();
-            let payload;
-            if (stage === 'measures') {
-                const candidateCodes = [];
-                let batchIndex = 0;
-                let totalBatches = 1;
-                while (batchIndex < totalBatches) {
-                    loadingStatus = `Revisando matriz causal: lote ${batchIndex + 1}${totalBatches > 1 ? `/${totalBatches}` : ''}`;
-                    const batch = await postJson(workspace.dataset.aiFactorBatchUrl, { ...body, batch_index: batchIndex }, 'No fue posible revisar este lote de factores.');
-                    assertInputsCurrent();
-                    candidateCodes.push(...(batch.candidate_codes || []));
-                    if (! Number.isInteger(batch.total_batches) || batch.total_batches < 1 || batch.total_batches > 21) throw new Error('La revisión de la matriz respondió con un número de lotes inválido.');
-                    totalBatches = batch.total_batches;
-                    batchIndex++;
-                }
-                loadingStatus = 'Generando medidas a partir de los factores pertinentes';
-                payload = await postJson(workspace.dataset.aiMeasuresUrl, { ...body, candidate_codes: [...new Set(candidateCodes)].slice(0, 64) }, 'No fue posible generar las medidas.');
-            } else {
-                payload = await postJson(workspace.dataset[`ai${stage[0].toUpperCase()}${stage.slice(1)}Url`], body, `No fue posible generar la etapa de ${stage}.`);
-            }
-            assertInputsCurrent();
-            result.dataset.model = payload.model || result.dataset.model || '';
-
-            if (stage === 'facts') {
-                if (! Array.isArray(payload.facts)) throw new Error('La respuesta no contiene una lista de hechos utilizable.');
-                resetLaterStages();
-                reviewedFacts = payload.facts;
-                renderFacts(reviewedFacts);
-                renderPendingVerifications(payload.pending_verifications || []);
-                result.classList.remove('hidden');
-                stageButtons.find((item) => item.dataset.aiStage === 'tree').disabled = reviewedFacts.length === 0;
-                if (payload.guide_reference) {
-                    const pageLabel = (payload.guide_reference.pages || []).map((page) => `p. ${page}`).join(', ');
-                    const guideReference = result.querySelector('[data-ai-guide-reference]');
-                    guideReference.textContent = `Referencia local: ${payload.guide_reference.title} (${payload.guide_reference.version}), páginas ${pageLabel || 'no disponibles'}.`;
-                    guideReference.classList.remove('hidden');
-                }
-            } else if (stage === 'tree') {
-                if (! payload.tree || ! Array.isArray(payload.tree.nodes) || ! Array.isArray(payload.tree.edges) || ! payload.tree.nodes.some((node) => node.id === payload.tree.final_node_id)) throw new Error('La respuesta no contiene un árbol con un hecho final válido.');
-                invalidateTree();
-                causalTree = payload.tree;
-                result.dataset.treeGraph = JSON.stringify(causalTree);
-                renderCausalTree(result.querySelector('[data-ai-tree-diagram]'), causalTree);
-                const treeNote = result.querySelector('[data-ai-tree-note]');
-                const excludedCount = (causalTree.excluded_node_ids || []).length;
-                treeNote.textContent = excludedCount ? `Se omitieron ${excludedCount} nodo(s) sin un vínculo que los conecte con el hecho final; no se inventaron relaciones para incorporarlos.` : '';
-                treeNote.classList.toggle('hidden', excludedCount === 0);
-                result.querySelector('[data-ai-stage-panel="tree"]').classList.remove('hidden');
-            } else {
-                if (! Array.isArray(payload.factors) || ! Array.isArray(payload.measures)) throw new Error('La respuesta no contiene factores y medidas utilizables.');
-                renderMeasures(payload);
-                result.querySelector('[data-ai-stage-panel="measures"]').classList.remove('hidden');
-                measuresReady = true;
-                clearSavedStatus();
-            }
-            renderMetadata(stage, payload);
-            showChangeNotice('');
-        } catch (exception) {
-            showError(`${exception.message}${inputRevision === revision ? ' Los resultados anteriores se conservaron.' : ''}`);
-        } finally {
-            clearInterval(timer);
-            loading.classList.add('hidden');
-            activeButton.textContent = originalLabel;
-            busy = false;
-            refreshControls();
-        }
-    };
-
-    stageButtons.forEach((stageButton) => stageButton.addEventListener('click', () => runStage(stageButton.dataset.aiStage)));
-
-    saveButton.addEventListener('click', async () => {
-        if (busy || ! measuresReady || ! causalTree) return;
-        busy = true;
-        refreshControls();
-        error.classList.add('hidden');
-        const originalLabel = saveButton.textContent;
-        saveButton.textContent = 'Guardando propuesta…';
-        const revision = inputRevision;
-        const graph = structuredClone(causalTree);
-        const nodesById = new Map((graph.nodes || []).map((node) => [node.id, node]));
-        const finalNode = nodesById.get(graph.final_node_id);
-        const antecedents = new Set((graph.edges || []).map((edge) => edge.from));
-        const origins = (graph.nodes || []).filter((node) => antecedents.has(node.id) && node.id !== finalNode?.id);
-        const treeValues = {
-            final: finalNode?.description || '',
-            origin: origins.map((node) => node.description).join('; ') || finalNode?.description || '',
-            causes: (graph.nodes || []).filter((node) => node.id !== finalNode?.id).map((node) => node.description),
-            graph,
-        };
-        const workspace = investigation.closest('[data-demo-workspace]');
-        const body = {
-            case_folio: workspace.dataset.caseFolio, story: story.value.trim(), model: result.dataset.model || '',
-            facts: factsPayload().map((fact) => fact.description), fact_details: factsPayload(), tree: treeValues,
-            factor_codes: [...result.querySelectorAll('[name="ai_factor_codes[]"]:checked')].map((input) => input.value),
-            prompt_version: proposalMetadata.measures?.prompt_version || proposalMetadata.tree?.prompt_version || proposalMetadata.facts?.prompt_version || '',
-            quality_warnings: [...new Set(Object.values(proposalMetadata).flatMap((metadata) => metadata.quality_warnings || []))],
-            measures: [...result.querySelectorAll('[data-ai-measure]')].map((row) => ({ description: row.querySelector('[name="ai_measure_description[]"]').value, category: row.querySelector('[name="ai_measure_category[]"]').value, responsible: row.querySelector('[name="ai_measure_owner[]"]').value, due_date: row.querySelector('[name="ai_measure_due[]"]').value || null, criterion: row.querySelector('[name="ai_measure_criterion[]"]').value, related_node_ids: row.querySelector('[name="ai_measure_nodes[]"]').value.split(',').map((id) => id.trim()).filter(Boolean) })),
-        };
-        try {
-            await postJson(workspace.dataset.aiStoreUrl, body, 'No fue posible guardar la propuesta.');
-            if (inputRevision !== revision) {
-                showChangeNotice('Se guardó la versión enviada, pero el relato cambió durante el guardado. Genere nuevamente el análisis para incorporar sus cambios.');
-                return;
-            }
-            const factsTarget = investigation.querySelector('[data-derived-facts]');
-            const treeTarget = investigation.querySelector('[data-derived-tree]');
-            const measuresTarget = investigation.querySelector('[data-derived-measures]');
-            factsTarget.replaceChildren();
-            treeTarget.replaceChildren();
-            measuresTarget.replaceChildren();
-
-            result.querySelectorAll('[name="ai_facts[]"]').forEach((source) => {
-                const row = document.createElement('div');
-                row.className = 'repeat-row';
-                const handle = document.createElement('span');
-                handle.className = 'drag-handle';
-                handle.textContent = '⋮⋮';
-                const input = document.createElement('input');
-                input.className = 'input';
-                input.name = 'facts[]';
-                input.value = source.value;
-                const remove = document.createElement('button');
-                remove.type = 'button';
-                remove.className = 'btn-secondary';
-                remove.dataset.removeRow = '';
-                remove.textContent = 'Quitar';
-                row.append(handle, input, remove);
-                factsTarget.append(row);
-            });
-
-            const diagram = document.createElement('div'); diagram.className = 'causal-graph-viewport';
-            renderCausalTree(diagram, graph); treeTarget.replaceChildren(diagram);
-
-            result.querySelectorAll('[data-ai-measure]').forEach((source) => {
-                const row = document.createElement('tr');
-                ['ai_measure_description[]', 'ai_measure_category[]', 'ai_measure_owner[]', 'ai_measure_due[]'].forEach((name) => {
-                    const cell = document.createElement('td');
-                    cell.textContent = source.querySelector(`[name="${name}"]`).value;
-                    row.append(cell);
-                });
-                measuresTarget.append(row);
-            });
-
-            investigation.closest('[data-demo-workspace]').querySelectorAll('[data-ai-derived-nav]').forEach((nav) => nav.classList.remove('hidden'));
-            result.querySelector('[data-ai-saved-status]').classList.remove('hidden');
-            saveButton.textContent = 'Propuesta guardada';
-            investigation.closest('[data-demo-workspace]').querySelector('[data-section-target="inv-4"]').click();
-        } catch (exception) {
-            showError(exception.message);
-            saveButton.textContent = originalLabel;
-        } finally {
-            busy = false;
-            refreshControls();
-        }
-    });
-    result.querySelector('[data-ai-measures]').addEventListener('input', clearSavedStatus);
-    result.querySelector('[data-ai-factors]').addEventListener('change', clearSavedStatus);
-    section.closest('[data-demo-workspace]').addEventListener('giatep:interview-saved', () => {
-        inputRevision++;
-        resetLaterStages();
-        section.querySelector('[data-ai-metadata="story"]').classList.add('hidden');
-        showChangeNotice('Se guardó una entrevista nueva. Actualice el relato para integrar esa fuente y genere nuevamente los hechos, el árbol y las medidas.');
-    });
-    investigation.addEventListener('submit', (event) => {
-        if (! busy) return;
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        showError('Espere a que termine la solicitud de IA antes de guardar la investigación.');
-    }, true);
-    refreshControls();
-    refreshModels();
-});
-
 document.querySelectorAll('[data-demo-form]').forEach((form) => {
     let currentStep = 0;
     const steps = [...form.querySelectorAll('[data-step]')];
@@ -1427,7 +1259,7 @@ document.querySelectorAll('[data-unsaved-form]').forEach((form) => {
     });
 });
 
-const investigationForm = document.querySelector('[data-final-story-ai]')?.closest('form');
+const investigationForm = document.querySelector('[data-investigation-form]');
 const linkedCaseId = new URLSearchParams(window.location.search).get('case');
 if (investigationForm && linkedCaseId) {
     const casesStorageKey = 'giatep.demo.cases';
@@ -1510,7 +1342,6 @@ if (investigationForm && linkedCaseId) {
         const record = relation || { id: `INV-${linkedCaseId}`, caseId: linkedCaseId, status: 'Borrador' };
         record.caseType = fields.event_type || linkedCase?.type || '';
         record.updatedAt = draft.updatedAt;
-        record.hasFinalStory = Boolean(fields.final_story?.trim());
         record.evidenceCount = evidence.length + (linkedCase?.evidenceFiles?.length || 0);
         if (! relation) investigations.unshift(record);
         localStorage.setItem(investigationsStorageKey, JSON.stringify(investigations));

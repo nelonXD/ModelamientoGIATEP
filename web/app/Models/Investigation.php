@@ -115,17 +115,17 @@ class Investigation extends Model
 
     public function facts(): HasMany
     {
-        return $this->hasMany(InvestigationFact::class);
+        return $this->hasMany(InvestigationFact::class, 'investigation_id', $this->usesOriginalSchema() ? 'Codigo_Investigacion' : 'id');
     }
 
     public function causalNodes(): HasMany
     {
-        return $this->hasMany(CausalNode::class);
+        return $this->hasMany(CausalNode::class, 'investigation_id', $this->usesOriginalSchema() ? 'Codigo_Investigacion' : 'id');
     }
 
     public function measures(): HasMany
     {
-        return $this->hasMany(CorrectiveMeasure::class);
+        return $this->hasMany(CorrectiveMeasure::class, 'investigation_id', $this->usesOriginalSchema() ? 'Codigo_Investigacion' : 'id');
     }
 
     public function interviews(): HasMany

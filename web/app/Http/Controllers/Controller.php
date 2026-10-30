@@ -27,11 +27,24 @@ abstract class Controller
             'settings.manage' => 'settings',
         };
 
+        $needsCaseData = in_array($module, ['cases', 'investigations', 'reviews', 'measures', 'statistics', 'reports'], true);
+        $includeMeasures = in_array($module, ['reviews', 'measures', 'statistics', 'reports'], true);
+        $demo = $needsCaseData
+            ? app(DemoWorkspace::class)->data(includeMeasures: $includeMeasures)
+            : [
+                'cases' => collect(),
+                'investigations' => collect(),
+                'measures' => collect(),
+                'observations' => collect(),
+                'establishments' => [],
+                'activity' => [],
+            ];
+
         return view('demo.workspace', [
             'module' => $module,
             'selected' => null,
             'mode' => 'index',
-            'demo' => app(DemoWorkspace::class)->data(),
+            'demo' => $demo,
             'title' => $title,
             'description' => $description,
         ]);

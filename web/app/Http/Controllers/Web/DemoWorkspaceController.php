@@ -10,7 +10,7 @@ use Illuminate\View\View;
 
 class DemoWorkspaceController extends Controller
 {
-    public function show(Request $request, DemoWorkspace $workspace, string $module, ?string $id = null): View
+    public function show(Request $request, DemoWorkspace $workspace, string $module, ?string $id = null): View|RedirectResponse
     {
         $permission = $workspace->permissions()[$module] ?? null;
         abort_unless($permission && $request->user()->hasPermission($permission), 403);
@@ -22,14 +22,24 @@ class DemoWorkspaceController extends Controller
             'measures' => 'measures',
             default => null,
         };
-        $selected = $id && $collection ? $workspace->find($collection, $id) : null;
+        $includeDetails = $id !== null;
+        $includeMeasures = $includeDetails || in_array($module, ['reviews', 'measures', 'statistics', 'reports'], true);
+        $demo = $workspace->data($includeDetails, $includeMeasures);
+        $selected = $id && $collection ? $workspace->find($collection, $id, $demo) : null;
         abort_if($id && $collection && ! $selected, 404);
+
+        if ($module === 'investigations' && $selected && ($request->user()->hasRole('jefatura') || $request->user()->hasRole('alta-direccion'))) {
+            return to_route('modules.investigations.index', ['case' => $selected['case_id']]);
+        }
 
         return view('demo.workspace', [
             'module' => $module,
             'selected' => $selected,
-            'demo' => $workspace->data(),
+            'demo' => $demo,
             'mode' => $request->string('mode')->toString() ?: ($id ? 'detail' : 'index'),
+            'leadershipReport' => false,
+            'reportCase' => null,
+            'reportInvestigation' => null,
         ]);
     }
 

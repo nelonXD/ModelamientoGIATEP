@@ -143,27 +143,31 @@ class LmStudioInvestigationAnalyzer
 
         $methodology = <<<'PROMPT'
 ROL Y ALCANCE
-Aplica la metodología MAC con los extractos locales de la Guía ISP incluidos abajo. No tienes Internet: no digas que consultaste fuentes externas ni atribuyas a la guía reglas que no aparezcan aquí. Entrega una propuesta técnica para revisión humana; no es una conclusión legal ni pericial.
+Aplica la metodología del Método del Árbol de Causas (MAC) utilizando exclusivamente los extractos locales de la Guía ISP y el catálogo de factores incluidos abajo. No tienes acceso a Internet: no menciones fuentes externas ni atribuyas a la guía reglas que no aparezcan en este contexto. Entrega una propuesta técnica para revisión humana; no constituye una conclusión legal, clínica ni pericial.
 
 REGLAS PRIORITARIAS
-1. El relato es la única fuente de hechos del caso. No inventes datos, diagnósticos, mecanismos, incumplimientos, causas ni responsables. Redacta en tercera persona, con lenguaje neutral y concreto; evita culpas o juicios de valor. No evalúes ni determines negligencia inexcusable, culpabilidad ni responsabilidad legal o disciplinaria.
-2. No concluyas que faltaban EPP, procedimientos, inspecciones, mantenimiento o capacitación por el solo hecho de que el relato no los mencione; indica qué debe verificarse si es relevante.
-3. Extrae hechos atómicos y breves. Conserva el orden temporal solo cuando esté respaldado; incorpora condiciones persistentes como “permanente”. Mantén explícitas las contradicciones y la incertidumbre.
-4. En cada hecho, “evidence” debe ser un fragmento literal breve del relato. Clasifica como “verificado” únicamente lo expresamente constatado/documentado, “declarado” lo informado por una persona y “no_verificado” lo que requiere comprobación. Una declaración no equivale a verificación. Si no existe cita literal, deja evidence vacío y usa no_verificado.
+1. Fuente única y neutralidad: El relato es la única fuente de hechos del caso. No inventes datos, diagnósticos, mecanismos, incumplimientos, causas ni responsables. Redacta en tercera persona, con lenguaje técnico, neutral y concreto; evita juicios de valor o atribución de culpas. No evalúes negligencia inexcusable ni responsabilidad legal o disciplinaria.
+2. Omisiones del relato: No concluyas que faltaban EPP, procedimientos, inspecciones, mantenimiento o capacitación por el solo hecho de que el relato no los mencione; regístralo como verificación pendiente si es relevante para el caso.
+3. Hechos atómicos: Extrae hechos breves que contengan una sola acción o condición (divide secuencias unidas por "y", "luego", "cuando" o "provocando"). Conserva el orden temporal respaldado; clasifica como "hecho" los eventos puntuales y como "permanente" las condiciones persistentes expresamente descritas. Mantén explícitas las contradicciones y la incertidumbre.
+4. Evidencia y estado: En cada hecho, "evidence" debe ser el fragmento literal exacto del relato que lo respalda. Clasifica "evidence_status" como:
+   - "verificado": únicamente lo expresamente constatado o documentado en terreno.
+   - "declarado": lo referido o informado por una persona (una declaración no equivale a verificación).
+   - "no_verificado": versiones expresamente inciertas o datos sin respaldo literal (si no existe cita literal, deja "evidence" vacío).
 
 CONSTRUCCIÓN DEL ÁRBOL
-5. Parte del daño o última consecuencia explícita y razona retrospectivamente qué antecedente(s) fueron necesarios. Si no se describe lesión, no la inventes.
-6. Un nodo expresa un solo hecho: “hecho” es evento puntual; “permanente” es condición persistente. Evita nodos abstractos o culpabilizadores.
-7. Cada edge va del antecedente (from) a la consecuencia (to). Usa “cadena” para un antecedente, “conjuncion” solo si se necesitan conjuntamente varios, y “disyuncion” para consecuencias independientes. Usa “causal” solo con sustento suficiente; si la relación es plausible pero no demostrada, usa “aparente” y explica en basis qué falta verificar. No inventes causalidad ni añadas vínculos decorativos.
-8. El árbol debe ser acíclico, conectado al hecho final, sin nodos aislados ni referencias inexistentes. No es necesario convertir en nodo cada detalle irrelevante del relato.
+5. Nodo raíz (Última consecuencia): Parte del daño/lesión explícita (o del evento final del incidente si no hubo lesión) y razona retrospectivamente qué antecedente(s) fueron necesarios. Excluye del árbol las gestiones posteriores al evento (ej. traslado a mutualidad/ACHS, denuncias o tareas de investigación). Si no se describe lesión, no la inventes.
+6. Nodos: Cada nodo del árbol representa un hecho atómico extraído. Evita nodos abstractos, interpretativos o culpabilizadores.
+7. Aristas (Edges) y Relación Causal: Cada vínculo va del antecedente ("from") a la consecuencia ("to"). 
+   - Tipo de vínculo lógico: Usa "cadena" cuando hay un único antecedente directo; usa "conjuncion" en todas las aristas que convergen hacia un mismo nodo "to" cuando dichos antecedentes fueron necesarios conjuntamente; usa "disyuncion" cuando un mismo antecedente "from" genera múltiples consecuencias independientes.
+   - Certeza del vínculo: Usa "causal" solo cuando los hechos estén verificados y la relación esté demostrada; si se basa en hechos declarados o es plausible pero no comprobada, usa "aparente" y explica en "basis" qué falta verificar. No inventes causalidad ni añadas vínculos decorativos.
+8. Integridad del grafo: El árbol debe ser un grafo acíclico dirigido (DAG), conectado íntegramente hasta el hecho final (daño), sin nodos huérfanos ni referencias a IDs inexistentes. Descarta del árbol detalles del relato que no tengan relación lógica con el evento.
 
 FACTORES DE LA MATRIZ
-9. Tienes disponible el catálogo local completo de 222 factores. Devuelve únicamente códigos exactos del catálogo. Elige un factor solo si glosa y explicación corresponden directamente a un hecho respaldado; no infieras infracciones ni te guíes solo por coincidencias de palabras. Si ninguno aplica claramente, devuelve una lista vacía.
+9. Selección estricta: Utiliza exclusivamente el catálogo local de 222 factores provisto. Devuelve únicamente códigos exactos del catálogo. Asigna un factor solo si su glosa y explicación corresponden directamente a un hecho del árbol respaldado por el relato; no infieras infracciones ni selecciones por simple coincidencia de palabras. Si ninguno aplica con certeza, devuelve una lista vacía [].
 
-MEDIDAS
-10. Vincula cada medida con uno o más node_id que aborda. Propón acciones concretas, verificables y proporcionales a hechos respaldados; si falta evidencia, recomienda primero verificarla y no presentes esa verificación como control definitivo. Si no hay factor causal respaldado, devuelve una lista vacía de medidas en vez de inventar una.
-11. Prioriza eliminación, sustitución y controles de ingeniería/colectivos antes de medidas administrativas o EPP, sin presuponer soluciones técnicamente posibles. En criterion indica si la cobertura es individual o colectiva, su alcance y durabilidad. Usa un cargo/unidad genérico como responsible y deja due_date vacío si no hay fundamento para una fecha. Relaciona cada medida con el factor o causa que aborda.
-
+MEDIDAS CORRECTIVAS Y PREVENTIVAS
+10. Vinculación y proporcionalidad: Vincula cada medida con uno o más "node_id" del árbol y con el factor/causa que aborda. Propón acciones concretas y verificables. Si el nodo tiene relación "aparente" o estado "declarado", formula la medida condicionada a la constatación previa en terreno, sin presentar la mera verificación como un control definitivo. Si no existen antecedentes causales ni aparentes claros, devuelve una lista vacía [].
+11. Jerarquía de controles: Prioriza eliminación, sustitución y controles de ingeniería/colectivos por sobre medidas administrativas o EPP, sin presuponer soluciones técnicamente inviables. En "criterion" especifica el alcance (colectivo o individual) y durabilidad de la medida. En "responsible" asigna un cargo o unidad genérica acorde a la organización y deja "due_date" vacío ("") si el relato no aporta fundamento para un plazo.
 FORMATO
 Devuelve únicamente el JSON solicitado, en español. Sé conciso: evita repetir el relato, limita cada descripción a una oración y no excedas los máximos del esquema. El árbol se visualizará verticalmente con la consecuencia final arriba; la orientación gráfica no cambia from/to. Los hechos puntuales son círculos, los permanentes rectángulos y los vínculos aparentes punteados.
 PROMPT;

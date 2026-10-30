@@ -23,7 +23,7 @@ $statusClass = fn ($status) => match ($status) {
 };
 @endphp
 <x-layouts.app :title="$pageTitle.' · GIATEP Los Ángeles'">
-<div class="mx-auto max-w-[1600px] space-y-6" data-demo-workspace data-demo-module="{{ $module }}" data-case-folio="{{ $module === 'investigations' && $selected ? $selected['case_id'] : '' }}" data-story-store-url="{{ route('modules.investigations.story.store') }}" data-story-generate-url="{{ route('modules.investigations.story.generate') }}" data-ai-models-url="{{ route('modules.investigations.ai.models') }}" data-ai-analyze-url="{{ route('modules.investigations.ai.analyze') }}" data-ai-facts-url="{{ route('modules.investigations.ai.facts') }}" data-ai-tree-url="{{ route('modules.investigations.ai.tree') }}" data-ai-factor-batch-url="{{ route('modules.investigations.ai.factor-batch') }}" data-ai-measures-url="{{ route('modules.investigations.ai.measures') }}" data-ai-store-url="{{ route('modules.investigations.ai.store') }}" data-interview-store-url="{{ route('modules.investigations.interviews.store') }}">
+<div class="mx-auto max-w-[1600px] space-y-6" data-demo-workspace data-demo-module="{{ $module }}" data-case-folio="{{ $module === 'investigations' && $selected ? $selected['case_id'] : '' }}" data-interview-store-url="{{ route('modules.investigations.interviews.store') }}" @if($module === 'investigations' && $selected) data-investigation-story="{{ $selected['final_story'] ?? ($case['story'] ?? '') }}" data-external-prompt-url="{{ route('modules.investigations.external.prompt') }}" data-external-import-url="{{ route('modules.investigations.external.import') }}" data-analysis-store-url="{{ route('modules.investigations.ai.store') }}" data-models-url="{{ route('modules.investigations.ai.models') }}" @endif>
     <!-- Encabezado del módulo -->
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
@@ -524,49 +524,43 @@ $statusClass = fn ($status) => match ($status) {
     <!-- ==================== MÓDULO: INVESTIGACIONES ==================== -->
     @elseif($module === 'investigations')
         @if($selected)
-            @php
-                $case = $demo['cases']->firstWhere('id', $selected['case_id']);
-                $completedStages = min(8, (int) floor(($selected['progress'] / 100) * 8));
-                $activeStage = min(7, $completedStages);
-                $stageProgress = round(($completedStages / 8) * 100, 1);
-            @endphp
+            @if($leadershipReport)
+                @include('modules.investigations.partials.executive-report', ['case' => $reportCase, 'investigation' => $reportInvestigation, 'selected' => $selected])
+            @else
+            @php $case = $demo['cases']->firstWhere('id', $selected['case_id']); @endphp
 
             <div class="space-y-5">
-                <div class="card overflow-x-auto p-4 shadow-sm sm:p-5" aria-label="Progreso de la investigación">
-                    <div class="flex min-w-[760px] items-start">
+                <nav class="card overflow-x-auto p-3 shadow-sm" aria-label="Progreso de la investigación" data-investigation-progress>
+                    <ol class="flex w-full min-w-[1120px] flex-nowrap gap-2">
                         @foreach([
-                            'Antecedentes',
-                            'Recopilación de información',
-                            'Hechos y relato',
-                            'Árbol de causas',
-                            'Medidas',
-                            'Revisión técnica',
-                            'Participantes y firmas',
-                            'Cierre',
-                        ] as $i => $step)
-                            @php $state = $i < $completedStages ? 'completed' : ($completedStages < 8 && $i === $activeStage ? 'current' : 'locked'); @endphp
-                            <div class="relative flex flex-1 flex-col items-center text-center text-[10px] leading-tight {{ $i < 7 ? 'after:absolute after:left-1/2 after:top-3.5 after:h-0.5 after:w-full after:translate-x-3.5 after:bg-slate-200' : '' }} {{ $state === 'completed' ? 'after:bg-emerald-400' : '' }}">
-                                <span class="relative z-10 grid size-7 place-items-center rounded-full border text-xs font-black {{ $state === 'completed' ? 'border-emerald-200 bg-emerald-100 text-emerald-700' : ($state === 'current' ? 'border-sky-600 bg-sky-600 text-white ring-4 ring-sky-100' : 'border-slate-200 bg-slate-100 text-slate-400') }}">
-                                    {{ $state === 'completed' ? '✓' : ($state === 'locked' ? '🔒' : $i + 1) }}
-                                </span>
-                                <span class="mt-2 max-w-24 font-bold {{ $state === 'current' ? 'text-sky-800' : ($state === 'completed' ? 'text-slate-700' : 'text-slate-400') }}">{{ $i + 1 }}. {{ $step }}</span>
-                                <span class="mt-1 {{ $state === 'completed' ? 'text-emerald-700' : ($state === 'current' ? 'text-sky-700' : 'text-slate-400') }}">{{ $state === 'completed' ? 'Completado' : ($state === 'current' ? 'En desarrollo' : 'Bloqueado') }}</span>
-                            </div>
+                            ['Antecedentes', 'Identificación y datos del suceso'],
+                            ['Entrevistas', 'Declaraciones de participantes'],
+                            ['Evidencias', 'Documentos y registros del caso'],
+                            ['Relato cronológico', 'Secuencia objetiva de los hechos'],
+                            ['Hechos constatados', 'Hechos y fuentes de respaldo'],
+                            ['Árbol de causas', 'Relaciones causales del accidente'],
+                            ['Medidas', 'Acciones, responsables y plazos'],
+                            ['Participantes y firmas', 'Equipo investigador y validación'],
+                            ['Dictamen y cierre', 'Revisión técnica e informe final'],
+                        ] as $i => [$step, $detail])
+                            <li class="min-w-0 flex-1">
+                                <button type="button" class="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-xl border border-transparent p-2 text-center transition hover:bg-slate-50 {{ $i === 0 ? 'border-blue-200 bg-blue-50' : '' }} {{ in_array($i, [4, 5, 6]) && empty($selected['has_facts']) ? 'cursor-not-allowed opacity-45' : '' }}" data-section-target="inv-{{ $i }}" aria-current="{{ $i === 0 ? 'step' : 'false' }}" @if(in_array($i, [4,5,6])) data-ai-derived-nav @endif @if(in_array($i, [4,5,6]) && empty($selected['has_facts'])) disabled title="Disponible después de analizar los hechos" @endif>
+                                    <span class="flex size-9 shrink-0 items-center justify-center rounded-lg {{ $i === 0 ? 'bg-blue-950 text-white' : 'bg-slate-200 text-slate-600' }} text-xs font-black" data-progress-number>{{ $i + 1 }}</span>
+                                    <span class="min-w-0">
+                                        <strong class="block text-xs font-bold leading-tight text-slate-900">{{ $step }}</strong>
+                                        <small class="mt-1 block text-[10px] leading-tight text-slate-500">{{ $detail }}</small>
+                                    </span>
+                                </button>
+                            </li>
                         @endforeach
-                    </div>
-                </div>
+                    </ol>
+                </nav>
                 <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-xs">
-                    <div><span class="font-black text-sky-950">Expediente {{ $selected['id'] }}</span><span class="ml-2 text-slate-600">Caso {{ $selected['case_id'] }}</span><span class="ml-3 font-bold text-sky-800">{{ number_format($stageProgress, 1, ',', '.') }} % · {{ $completedStages }} de 8 etapas completas</span></div>
+                    <div><span class="font-black text-sky-950">Expediente {{ $selected['id'] }}</span><span class="ml-2 text-slate-600">Caso {{ $selected['case_id'] }}</span></div>
                     <div class="flex gap-2"><button type="button" data-section-target="inv-0" class="btn-secondary px-3 py-1.5 text-xs">Editar información</button><a href="{{ route('modules.observations.index', ['case' => $selected['case_id']]) }}" class="btn-secondary px-3 py-1.5 text-xs">Agregar observación</a></div>
                 </div>
-                <nav class="flex flex-wrap gap-2" aria-label="Secciones del expediente">
-                    @foreach(['Antecedentes', 'Entrevistas', 'Evidencias', 'Relato cronológico', 'Hechos constatados', 'Árbol de causas', 'Medidas', 'Participantes y firmas', 'Dictamen y cierre'] as $i => $section)
-                        <button class="section-link {{ $i === 0 ? 'section-link-active' : '' }} {{ in_array($i, [4,5,6]) && empty($selected['has_facts']) ? 'hidden' : '' }}" data-section-target="inv-{{ $i }}" @if(in_array($i, [4,5,6])) data-ai-derived-nav @endif>{{ $i + 1 }}. {{ $section }}</button>
-                    @endforeach
-                </nav>
-
                 <!-- Contenido de la Investigación -->
-                <form method="POST" action="{{ route('demo.action', 'investigations') }}" class="card min-w-0 shadow-sm" data-unsaved-form>
+                <form method="POST" action="{{ route('demo.action', 'investigations') }}" class="card min-w-0 shadow-sm" data-unsaved-form data-investigation-form>
                     @csrf
                     <input type="hidden" name="action" value="Borrador de investigación guardado">
                     <input type="hidden" name="return_to" value="{{ url()->current() }}">
@@ -856,126 +850,69 @@ $statusClass = fn ($status) => match ($status) {
                             <ul class="space-y-2" data-file-list></ul>
                         </section>
 
-                        <!-- Sección 3: Relato Cronológico Final + IA -->
-                        <section data-section="inv-3" class="hidden space-y-6" data-final-story-ai>
-                            <h3 class="section-title">4. Relato Cronológico Final de los Hechos</h3>
-                            <div class="source-banner">
-                                Redactado por la comisión investigadora (Prevención, CPHS y Delegado) integrando los antecedentes, declaraciones y evidencias verificadas.
+                        @php $linkedCaseStory = collect($demo['cases'])->firstWhere('id', $selected['case_id'])['story'] ?? ($selected['final_story'] ?? ''); @endphp
+                        <!-- Relato cronológico y flujo de análisis externo con revisión local -->
+                        <section data-section="inv-3" class="hidden space-y-6" aria-label="Relato cronológico" data-external-analysis>
+                            <div>
+                                <h3 class="section-title mb-1">4. Análisis de la investigación</h3>
+                                <p class="text-sm text-slate-600">Genera un prompt para una IA externa y luego entrega su respuesta a LM Studio para contrastarla con las fuentes y preparar los hechos, el árbol causal y las medidas.</p>
                             </div>
-                            <div class="space-y-3 rounded-xl border border-violet-200 bg-violet-50 p-4">
-                                <div class="flex flex-wrap items-center gap-3">
-                                    <button type="button" class="btn-secondary border-violet-300 text-violet-900" data-generate-final-story>Generar borrador con el modelo seleccionado</button>
-                                    <p class="text-sm text-violet-950">Integra los datos y fuentes guardados del caso. Revisa la cronología y las atribuciones antes de guardar el borrador.</p>
-                                </div>
-                                <div class="max-w-xl">
-                                    <label class="label" for="investigation-ai-model">Modelo LM Studio para relato final y análisis local</label>
-                                    <select class="input" id="investigation-ai-model" data-ai-model aria-describedby="investigation-ai-model-help" disabled>
-                                        <option value="">Cargando modelos de LM Studio…</option>
-                                    </select>
-                                    <button type="button" class="mt-2 text-xs font-semibold text-violet-900 underline" data-ai-model-refresh>Actualizar modelos disponibles</button>
-                                    <p class="mt-1 text-xs text-violet-800" id="investigation-ai-model-help" data-ai-model-status role="status">Groq usa el modelo GPT-OSS 120B configurado en el servidor.</p>
-                                </div>
+                            <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+                                El prompt incluye el relato, las entrevistas guardadas y los antecedentes textuales disponibles. Los archivos adjuntos se identifican, pero su contenido no se lee automáticamente. La respuesta externa se considera una propuesta y la IA local puede descartar datos sin respaldo.
                             </div>
-                            <p class="hidden text-sm font-bold text-violet-800" data-story-generate-loading role="status">Preparando borrador con LM Studio…</p>
-                            <div class="hidden rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700" data-ai-metadata="story" aria-live="polite"></div>
-                            <label for="final-investigation-story" class="block">
-                                <span class="label">Borrador de relato técnico y cronológico</span>
-                                <textarea id="final-investigation-story" class="input leading-relaxed" name="final_story" rows="8" placeholder="Redacte cronológicamente los hechos sin adjetivos subjetivos ni conclusiones apresuradas.">{{ old('final_story', !empty($selected['final_story']) ? $selected['final_story'] : ($case['story'] ?? '')) }}</textarea>
-                                <span class="hint">El texto generado es solo una propuesta: debe ser validado por el prevencionista, Comité Paritario o delegado responsable.</span>
+                            <label class="block">
+                                <span class="label">Relato técnico para analizar</span>
+                                <textarea class="input" rows="7" maxlength="30000" data-analysis-story>{{ $linkedCaseStory }}</textarea>
                             </label>
-                            <div class="flex items-center gap-3">
-                                <button type="button" class="btn-secondary" data-save-final-story>Guardar Relato Final</button>
-                                <p class="hidden text-sm font-bold text-emerald-800" data-final-story-saved>Relato guardado correctamente.</p>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <button type="button" class="btn-primary" data-create-external-prompt>Generar prompt para IA externa</button>
+                                <span class="text-sm text-slate-600" data-analysis-status role="status" aria-live="polite">El prompt todavía no se ha generado.</span>
                             </div>
-
-                            <!-- Módulo Asistido por Inteligencia Artificial -->
-                            <div class="rounded-2xl border border-violet-200 bg-violet-50/70 p-6 shadow-sm">
-                                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                    <div>
-                                        <div class="flex items-center gap-2">
-                                            <span class="rounded bg-violet-700 px-2.5 py-0.5 text-xs font-black text-white">IA Asistida · <span data-ai-provider-label>LM Studio</span></span>
-                                            <span class="text-xs font-semibold text-violet-900" data-ai-provider-location>Procesamiento en el servidor local</span>
-                                        </div>
-                                        <h4 class="mt-2 text-lg font-black text-violet-950">Análisis asistido por etapas</h4>
-                                        <p class="mt-1 text-xs text-violet-900 leading-relaxed">
-                                            Revisa cada resultado antes de enviarlo a la siguiente etapa. La matriz de 222 factores se consulta solo al generar las medidas.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="mt-5 grid gap-3 md:grid-cols-3">
-                                    <button type="button" class="btn-primary bg-violet-700 hover:bg-violet-800" data-ai-stage="facts">1. Generar hechos</button>
-                                    <button type="button" class="btn-primary bg-blue-700 hover:bg-blue-800" data-ai-stage="tree" disabled>2. Generar árbol</button>
-                                    <button type="button" class="btn-primary bg-sky-700 hover:bg-sky-800" data-ai-stage="measures" disabled>3. Generar medidas</button>
-                                </div>
-                                <div class="mt-4 flex flex-wrap items-center gap-2">
-                                    <span class="text-xs font-bold text-violet-950">Motor para estas etapas:</span>
-                                    <button type="button" class="btn-secondary border-violet-300 text-violet-900" data-ai-provider="lm_studio" aria-pressed="true">LM Studio</button>
-                                    <button type="button" class="btn-secondary border-orange-300 text-orange-900" data-ai-provider="groq" aria-pressed="false" disabled>Groq · GPT-OSS 120B</button>
-                                </div>
-                                <p class="mt-2 text-xs text-slate-600">Al usar Groq se envían el relato, el análisis, las instrucciones, extractos de la guía y factores de la matriz a la API de Groq. Los archivos adjuntos no se envían.</p>
-                                <p class="mt-4 hidden text-xs font-bold text-red-700" data-final-ai-error role="alert"></p>
-                                <p class="mt-4 hidden text-xs font-bold text-violet-800" data-final-ai-loading role="status">Procesando etapa con LM Studio…</p>
-                                <p class="mt-3 hidden text-xs text-amber-900" data-ai-change-notice role="status"></p>
+                            <label class="block">
+                                <span class="label">Prompt generado</span>
+                                <textarea class="input font-mono text-xs" rows="12" readonly data-external-prompt placeholder="Aquí aparecerá el prompt listo para copiar y pegar en la IA externa."></textarea>
+                            </label>
+                            <div class="flex flex-wrap gap-3">
+                                <button type="button" class="btn-secondary" data-copy-external-prompt disabled>Copiar prompt</button>
                             </div>
-
-                            <!-- Propuesta generada / habilitada -->
-                            <div class="hidden space-y-6" data-final-ai-result>
-                                <fieldset class="rounded-2xl border border-slate-200 p-5" data-ai-stage-panel="facts">
-                                    <legend class="px-2 font-black text-blue-950">Hechos del relato</legend>
-                                    <p class="mb-3 text-xs text-slate-600">Revise o edite los eventos y condiciones. “Declarado” significa que una fuente lo informó; “verificado” requiere corroboración descrita. Los datos faltantes se muestran aparte y no se incorporan como hechos.</p>
-                                    <div class="mb-3 hidden rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700" data-ai-metadata="facts"></div>
-                                    <div class="mt-3 space-y-2.5 text-xs" data-ai-facts>
-                                    </div>
-                                    <div class="mt-4 hidden rounded-xl border border-amber-200 bg-amber-50 p-4" data-ai-pending-verifications>
-                                        <h3 class="text-sm font-black text-amber-950">Pendiente de verificar</h3>
-                                        <ul class="mt-2 list-disc space-y-1 pl-5 text-xs text-amber-900" data-ai-pending-list></ul>
-                                    </div>
-                                </fieldset>
-
-                                <fieldset class="hidden rounded-2xl border border-slate-200 p-5" data-ai-stage-panel="tree">
-                                    <legend class="px-2 font-black text-blue-950">Árbol de causas propuesto</legend>
-                                    <p class="mb-4 text-xs text-slate-600">Hecho final arriba y antecedentes abajo. Círculo: hecho puntual; rectángulo: condición permanente; línea punteada: vínculo aparente por verificar.</p>
-                                    <div class="mb-3 hidden rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700" data-ai-metadata="tree"></div>
-                                    <p class="hidden mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-900" data-ai-tree-note></p>
-                                    <div class="causal-graph-viewport min-h-16" data-ai-tree-diagram aria-live="polite"></div>
-                                    <p class="mt-3 hidden text-xs text-slate-500" data-ai-guide-reference></p>
-                                </fieldset>
-
-                                <div class="hidden space-y-6" data-ai-stage-panel="measures">
-                                <div class="hidden rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700" data-ai-metadata="measures"></div>
-                                <fieldset class="rounded-2xl border border-sky-200 bg-sky-50/60 p-5">
-                                    <legend class="px-2 font-black text-blue-950">Factores de la matriz sugeridos</legend>
-                                    <p class="text-xs text-slate-600">La IA selecciona factores de la matriz oficial de 222 causas. Revise y desmarque los que no correspondan.</p>
-                                    <div class="mt-3 grid gap-3 text-xs" data-ai-factors>
-                                    </div>
-                                </fieldset>
-
-                                <fieldset class="rounded-2xl border border-slate-200 p-5">
-                                    <legend class="px-2 font-black text-blue-950">Medidas propuestas</legend>
-                                    <div class="mt-3 space-y-4" data-ai-measures>
-                                    </div>
-                                </fieldset>
-
-                                <div class="flex justify-between items-center pt-3 border-t">
-                                    <p class="text-xs text-slate-500">Revise y edite toda la propuesta antes de incorporarla a la investigación.</p>
-                                    <button type="button" class="btn-primary" data-save-ai-proposal disabled>Guardar propuesta</button>
+                            <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+                                <label class="block">
+                                    <span class="label">Respuesta de la IA externa</span>
+                                    <textarea class="input font-mono text-xs" rows="12" maxlength="30000" data-external-response placeholder="Pega aquí la respuesta JSON de la IA externa."></textarea>
+                                </label>
+                                <div class="space-y-3">
+                                    <label class="block"><span class="label">Modelo local para revisar</span><select class="input" data-local-model><option value="">Modelo configurado en LM Studio</option></select></label>
+                                    <button type="button" class="btn-primary w-full" data-import-external>Revisar con IA local y completar la página</button>
+                                    <p class="text-xs text-slate-500">LM Studio coteja la propuesta con las fuentes del expediente. Los resultados quedan como borrador hasta que se guarden.</p>
                                 </div>
+                            </div>
+                            <div class="hidden space-y-3 rounded-xl border border-sky-200 bg-sky-50 p-4" data-analysis-result aria-live="polite">
+                                <h4 class="font-bold text-slate-900">Resultado revisado por la IA local</h4>
+                                <div class="grid gap-3 sm:grid-cols-3 text-sm">
+                                    <p><strong>Hechos:</strong> <span data-result-fact-count>0</span></p>
+                                    <p><strong>Nodos del árbol:</strong> <span data-result-node-count>0</span></p>
+                                    <p><strong>Medidas:</strong> <span data-result-measure-count>0</span></p>
                                 </div>
-                                <p class="hidden rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-bold text-emerald-900" data-ai-saved-status role="status">
-                                    Propuesta incorporada. Se habilitaron los apartados correspondientes.
-                                </p>
+                                <ul class="list-disc space-y-1 pl-5 text-sm text-slate-700" data-analysis-warnings></ul>
+                                <div class="hidden rounded-lg border border-indigo-200 bg-white p-3" data-questionnaire-proposals>
+                                    <h5 class="text-sm font-bold text-indigo-950">Sugerencias de selección para entrevistas</h5>
+                                    <p class="mt-1 text-xs text-slate-600">Son propuestas respaldadas por las fuentes; no modifican ni reemplazan ninguna declaración.</p>
+                                    <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700" data-questionnaire-selections></ul>
+                                </div>
+                                <button type="button" class="btn-primary" data-save-external-analysis disabled>Guardar hechos, árbol y medidas en el expediente</button>
+                                <p class="text-xs text-slate-600">Revisa cada sección antes de guardar. Esta acción reemplaza el análisis estructurado actualmente guardado para este expediente.</p>
                             </div>
                         </section>
 
                         <!-- Sección 4: Hechos Constatados -->
                         @php
                             $dbFacts = collect();
-                            if (! \App\Support\OriginalGiatepSchema::isActive() && !empty($selected['id']) && $selected['id'] !== 'INV-NUEVA') {
+                            if (!empty($selected['id']) && $selected['id'] !== 'INV-NUEVA') {
                                 $invFactsModel = \App\Models\Investigation::where('folio', $selected['id'])->with('facts')->first();
                                 if ($invFactsModel) {
                                     $dbFacts = $invFactsModel->facts;
                                 }
-                            } elseif (! \App\Support\OriginalGiatepSchema::isActive() && !empty($selected['case_id'])) {
+                            } elseif (!empty($selected['case_id'])) {
                                 $caseFactsModel = \App\Models\OccupationalCase::where('folio', $selected['case_id'])->with('investigation.facts')->first();
                                 if ($caseFactsModel && $caseFactsModel->investigation) {
                                     $dbFacts = $caseFactsModel->investigation->facts;
@@ -983,7 +920,16 @@ $statusClass = fn ($status) => match ($status) {
                             }
                         @endphp
                         <section data-section="inv-4" class="hidden space-y-4">
-                            <h3 class="section-title">5. Hechos Constatados (Cronología Verificada)</h3>
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <h3 class="section-title">5. Hechos Constatados (Cronología Verificada)</h3>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <button type="button" class="btn-secondary" data-facts-edit>Editar hechos</button>
+                                    <button type="button" class="btn-secondary hidden" data-fact-add>Agregar hecho</button>
+                                    <button type="button" class="btn-primary hidden" data-facts-save>Guardar hechos</button>
+                                    <button type="button" class="btn-secondary hidden" data-facts-cancel>Cancelar</button>
+                                </div>
+                            </div>
+                            <p class="hidden text-sm text-slate-600" data-facts-status aria-live="polite"></p>
                             <div class="space-y-3" data-derived-facts>
                                 @forelse($dbFacts as $fact)
                                     <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 font-semibold text-slate-800">
@@ -1002,12 +948,12 @@ $statusClass = fn ($status) => match ($status) {
                         <!-- Sección 5: Árbol de Causas Visual -->
                         @php
                             $dbNodes = collect();
-                            if (! \App\Support\OriginalGiatepSchema::isActive() && !empty($selected['id']) && $selected['id'] !== 'INV-NUEVA') {
+                            if (!empty($selected['id']) && $selected['id'] !== 'INV-NUEVA') {
                                 $invTreeModel = \App\Models\Investigation::where('folio', $selected['id'])->with('causalNodes')->first();
                                 if ($invTreeModel) {
                                     $dbNodes = $invTreeModel->causalNodes;
                                 }
-                            } elseif (! \App\Support\OriginalGiatepSchema::isActive() && !empty($selected['case_id'])) {
+                            } elseif (!empty($selected['case_id'])) {
                                 $caseTreeModel = \App\Models\OccupationalCase::where('folio', $selected['case_id'])->with('investigation.causalNodes')->first();
                                 if ($caseTreeModel && $caseTreeModel->investigation) {
                                     $dbNodes = $caseTreeModel->investigation->causalNodes;
@@ -1022,7 +968,7 @@ $statusClass = fn ($status) => match ($status) {
                                     <h3 class="section-title mb-1">6. Árbol de Causas Técnico</h3>
                                     <p class="text-xs text-slate-600">Diagrama causal retrospectivo desde el hecho final (lesión) hacia las causas inmediatas y de gestión.</p>
                                 </div>
-                                <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-900">Método Oficial DCS</span>
+                                <div class="flex items-center gap-3"><button type="button" class="btn-secondary" data-open-results-editor="tree">Editar árbol</button><span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-900">Método Oficial DCS</span></div>
                             </div>
 
                             <!-- Gráfico Visual del Árbol de Causas -->
@@ -1088,6 +1034,7 @@ $statusClass = fn ($status) => match ($status) {
                         <!-- Sección 6: Matriz y Medidas -->
                         <section data-section="inv-6" class="hidden space-y-6">
                             <h3 class="section-title">7. Matriz de Medidas de Control y Plan de Acción</h3>
+                            <button type="button" class="btn-secondary" data-open-results-editor="measures">Editar medidas</button>
                             <div class="card table-card shadow-none">
                                 <table class="data-table">
                                     <thead>
@@ -1096,25 +1043,48 @@ $statusClass = fn ($status) => match ($status) {
                                             <th>Jerarquía de Control</th>
                                             <th>Responsable Institucional</th>
                                             <th>Plazo</th>
+                                            <th>Hecho relacionado</th>
                                             <th>Estado</th>
                                         </tr>
                                     </thead>
                                     <tbody data-derived-measures>
-                                        @forelse($demo['measures']->where('case_id', $selected['case_id']) as $m)
+                                        @php
+                                            $dbMeasures = collect();
+                                            if (!empty($selected['id']) && $selected['id'] !== 'INV-NUEVA') {
+                                                $measureInvestigation = \App\Models\Investigation::where('folio', $selected['id'])->with('measures')->first();
+                                                if ($measureInvestigation) $dbMeasures = $measureInvestigation->measures;
+                                            }
+                                            if ($dbMeasures->isEmpty() && !empty($selected['case_id'])) {
+                                                $measureCase = \App\Models\OccupationalCase::where('folio', $selected['case_id'])->with('investigation.measures')->first();
+                                                if ($measureCase?->investigation) $dbMeasures = $measureCase->investigation->measures;
+                                            }
+                                            $displayMeasures = $dbMeasures->isNotEmpty()
+                                                ? $dbMeasures
+                                                : $demo['measures']->where('case_id', $selected['case_id']);
+                                        @endphp
+                                        @forelse($displayMeasures as $m)
                                             <tr>
-                                                <td class="font-bold text-slate-900">{{ $m['description'] }}</td>
-                                                <td><span class="rounded bg-sky-50 px-2 py-0.5 text-xs font-bold text-sky-800">{{ $m['category'] }}</span></td>
-                                                <td>{{ $m['owner'] }}</td>
-                                                <td>{{ $m['due'] }}</td>
-                                                <td><span class="status {{ $statusClass($m['status']) }}">{{ $m['status'] }}</span></td>
+                                                <td class="font-bold text-slate-900">{{ data_get($m, 'description') }}</td>
+                                                <td><span class="rounded bg-sky-50 px-2 py-0.5 text-xs font-bold text-sky-800">{{ data_get($m, 'category') }}</span></td>
+                                                <td>{{ data_get($m, 'responsible', data_get($m, 'owner', '')) }}</td>
+                                                <td>{{ data_get($m, 'due_date') ? \Illuminate\Support\Carbon::parse(data_get($m, 'due_date'))->format('d-m-Y') : data_get($m, 'due', '') }}</td>
+                                                <td>Ver detalle de medida</td>
+                                                <td><span class="status {{ $statusClass(data_get($m, 'status', 'Pendiente')) }}">{{ data_get($m, 'status', 'Pendiente') }}</span></td>
                                             </tr>
                                         @empty
-                                            <tr><td colspan="5" class="p-6 text-center text-slate-500">Aún no hay medidas registradas para esta investigación.</td></tr>
+                                            <tr><td colspan="6" class="p-6 text-center text-slate-500">Aún no hay medidas registradas para esta investigación.</td></tr>
                                         @endforelse
                                     </tbody>
                                 </table>
                             </div>
                         </section>
+
+                        <div class="hidden rounded-2xl border border-sky-200 bg-white p-5 shadow-lg sm:p-7" data-results-editor aria-label="Editar resultados">
+                            <div class="flex items-center justify-between gap-4"><h3 class="text-xl font-black" data-results-editor-title>Editar resultados</h3><button type="button" class="btn-secondary" data-close-results-editor>Cerrar edición</button></div>
+                            <p class="my-3 text-sm text-slate-600">Corrige los datos o agrega y quita elementos de esta sección. Guarda para aplicar los cambios al expediente.</p>
+                            <div class="space-y-6" data-results-editor-body></div>
+                            <div class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t pt-4"><p class="text-sm text-slate-600" data-results-editor-status></p><button type="button" class="btn-primary" data-save-results-editor>Guardar esta sección</button></div>
+                        </div>
 
                         <!-- Sección 7: Participantes -->
                         <section data-section="inv-7" class="hidden space-y-6">
@@ -1186,6 +1156,7 @@ $statusClass = fn ($status) => match ($status) {
                     </footer>
                 </form>
             </div>
+            @endif
         @else
             <!-- Listado de Investigaciones -->
             <div class="filter-bar">

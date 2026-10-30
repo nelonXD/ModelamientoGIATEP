@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Establishment;
+use App\Models\Investigation;
+use App\Models\OccupationalCase;
 use App\Models\Role;
 use App\Models\User;
 use App\Support\DemoWorkspace;
@@ -59,12 +62,12 @@ class DemoWorkspaceTest extends TestCase
 
     private function createDemoCaseAndInvestigation(User $user): void
     {
-        $establishment = \App\Models\Establishment::firstOrCreate(
+        $establishment = Establishment::firstOrCreate(
             ['name' => 'CESFAM Nororiente'],
             ['type' => 'CESFAM', 'is_active' => true]
         );
 
-        $case = \App\Models\OccupationalCase::create([
+        $case = OccupationalCase::create([
             'folio' => 'CAS-2026-017',
             'created_by' => $user->id,
             'establishment_id' => $establishment->id,
@@ -88,7 +91,7 @@ class DemoWorkspaceTest extends TestCase
             'witnesses' => 'Juan Pérez (Testigo directo)',
         ]);
 
-        \App\Models\Investigation::create([
+        Investigation::create([
             'folio' => 'INV-2026-011',
             'occupational_case_id' => $case->id,
             'owner_id' => $user->id,

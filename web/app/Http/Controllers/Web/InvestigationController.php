@@ -57,9 +57,12 @@ class InvestigationController extends Controller
         abort_unless($request->user()->hasPermission('investigations.read'), 403);
 
         $workspace = app(DemoWorkspace::class);
-        $demo = $workspace->data();
         $caseFolio = $request->string('case')->toString();
+        $demo = $workspace->data($caseFolio !== '', $caseFolio !== '');
         $selected = null;
+        $leadershipReport = $request->user()->hasRole('jefatura') || $request->user()->hasRole('alta-direccion');
+        $reportCase = null;
+        $reportInvestigation = null;
 
         if ($caseFolio !== '') {
             $case = $demo['cases']->firstWhere('id', $caseFolio) ?? $this->caseFromModule($caseFolio);
@@ -90,7 +93,7 @@ class InvestigationController extends Controller
                         'updated' => $inv->updated_at->toDateString(),
                         'kind' => 'Árbol de causas',
                         'final_story' => $inv->final_story ?: $dbCase->narrative,
-                        'has_facts' => ! OriginalGiatepSchema::isActive() && $inv->facts()->exists(),
+                        'has_facts' => $inv->facts()->exists(),
                         'pending' => 'Completar árbol de causas y validar medidas',
                     ];
                 } else {
@@ -111,6 +114,15 @@ class InvestigationController extends Controller
                     ];
                 }
             }
+
+            if ($leadershipReport) {
+                $relations = ['establishment', 'evidences', 'investigation.owner'];
+                if (! OriginalGiatepSchema::isActive()) {
+                    $relations = [...$relations, 'investigation.facts', 'investigation.causalNodes', 'investigation.measures', 'investigation.interviews.answers', 'investigation.causeFactors'];
+                }
+                $reportCase = OccupationalCase::query()->with($relations)->where('folio', $caseFolio)->first();
+                $reportInvestigation = $reportCase?->investigation;
+            }
         }
 
         return view('demo.workspace', [
@@ -120,6 +132,9 @@ class InvestigationController extends Controller
             'demo' => $demo,
             'title' => 'Investigaciones',
             'description' => 'Recopilación de antecedentes, evidencias, entrevistas y análisis causal.',
+            'leadershipReport' => $leadershipReport,
+            'reportCase' => $reportCase,
+            'reportInvestigation' => $reportInvestigation,
         ]);
     }
 

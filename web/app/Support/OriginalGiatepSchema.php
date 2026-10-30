@@ -7,9 +7,11 @@ use Illuminate\Support\Facades\Schema;
 
 class OriginalGiatepSchema
 {
+    private static ?bool $active = null;
+
     public static function isActive(): bool
     {
-        return DB::connection()->getDriverName() === 'mysql'
+        return self::$active ??= DB::connection()->getDriverName() === 'mysql'
             && Schema::hasTable('USUARIO')
             && Schema::hasTable('CASO')
             && Schema::hasTable('DEPENDENCIA');

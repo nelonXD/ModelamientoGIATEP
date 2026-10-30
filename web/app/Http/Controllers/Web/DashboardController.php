@@ -21,8 +21,8 @@ class DashboardController extends Controller
         $dashboardProfile = $dashboardData->profileFor($user);
         $availableActions = $dashboardData->actionsFor($user);
 
-        $demo = $workspace->data();
-        $metrics = $workspace->metrics();
+        $demo = $workspace->data(includeMeasures: true);
+        $metrics = $workspace->metrics($demo);
         $adminMetrics = [
             'pending_requests' => OriginalGiatepSchema::isActive() ? 0 : RegistrationRequest::query()->where('status', 'pending')->count(),
             'active_users' => User::query()->where(User::columnFor('status'), 'active')->count(),

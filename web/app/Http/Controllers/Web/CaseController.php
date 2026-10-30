@@ -33,7 +33,7 @@ class CaseController extends Controller
             'workerRut' => $case->worker_rut, 'jobTitle' => $case->job_title, 'workplace' => $case->workplace,
             'phone' => $case->worker_phone, 'employerName' => $case->employer_name, 'employerRut' => $case->employer_rut,
             'administrator' => $case->administrator, 'establishment' => $case->establishment?->name ?? $case->workplace,
-            'employerAddress' => $case->employer_address, 'date' => $case->event_date->format('d-m-Y'),
+            'employerAddress' => $case->employer_address, 'date' => $case->event_date?->format('d-m-Y') ?? '',
             'time' => $case->event_time ? substr((string) $case->event_time, 0, 5) : '', 'location' => $case->event_location,
             'status' => ! OriginalGiatepSchema::isActive() && $case->investigation && in_array($case->status, ['Borrador', 'Registrado'], true)
                 ? 'En investigación'
@@ -264,7 +264,10 @@ class CaseController extends Controller
     {
         $prefix = 'GIATEP-'.now()->year.'-';
         $folioColumn = OriginalGiatepSchema::isActive() ? 'Folio' : 'folio';
-        $last = OccupationalCase::query()->where($folioColumn, 'like', $prefix.'%')->lockForUpdate()->max($folioColumn);
+        $last = OccupationalCase::query()
+            ->whereRaw($folioColumn.' REGEXP ?', ['^'.preg_quote($prefix, '/').'[0-9]{3}$'])
+            ->lockForUpdate()
+            ->max($folioColumn);
         $sequence = $last ? ((int) substr($last, -3)) + 1 : 1;
 
         return $prefix.str_pad((string) $sequence, 3, '0', STR_PAD_LEFT);
@@ -317,6 +320,7 @@ class CaseController extends Controller
             if (str_contains(strtolower($data['case_type']), 'enfermedad')) {
                 DB::table('detalle_enfermedad')->insert([
                     'Id_Caso' => $caseId, 'Descripcion_Sintomas' => $data['narrative'],
+                    'Fecha_Inicio_Sintomas' => $data['event_date'],
                     'Duracion_Sintomas_Unidad' => null, 'Molestias_Previas' => $this->yesNo($details['previous_symptoms'] ?? null),
                     'Actividad_Inicio_Sintomas' => $details['activity_when_symptoms_began'] ?? null,
                     'Puesto_Inicio_Sintomas' => $details['symptom_job_position'] ?? null,

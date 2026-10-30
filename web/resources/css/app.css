@@ -234,17 +234,26 @@
     .cause-connector { 
         @apply py-2 font-black text-sky-700 text-xs tracking-widest; 
     }
-    .causal-graph-viewport { @apply overflow-x-auto rounded-2xl border border-slate-200 bg-gradient-to-b from-sky-50/70 to-white p-4; }
-    .causal-graph-svg { display: block; min-width: 760px; width: 100%; height: auto; }
-    .causal-graph-edge { fill: none; stroke: #71869a; stroke-width: 2; }
-    .causal-graph-edge.is-apparent { stroke: #c58a1b; stroke-dasharray: 7 6; }
-    .causal-arrow-head { fill: #71869a; }
-    .causal-arrow-head.is-apparent { fill: #c58a1b; }
-    .causal-graph-node rect { fill: #e7f1ff; stroke: #3981bd; stroke-width: 2; }
-    .causal-graph-node ellipse { fill: #e5f6ee; stroke: #28865c; stroke-width: 2; }
-    .causal-graph-node.is-final ellipse, .causal-graph-node.is-final rect { fill: #dceeff; stroke: #236aa4; stroke-width: 3; }
-    .causal-graph-label { fill: #18324b; text-anchor: middle; font-size: 13px; font-weight: 650; }
-    .causal-graph-kind { fill: #587087; text-anchor: middle; font-size: 10px; font-weight: 750; letter-spacing: .5px; }
+    .causal-graph-viewport {
+        @apply overflow-x-auto rounded-2xl border border-slate-200 bg-white p-4;
+        background-image: radial-gradient(#cbd5e1 0.7px, transparent 0.7px);
+        background-size: 18px 18px;
+    }
+    .causal-graph-svg { display: block; min-width: 680px; width: 100%; height: auto; }
+    .causal-graph-edge { fill: none; stroke: #475569; stroke-width: 2.2; }
+    .causal-graph-edge.is-branch, .causal-graph-edge.is-apparent { stroke: #f97316; }
+    .causal-graph-edge.is-apparent { stroke-dasharray: 6 5; }
+    .causal-arrow-head { fill: #475569; }
+    .causal-arrow-head.is-branch { fill: #f97316; }
+    .causal-graph-node.is-permanent rect { fill: #fff; stroke: #00b875; stroke-width: 2.5; }
+    .causal-graph-node.is-event circle { fill: #fff; stroke: #397dff; stroke-width: 2.5; }
+    .causal-graph-node.is-final polygon { fill: #fff; stroke: #ef4444; stroke-width: 3; }
+    .causal-graph-number { text-anchor: middle; font-size: 14px; font-weight: 800; }
+    .causal-graph-node.is-permanent .causal-graph-number { fill: #008e5b; }
+    .causal-graph-node.is-event .causal-graph-number { fill: #2563eb; }
+    .causal-graph-node.is-final .causal-graph-number { fill: #dc2626; }
+    .causal-graph-description-card { fill: #fff; stroke: #e2e8f0; stroke-width: 1; filter: drop-shadow(0 2px 3px rgb(15 23 42 / 12%)); }
+    .causal-graph-label { fill: #1e293b; text-anchor: middle; font-size: 11px; font-weight: 600; }
     .progress { 
         @apply h-2 w-24 overflow-hidden rounded-full bg-slate-100; 
     }

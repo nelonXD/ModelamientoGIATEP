@@ -63,6 +63,16 @@ class InterviewAnswer extends Model
 
     public function getValueAttribute($value)
     {
-        return is_string($value) ? json_decode($value, true) : $value;
+        $storedValue = OriginalGiatepSchema::isActive()
+            ? ($this->attributes['Texto_Respuesta'] ?? null)
+            : $value;
+
+        if (! is_string($storedValue)) {
+            return $storedValue;
+        }
+
+        $decoded = json_decode($storedValue, true);
+
+        return json_last_error() === JSON_ERROR_NONE ? $decoded : $storedValue;
     }
 }

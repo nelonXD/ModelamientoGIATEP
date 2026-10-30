@@ -56,6 +56,8 @@ Route::middleware('auth')->group(function (): void {
         Route::get('/investigaciones', InvestigationController::class)->name('investigations.index');
         Route::post('/investigaciones/{case:folio}/iniciar', [InvestigationController::class, 'start'])->name('investigations.start');
         Route::post('/investigaciones/relato-final', [AiAnalysisController::class, 'storeFinalStory'])->name('investigations.story.store');
+        Route::post('/investigaciones/analisis-externo/prompt', [AiAnalysisController::class, 'externalAnalysisPrompt'])->name('investigations.external.prompt');
+        Route::post('/investigaciones/analisis-externo/importar', [AiAnalysisController::class, 'importExternalAnalysis'])->middleware('throttle:5,1')->name('investigations.external.import');
         Route::post('/investigaciones/relato-final/generar', [AiAnalysisController::class, 'generateFinalStory'])->middleware('throttle:5,1')->name('investigations.story.generate');
         Route::post('/investigaciones/asistente-local', [AiAnalysisController::class, 'askCaseAgent'])->middleware('throttle:10,1')->name('investigations.ai.agent');
         Route::post('/investigaciones/analizar', [AiAnalysisController::class, 'analyze'])->middleware('throttle:10,1')->name('investigations.ai.analyze');

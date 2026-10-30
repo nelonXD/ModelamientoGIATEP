@@ -95,6 +95,49 @@ class AiAnalysisController extends Controller
         return response()->json(['message' => 'Relato final guardado correctamente.', 'investigation' => $investigation->folio]);
     }
 
+    public function externalAnalysisPrompt(Request $request, LmStudioFinalStoryGenerator $generator): JsonResponse
+    {
+        abort_unless($request->user()->hasPermission('investigations.read'), 403);
+        $validated = $request->validate([
+            'case_folio' => ['required', 'string', $this->caseFolioExistsRule()],
+            'story' => ['nullable', 'string', 'max:30000'],
+            'questionnaire_options' => ['sometimes', 'array', 'max:120'],
+            'questionnaire_options.*.field' => ['required', 'string', 'max:100', 'distinct'],
+            'questionnaire_options.*.type' => ['required', 'in:radio,checkbox'],
+            'questionnaire_options.*.question' => ['nullable', 'string', 'max:500'],
+            'questionnaire_options.*.options' => ['required', 'array', 'max:40'],
+            'questionnaire_options.*.options.*' => ['required', 'string', 'max:255'],
+        ]);
+        $case = OccupationalCase::query()->with(['investigation.interviews.answers.question', 'evidences'])
+            ->where(OriginalGiatepSchema::isActive() ? 'Folio' : 'folio', $validated['case_folio'])->firstOrFail();
+
+        return response()->json(['prompt' => $generator->externalAnalysisPrompt($case, $validated['story'] ?? null, $validated['questionnaire_options'] ?? [])]);
+    }
+
+    public function importExternalAnalysis(Request $request, LmStudioFinalStoryGenerator $storyGenerator, StagedLmStudioInvestigationAnalyzer $analyzer): JsonResponse
+    {
+        abort_unless($request->user()->hasPermission('investigations.read'), 403);
+        $validated = $request->validate([
+            'case_folio' => ['required', 'string', $this->caseFolioExistsRule()],
+            'story' => ['required', 'string', 'min:30', 'max:30000'],
+            'external_response' => ['required', 'string', 'min:10', 'max:30000'],
+            'model' => ['nullable', 'string', 'max:255'],
+            'questionnaire_options' => ['sometimes', 'array', 'max:120'],
+            'questionnaire_options.*.field' => ['required', 'string', 'max:100', 'distinct'],
+            'questionnaire_options.*.type' => ['required', 'in:radio,checkbox'],
+            'questionnaire_options.*.question' => ['nullable', 'string', 'max:500'],
+            'questionnaire_options.*.options' => ['required', 'array', 'max:40'],
+            'questionnaire_options.*.options.*' => ['required', 'string', 'max:255'],
+        ]);
+        $case = OccupationalCase::query()->with(['investigation.interviews.answers.question', 'evidences'])
+            ->where(OriginalGiatepSchema::isActive() ? 'Folio' : 'folio', $validated['case_folio'])->firstOrFail();
+        $options = $validated['questionnaire_options'] ?? [];
+        $input = [...$validated, 'source_context' => $storyGenerator->externalAnalysisContext($case, $validated['story'], $options)];
+
+        return $this->runStage($request, 'integracion-de-ia-externa', $input,
+            fn (): array => $analyzer->importExternalResponse($input['source_context'], $validated['external_response'], $validated['model'] ?? null, $options));
+    }
+
     public function analyze(Request $request, LmStudioInvestigationAnalyzer $analyzer): JsonResponse
     {
         abort_unless($request->user()->hasPermission('investigations.read'), 403);
@@ -291,7 +334,7 @@ class AiAnalysisController extends Controller
             'tree.graph.nodes.*.type' => ['required', 'in:hecho,permanente'],
             'tree.graph.nodes.*.description' => ['required', 'string', 'max:600'],
             'tree.graph.edges' => ['present_with:tree.graph', 'array', 'max:40'],
-            'tree.graph.edges.*.evidence' => ['sometimes', 'string', 'max:1000'],
+            'tree.graph.edges.*.evidence' => ['nullable', 'string', 'max:1000'],
             'tree.graph.edges.*.from' => ['required', 'string', 'max:40'], 'tree.graph.edges.*.to' => ['required', 'string', 'max:40'],
             'tree.graph.edges.*.link_type' => ['required', 'in:causal,aparente'],
             'tree.graph.edges.*.logic' => ['required', 'in:cadena,conjuncion,disyuncion'], 'tree.graph.edges.*.basis' => ['required', 'string', 'max:1000'],
@@ -304,6 +347,7 @@ class AiAnalysisController extends Controller
             'fact_details.*.source_ids' => ['sometimes', 'array', 'max:50'], 'fact_details.*.source_ids.*' => ['string', 'max:80'],
             'prompt_version' => ['nullable', 'string', 'max:100'],
             'quality_warnings' => ['sometimes', 'array', 'max:30'], 'quality_warnings.*' => ['string', 'max:2000'],
+            'manual_entry' => ['sometimes', 'boolean'],
             'factor_codes' => ['present', 'array', 'max:24'], 'factor_codes.*' => ['string', 'exists:cause_factors,codigo_efectivo'],
             'measures' => ['present', 'array'], 'measures.*.description' => ['required', 'string', 'max:3000'],
             'measures.*.category' => ['required', 'string', 'max:80'], 'measures.*.responsible' => ['required', 'string', 'max:255'],
@@ -324,7 +368,7 @@ class AiAnalysisController extends Controller
                         'evidence_status' => $fact['evidence_status'], 'evidence' => $fact['evidence'] ?? '',
                         'source' => $fact['source'] ?? 'Relato final',
                     ], $validated['fact_details']);
-                    $analyzer->validateReviewedTree($graph, $reviewedFacts, true);
+                    $analyzer->validateReviewedTree($graph, $reviewedFacts, ! ($validated['manual_entry'] ?? false));
                 }
             } catch (RuntimeException $exception) {
                 throw ValidationException::withMessages(['tree.graph' => $exception->getMessage()]);
@@ -337,7 +381,8 @@ class AiAnalysisController extends Controller
             }
         }
 
-        $investigation = DB::transaction(function () use ($request, $validated): Investigation {
+        $manualEntry = (bool) ($validated['manual_entry'] ?? false);
+        $investigation = DB::transaction(function () use ($request, $validated, $manualEntry): Investigation {
             $case = OccupationalCase::where('folio', $validated['case_folio'])->firstOrFail();
             $investigation = Investigation::firstOrCreate(['occupational_case_id' => $case->id], [
                 'folio' => 'INV-'.now()->year.'-'.str_pad((string) (Investigation::query()->lockForUpdate()->count() + 1), 3, '0', STR_PAD_LEFT),
@@ -348,16 +393,16 @@ class AiAnalysisController extends Controller
             $investigation->causalNodes()->delete();
             $investigation->measures()->delete();
             foreach ($validated['facts'] as $position => $fact) {
-                $investigation->facts()->create(['position' => $position + 1, 'description' => $fact, 'ai_generated' => true]);
+                $investigation->facts()->create(['position' => $position + 1, 'description' => $fact, 'ai_generated' => ! $manualEntry]);
             }
-            $investigation->causalNodes()->create(['node_type' => 'final', 'position' => 1, 'description' => $validated['tree']['final'], 'ai_generated' => true]);
+            $investigation->causalNodes()->create(['node_type' => 'final', 'position' => 1, 'description' => $validated['tree']['final'], 'ai_generated' => ! $manualEntry]);
             $origin = trim($validated['tree']['origin']);
             $final = trim($validated['tree']['final']);
             if ($origin !== '' && $origin !== $final) {
-                $investigation->causalNodes()->create(['node_type' => 'origin', 'position' => 1, 'description' => $validated['tree']['origin'], 'ai_generated' => true]);
+                $investigation->causalNodes()->create(['node_type' => 'origin', 'position' => 1, 'description' => $validated['tree']['origin'], 'ai_generated' => ! $manualEntry]);
             }
             foreach ($validated['tree']['causes'] as $position => $cause) {
-                $investigation->causalNodes()->create(['node_type' => 'cause', 'position' => $position + 1, 'description' => $cause, 'ai_generated' => true]);
+                $investigation->causalNodes()->create(['node_type' => 'cause', 'position' => $position + 1, 'description' => $cause, 'ai_generated' => ! $manualEntry]);
             }
             if (! empty($validated['tree']['graph'])) {
                 $graph = $validated['tree']['graph'];
@@ -368,12 +413,12 @@ class AiAnalysisController extends Controller
                 }
                 $investigation->causalNodes()->create([
                     'node_type' => 'graph', 'position' => 1,
-                    'description' => json_encode($graph, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), 'ai_generated' => true,
+                    'description' => json_encode($graph, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), 'ai_generated' => ! $manualEntry,
                 ]);
             }
             $factorIds = CauseFactor::query()->whereIn('codigo_efectivo', $validated['factor_codes'])->pluck('id');
             $investigation->belongsToMany(CauseFactor::class, 'investigation_cause_factor')->sync(
-                $factorIds->mapWithKeys(fn (int $id): array => [$id => ['origen' => 'ia', 'validated_by' => $request->user()->id, 'validated_at' => now()]])->all(),
+                $factorIds->mapWithKeys(fn (int $id): array => [$id => ['origen' => $manualEntry ? 'manual' : 'ia', 'validated_by' => $request->user()->id, 'validated_at' => now()]])->all(),
             );
             $graphNodes = collect($validated['tree']['graph']['nodes'] ?? [])->keyBy('id');
             foreach ($validated['measures'] as $measure) {
@@ -387,13 +432,13 @@ class AiAnalysisController extends Controller
                 }
                 $investigation->measures()->create([
                     'description' => $description, 'category' => $measure['category'], 'responsible' => $measure['responsible'],
-                    'due_date' => ($measure['due_date'] ?? null) ?: null, 'ai_generated' => true,
+                    'due_date' => ($measure['due_date'] ?? null) ?: null, 'ai_generated' => ! $manualEntry,
                 ]);
             }
 
             DB::table('ai_analysis_runs')->insert([
                 'investigation_id' => $investigation->id, 'requested_by' => $request->user()->id,
-                'modelo' => $validated['model'] ?? 'revision-manual',
+                'modelo' => $manualEntry ? 'ingreso-manual' : ($validated['model'] ?? 'revision-manual'),
                 'entrada' => json_encode(['stage' => 'propuesta revisada', 'data' => $validated], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
                 'salida' => json_encode(['investigation' => $investigation->folio, 'review_completed' => true], JSON_THROW_ON_ERROR),
                 'estado' => 'guardado', 'created_at' => now(), 'updated_at' => now(),
