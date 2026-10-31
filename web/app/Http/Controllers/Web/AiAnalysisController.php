@@ -7,6 +7,7 @@ use App\Models\CauseFactor;
 use App\Models\Investigation;
 use App\Models\OccupationalCase;
 use App\Models\QuestionnaireForm;
+use App\Services\GroqPromptGenerator;
 use App\Services\LmStudioCaseAgent;
 use App\Services\LmStudioFinalStoryGenerator;
 use App\Services\LmStudioInvestigationAnalyzer;
@@ -117,7 +118,7 @@ class AiAnalysisController extends Controller
         $prompt = $generator->externalAnalysisPrompt($case, $validated['story'] ?? null, $validated['questionnaire_options'] ?? []);
         if (($validated['prompt_provider'] ?? 'template') === 'groq') {
             try {
-                $prompt = app(\App\Services\GroqPromptGenerator::class)->generate($prompt);
+                $prompt = app(GroqPromptGenerator::class)->generate($prompt);
             } catch (RuntimeException $exception) {
                 report($exception);
 
