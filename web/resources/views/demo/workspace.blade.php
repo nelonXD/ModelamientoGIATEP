@@ -864,7 +864,8 @@ $statusClass = fn ($status) => match ($status) {
                                 <span class="label">Relato técnico para analizar</span>
                                 <textarea class="input" rows="7" maxlength="30000" data-analysis-story>{{ $linkedCaseStory }}</textarea>
                             </label>
-                            <div class="flex flex-wrap items-center gap-3">
+                            <div class="flex flex-wrap items-end gap-3">
+                                <label class="block"><span class="label">Cómo generar el prompt</span><select class="input" data-prompt-provider><option value="template">Plantilla del sistema</option><option value="groq">Redactar con modelo de API (Groq)</option></select></label>
                                 <button type="button" class="btn-primary" data-create-external-prompt>Generar prompt para IA externa</button>
                                 <span class="text-sm text-slate-600" data-analysis-status role="status" aria-live="polite">El prompt todavía no se ha generado.</span>
                             </div>
@@ -883,11 +884,12 @@ $statusClass = fn ($status) => match ($status) {
                                 <div class="space-y-3">
                                     <label class="block"><span class="label">Modelo local para revisar</span><select class="input" data-local-model><option value="">Modelo configurado en LM Studio</option></select></label>
                                     <button type="button" class="btn-primary w-full" data-import-external>Revisar con IA local y completar la página</button>
-                                    <p class="text-xs text-slate-500">LM Studio coteja la propuesta con las fuentes del expediente. Los resultados quedan como borrador hasta que se guarden.</p>
+                                    <button type="button" class="btn-secondary w-full" data-fill-without-ai>Completar campos sin IA</button>
+                                    <p class="text-xs text-slate-500">El botón superior contrasta la respuesta con LM Studio. El inferior carga el JSON como borrador local, sin consultar modelos. Revisa los datos y pulsa “Guardar cambios” al final del formulario para guardar también los hechos, el árbol y las medidas.</p>
                                 </div>
                             </div>
                             <div class="hidden space-y-3 rounded-xl border border-sky-200 bg-sky-50 p-4" data-analysis-result aria-live="polite">
-                                <h4 class="font-bold text-slate-900">Resultado revisado por la IA local</h4>
+                                <h4 class="font-bold text-slate-900">Borrador del análisis</h4>
                                 <div class="grid gap-3 sm:grid-cols-3 text-sm">
                                     <p><strong>Hechos:</strong> <span data-result-fact-count>0</span></p>
                                     <p><strong>Nodos del árbol:</strong> <span data-result-node-count>0</span></p>
@@ -908,12 +910,12 @@ $statusClass = fn ($status) => match ($status) {
                         @php
                             $dbFacts = collect();
                             if (!empty($selected['id']) && $selected['id'] !== 'INV-NUEVA') {
-                                $invFactsModel = \App\Models\Investigation::where('folio', $selected['id'])->with('facts')->first();
+                                $invFactsModel = \App\Models\Investigation::where(\App\Support\OriginalGiatepSchema::isActive() ? 'Folio' : 'folio', $selected['id'])->with('facts')->first();
                                 if ($invFactsModel) {
                                     $dbFacts = $invFactsModel->facts;
                                 }
                             } elseif (!empty($selected['case_id'])) {
-                                $caseFactsModel = \App\Models\OccupationalCase::where('folio', $selected['case_id'])->with('investigation.facts')->first();
+                                $caseFactsModel = \App\Models\OccupationalCase::where(\App\Support\OriginalGiatepSchema::isActive() ? 'Folio' : 'folio', $selected['case_id'])->with('investigation.facts')->first();
                                 if ($caseFactsModel && $caseFactsModel->investigation) {
                                     $dbFacts = $caseFactsModel->investigation->facts;
                                 }
@@ -949,12 +951,12 @@ $statusClass = fn ($status) => match ($status) {
                         @php
                             $dbNodes = collect();
                             if (!empty($selected['id']) && $selected['id'] !== 'INV-NUEVA') {
-                                $invTreeModel = \App\Models\Investigation::where('folio', $selected['id'])->with('causalNodes')->first();
+                                $invTreeModel = \App\Models\Investigation::where(\App\Support\OriginalGiatepSchema::isActive() ? 'Folio' : 'folio', $selected['id'])->with('causalNodes')->first();
                                 if ($invTreeModel) {
                                     $dbNodes = $invTreeModel->causalNodes;
                                 }
                             } elseif (!empty($selected['case_id'])) {
-                                $caseTreeModel = \App\Models\OccupationalCase::where('folio', $selected['case_id'])->with('investigation.causalNodes')->first();
+                                $caseTreeModel = \App\Models\OccupationalCase::where(\App\Support\OriginalGiatepSchema::isActive() ? 'Folio' : 'folio', $selected['case_id'])->with('investigation.causalNodes')->first();
                                 if ($caseTreeModel && $caseTreeModel->investigation) {
                                     $dbNodes = $caseTreeModel->investigation->causalNodes;
                                 }
@@ -1051,11 +1053,11 @@ $statusClass = fn ($status) => match ($status) {
                                         @php
                                             $dbMeasures = collect();
                                             if (!empty($selected['id']) && $selected['id'] !== 'INV-NUEVA') {
-                                                $measureInvestigation = \App\Models\Investigation::where('folio', $selected['id'])->with('measures')->first();
+                                                $measureInvestigation = \App\Models\Investigation::where(\App\Support\OriginalGiatepSchema::isActive() ? 'Folio' : 'folio', $selected['id'])->with('measures')->first();
                                                 if ($measureInvestigation) $dbMeasures = $measureInvestigation->measures;
                                             }
                                             if ($dbMeasures->isEmpty() && !empty($selected['case_id'])) {
-                                                $measureCase = \App\Models\OccupationalCase::where('folio', $selected['case_id'])->with('investigation.measures')->first();
+                                                $measureCase = \App\Models\OccupationalCase::where(\App\Support\OriginalGiatepSchema::isActive() ? 'Folio' : 'folio', $selected['case_id'])->with('investigation.measures')->first();
                                                 if ($measureCase?->investigation) $dbMeasures = $measureCase->investigation->measures;
                                             }
                                             $displayMeasures = $dbMeasures->isNotEmpty()
@@ -1149,7 +1151,10 @@ $statusClass = fn ($status) => match ($status) {
 
                     <footer class="flex flex-wrap justify-between gap-3 border-t bg-slate-50/90 p-5">
                         @if($selected['status'] === 'En desarrollo')
-                        <button class="btn-secondary" type="submit" onclick="this.form.querySelector('[data-investigation-workflow-action]').value='save'">Guardar cambios</button>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <button class="btn-secondary" type="submit" formnovalidate data-save-workflow onclick="this.form.querySelector('[data-investigation-workflow-action]').value='save'">Guardar cambios</button>
+                            <p class="text-sm font-semibold text-slate-700" data-workflow-save-status role="status" aria-live="polite"></p>
+                        </div>
                         <div class="flex gap-2">
                             <button name="workflow_action" value="submit" class="btn-primary" onclick="return confirm('La investigación pasará a revisión de Prevención. ¿Desea continuar?')">Pasar a revisión</button>
                         </div>

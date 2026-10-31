@@ -124,7 +124,7 @@ class InvestigationController extends Controller
             $selected = $demo['investigations']->firstWhere('case_id', $caseFolio);
 
             if (! $selected) {
-                $dbCase = OccupationalCase::where('folio', $caseFolio)->with('investigation.owner')->first();
+                $dbCase = OccupationalCase::where(OriginalGiatepSchema::isActive() ? 'Folio' : 'folio', $caseFolio)->with('investigation.owner')->first();
                 if ($dbCase && $dbCase->investigation) {
                     $inv = $dbCase->investigation;
                     $selected = [
@@ -166,7 +166,7 @@ class InvestigationController extends Controller
                 if (! OriginalGiatepSchema::isActive()) {
                     $relations = [...$relations, 'investigation.facts', 'investigation.causalNodes', 'investigation.measures', 'investigation.interviews.answers', 'investigation.causeFactors'];
                 }
-                $reportCase = OccupationalCase::query()->with($relations)->where('folio', $caseFolio)->first();
+                $reportCase = OccupationalCase::query()->with($relations)->where(OriginalGiatepSchema::isActive() ? 'Folio' : 'folio', $caseFolio)->first();
                 $reportInvestigation = $reportCase?->investigation;
             }
         }
@@ -184,7 +184,7 @@ class InvestigationController extends Controller
             foreach ($reportObservations as $observation) {
                 $observation->replies = DB::table('investigation_observations')->where('parent_id', $observation->id)->orderBy('created_at')->get();
             }
-            $caseInvestigation = OccupationalCase::where('folio', $caseFolio)->with('investigation.owner')->first()?->investigation;
+            $caseInvestigation = OccupationalCase::where(OriginalGiatepSchema::isActive() ? 'Folio' : 'folio', $caseFolio)->with('investigation.owner')->first()?->investigation;
             $canReplyObservation = $caseInvestigation?->owner?->rut === $request->user()->rut
                 && ($request->user()->hasRole('cphs') || $request->user()->hasRole('delegado') || $request->user()->hasRole('prevencion'));
         }
@@ -208,7 +208,7 @@ class InvestigationController extends Controller
     /** @return array<string, mixed>|null */
     private function caseFromModule(string $folio): ?array
     {
-        $storedCase = OccupationalCase::query()->with(['establishment', 'investigation'])->where('folio', $folio)->first();
+        $storedCase = OccupationalCase::query()->with(['establishment', 'investigation'])->where(OriginalGiatepSchema::isActive() ? 'Folio' : 'folio', $folio)->first();
         if ($storedCase) {
             return [
                 'id' => $storedCase->folio, 'type' => $storedCase->case_type, 'worker' => $storedCase->worker_name,

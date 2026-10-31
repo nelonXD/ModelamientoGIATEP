@@ -103,6 +103,7 @@ class AiAnalysisController extends Controller
         $validated = $request->validate([
             'case_folio' => ['required', 'string', $this->caseFolioExistsRule()],
             'story' => ['nullable', 'string', 'max:30000'],
+            'prompt_provider' => ['nullable', 'in:template,groq'],
             'questionnaire_options' => ['sometimes', 'array', 'max:120'],
             'questionnaire_options.*.field' => ['required', 'string', 'max:100', 'distinct'],
             'questionnaire_options.*.type' => ['required', 'in:radio,checkbox'],
@@ -113,7 +114,18 @@ class AiAnalysisController extends Controller
         $case = OccupationalCase::query()->with(['investigation.interviews.answers.question', 'evidences'])
             ->where(OriginalGiatepSchema::isActive() ? 'Folio' : 'folio', $validated['case_folio'])->firstOrFail();
 
-        return response()->json(['prompt' => $generator->externalAnalysisPrompt($case, $validated['story'] ?? null, $validated['questionnaire_options'] ?? [])]);
+        $prompt = $generator->externalAnalysisPrompt($case, $validated['story'] ?? null, $validated['questionnaire_options'] ?? []);
+        if (($validated['prompt_provider'] ?? 'template') === 'groq') {
+            try {
+                $prompt = app(\App\Services\GroqPromptGenerator::class)->generate($prompt);
+            } catch (RuntimeException $exception) {
+                report($exception);
+
+                return response()->json(['message' => $exception->getMessage()], 503);
+            }
+        }
+
+        return response()->json(['prompt' => $prompt, 'provider' => $validated['prompt_provider'] ?? 'template']);
     }
 
     public function importExternalAnalysis(Request $request, LmStudioFinalStoryGenerator $storyGenerator, StagedLmStudioInvestigationAnalyzer $analyzer): JsonResponse
@@ -328,7 +340,7 @@ class AiAnalysisController extends Controller
         $validated = $request->validate([
             'case_folio' => ['required', 'string', $this->caseFolioExistsRule()], 'story' => ['required', 'string', 'max:30000'],
             'model' => ['nullable', 'string', 'max:255'], 'facts' => ['required', 'array', 'min:1'], 'facts.*' => ['required', 'string', 'max:2000'],
-            'tree' => ['required', 'array'], 'tree.final' => ['required', 'string', 'max:2000'], 'tree.origin' => ['required', 'string', 'max:2000'],
+            'tree' => ['required', 'array'], 'tree.final' => ['required', 'string', 'max:2000'], 'tree.origin' => ['nullable', 'string', 'max:2000'],
             'tree.causes' => ['present', 'array'], 'tree.causes.*' => ['required', 'string', 'max:2000'],
             'tree.graph' => ['sometimes', 'array'], 'tree.graph.final_node_id' => ['required_with:tree.graph', 'string', 'max:40'],
             'tree.graph.nodes' => ['required_with:tree.graph', 'array', 'min:1', 'max:24'],
@@ -349,6 +361,13 @@ class AiAnalysisController extends Controller
             'fact_details.*.source_ids' => ['sometimes', 'array', 'max:50'], 'fact_details.*.source_ids.*' => ['string', 'max:80'],
             'prompt_version' => ['nullable', 'string', 'max:100'],
             'quality_warnings' => ['sometimes', 'array', 'max:30'], 'quality_warnings.*' => ['string', 'max:2000'],
+            'pending_verifications' => ['sometimes', 'array', 'max:30'], 'pending_verifications.*' => ['string', 'max:2000'],
+            'questionnaire_selections' => ['sometimes', 'array', 'max:80'],
+            'questionnaire_selections.*.field' => ['required', 'string', 'max:255'],
+            'questionnaire_selections.*.selected_values' => ['required', 'array', 'max:20'],
+            'questionnaire_selections.*.selected_values.*' => ['string', 'max:500'],
+            'questionnaire_selections.*.evidence' => ['nullable', 'string', 'max:2000'],
+            'questionnaire_selections.*.rationale' => ['nullable', 'string', 'max:1000'],
             'manual_entry' => ['sometimes', 'boolean'],
             'factor_codes' => ['present', 'array', 'max:24'], 'factor_codes.*' => ['string', 'exists:cause_factors,codigo_efectivo'],
             'measures' => ['present', 'array'], 'measures.*.description' => ['required', 'string', 'max:3000'],
@@ -361,7 +380,7 @@ class AiAnalysisController extends Controller
             throw ValidationException::withMessages(['fact_details' => 'Los hechos detallados no coinciden con la lista revisada. Vuelva a generar las etapas posteriores.']);
         }
         $graph = $validated['tree']['graph'] ?? null;
-        if ($graph !== null) {
+        if ($graph !== null && ! ($validated['manual_entry'] ?? false)) {
             try {
                 $analyzer->validateGraph($graph);
                 if (isset($validated['fact_details'])) {
@@ -385,12 +404,28 @@ class AiAnalysisController extends Controller
 
         $manualEntry = (bool) ($validated['manual_entry'] ?? false);
         $investigation = DB::transaction(function () use ($request, $validated, $manualEntry): Investigation {
-            $case = OccupationalCase::where('folio', $validated['case_folio'])->firstOrFail();
-            $investigation = Investigation::firstOrCreate(['occupational_case_id' => $case->id], [
-                'folio' => 'INV-'.now()->year.'-'.str_pad((string) (Investigation::query()->lockForUpdate()->count() + 1), 3, '0', STR_PAD_LEFT),
-                'owner_id' => $request->user()->id,
-                'status' => 'En desarrollo',
-            ]);
+            if (OriginalGiatepSchema::isActive()) {
+                $case = OccupationalCase::query()->where('Folio', $validated['case_folio'])->firstOrFail();
+                $investigation = $case->investigation()->lockForUpdate()->first();
+
+                if (! $investigation) {
+                    $sequence = (int) Investigation::query()->lockForUpdate()->max('Codigo_Investigacion') + 1;
+                    $investigation = $case->investigation()->create([
+                        'folio' => 'INV-'.now()->year.'-'.str_pad((string) $sequence, 3, '0', STR_PAD_LEFT),
+                        'owner_id' => $request->user()->getKey(),
+                        'status' => 'En desarrollo',
+                        'created_at' => now(),
+                        'final_story' => $validated['story'],
+                    ]);
+                }
+            } else {
+                $case = OccupationalCase::where('folio', $validated['case_folio'])->firstOrFail();
+                $investigation = Investigation::firstOrCreate(['occupational_case_id' => $case->id], [
+                    'folio' => 'INV-'.now()->year.'-'.str_pad((string) (Investigation::query()->lockForUpdate()->count() + 1), 3, '0', STR_PAD_LEFT),
+                    'owner_id' => $request->user()->id,
+                    'status' => 'En desarrollo',
+                ]);
+            }
             $this->ensureInvestigationEditable($investigation);
             $investigation->update(['final_story' => $validated['story'], 'ai_model' => $validated['model'] ?? null, 'ai_analyzed_at' => now()]);
             $investigation->facts()->delete();
@@ -400,7 +435,7 @@ class AiAnalysisController extends Controller
                 $investigation->facts()->create(['position' => $position + 1, 'description' => $fact, 'ai_generated' => ! $manualEntry]);
             }
             $investigation->causalNodes()->create(['node_type' => 'final', 'position' => 1, 'description' => $validated['tree']['final'], 'ai_generated' => ! $manualEntry]);
-            $origin = trim($validated['tree']['origin']);
+            $origin = trim((string) ($validated['tree']['origin'] ?? ''));
             $final = trim($validated['tree']['final']);
             if ($origin !== '' && $origin !== $final) {
                 $investigation->causalNodes()->create(['node_type' => 'origin', 'position' => 1, 'description' => $validated['tree']['origin'], 'ai_generated' => ! $manualEntry]);
@@ -421,7 +456,7 @@ class AiAnalysisController extends Controller
                 ]);
             }
             $factorIds = CauseFactor::query()->whereIn('codigo_efectivo', $validated['factor_codes'])->pluck('id');
-            $investigation->belongsToMany(CauseFactor::class, 'investigation_cause_factor')->sync(
+            $investigation->causeFactors()->sync(
                 $factorIds->mapWithKeys(fn (int $id): array => [$id => ['origen' => $manualEntry ? 'manual' : 'ia', 'validated_by' => $request->user()->id, 'validated_at' => now()]])->all(),
             );
             $graphNodes = collect($validated['tree']['graph']['nodes'] ?? [])->keyBy('id');
@@ -522,6 +557,8 @@ class AiAnalysisController extends Controller
             'interview_location' => ['nullable', 'string', 'max:200'],
             'answers' => ['required', 'array'],
             'answers.*' => ['present'],
+            'question_labels' => ['sometimes', 'array', 'max:300'],
+            'question_labels.*' => ['nullable', 'string', 'max:500'],
         ]);
 
         $declarationId = DB::transaction(function () use ($request, $validated): int {
@@ -578,12 +615,13 @@ class AiAnalysisController extends Controller
 
             $order = 0;
             foreach ($validated['answers'] as $key => $value) {
+                $questionLabel = trim((string) ($validated['question_labels'][$key] ?? ''));
                 $question = DB::table('pregunta_declaracion')->where('Variable', $key)->first();
                 if (! $question) {
                     $questionId = DB::table('pregunta_declaracion')->insertGetId([
                         'Id_Formulario' => $formId,
                         'Seccion' => str_starts_with($key, 'interview_') ? 'Observaciones' : 'Entrevista',
-                        'Texto_Pregunta' => str_replace(['_', '[]'], ' ', $key),
+                        'Texto_Pregunta' => $questionLabel !== '' ? $questionLabel : str_replace(['_', '[]'], ' ', $key),
                         'Tipo_Respuesta' => is_array($value) ? 'multiple' : 'texto',
                         'Orden' => ++$order,
                         'Obligatorio_Si_Aplica' => false,
@@ -591,6 +629,9 @@ class AiAnalysisController extends Controller
                     ], 'Id_Pregunta');
                 } else {
                     $questionId = $question->Id_Pregunta;
+                    if ($questionLabel !== '' && $question->Texto_Pregunta !== $questionLabel) {
+                        DB::table('pregunta_declaracion')->where('Id_Pregunta', $questionId)->update(['Texto_Pregunta' => $questionLabel]);
+                    }
                 }
 
                 $answerText = is_array($value) ? json_encode($value, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) : (string) $value;

@@ -397,8 +397,48 @@ document.querySelectorAll('[data-external-analysis]').forEach((panel) => {
             body: JSON.stringify(payload),
         });
         const data = await response.json().catch(() => ({}));
-        if (! response.ok) throw new Error(data.message || Object.values(data.errors || {}).flat().join(' ') || `Error HTTP ${response.status}`);
+        if (! response.ok) {
+            const validationErrors = Object.entries(data.errors || {})
+                .map(([field, messages]) => `${field}: ${(Array.isArray(messages) ? messages : [messages]).join(' ')}`)
+                .join(' ');
+            throw new Error(validationErrors || data.message || `Error HTTP ${response.status}`);
+        }
         return data;
+    };
+
+    const buildAnalysisStorePayload = () => {
+        if (! importedAnalysis?.facts?.length) return null;
+        const tree = importedAnalysis.tree || { final_node_id: '', nodes: [], edges: [] };
+        const nodes = tree.nodes || [];
+        const finalNode = nodes.find((node) => node.id === tree.final_node_id);
+
+        return {
+            case_folio: workspace.dataset.caseFolio,
+            story: story.value.trim(),
+            model: importedAnalysis.model || modelSelect.value || null,
+            facts: importedAnalysis.facts.map((fact) => fact.description),
+            fact_details: importedAnalysis.facts,
+            tree: {
+                final: finalNode?.description || '',
+                origin: '',
+                causes: nodes.filter((node) => node.id !== tree.final_node_id).map((node) => node.description),
+                graph: tree,
+            },
+            factor_codes: [],
+            measures: (importedAnalysis.measures || []).map((measure) => ({
+                description: measure.description,
+                category: measure.category,
+                responsible: measure.responsible || 'Pendiente de asignar',
+                due_date: measure.due_date || null,
+                criterion: measure.criterion || '',
+                related_node_ids: measure.related_node_ids || [],
+            })),
+            quality_warnings: importedAnalysis.quality_warnings || [],
+            pending_verifications: importedAnalysis.pending_verifications || [],
+            questionnaire_selections: importedAnalysis.questionnaire_selections || [],
+            prompt_version: importedAnalysis.prompt_version || null,
+            manual_entry: importedAnalysis.model === 'importacion-directa-sin-IA',
+        };
     };
 
     const collectQuestionnaireOptions = () => {
@@ -428,7 +468,7 @@ document.querySelectorAll('[data-external-analysis]').forEach((panel) => {
     };
 
     const setBusy = (busy, message) => {
-        panel.querySelectorAll('[data-create-external-prompt], [data-copy-external-prompt], [data-import-external]').forEach((button) => { button.disabled = busy; });
+        panel.querySelectorAll('[data-create-external-prompt], [data-copy-external-prompt], [data-import-external], [data-fill-without-ai]').forEach((button) => { button.disabled = busy; });
         if (message) status.textContent = message;
     };
 
@@ -549,11 +589,14 @@ document.querySelectorAll('[data-external-analysis]').forEach((panel) => {
             const data = await requestJson(workspace.dataset.externalPromptUrl, {
                 case_folio: workspace.dataset.caseFolio,
                 story: story.value.trim(),
+                prompt_provider: panel.querySelector('[data-prompt-provider]')?.value || 'template',
                 questionnaire_options: questionnaireOptions,
             });
             promptOutput.value = data.prompt || '';
             panel.querySelector('[data-copy-external-prompt]').disabled = ! promptOutput.value;
-            status.textContent = 'Prompt listo. Cópialo en la IA externa y pega aquí su respuesta.';
+            status.textContent = data.provider === 'groq'
+                ? 'Prompt redactado por Groq. Revísalo antes de copiarlo y pegarlo en la IA externa.'
+                : 'Prompt listo. Cópialo en la IA externa y pega aquí su respuesta.';
         } catch (error) {
             status.textContent = error.message;
         } finally { setBusy(false); }
@@ -564,6 +607,109 @@ document.querySelectorAll('[data-external-analysis]').forEach((panel) => {
             await navigator.clipboard.writeText(promptOutput.value);
             status.textContent = 'Prompt copiado.';
         } catch { status.textContent = 'No se pudo copiar automáticamente; selecciona y copia el texto.'; }
+    });
+
+    panel.querySelector('[data-fill-without-ai]')?.addEventListener('click', () => {
+        const raw = externalResponse.value.trim();
+        if (raw.length < 10) {
+            status.textContent = 'Pega primero la respuesta JSON en el campo “Respuesta de la IA externa”.';
+            externalResponse.focus();
+            return;
+        }
+
+        try {
+            const jsonText = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+            const parsed = JSON.parse(jsonText);
+            if (!Array.isArray(parsed.facts) || parsed.facts.length === 0 || parsed.facts.length > 24) {
+                throw new Error('La respuesta debe incluir entre 1 y 24 hechos en “facts”.');
+            }
+            if (!parsed.tree || !Array.isArray(parsed.tree.nodes) || parsed.tree.nodes.length === 0 || parsed.tree.nodes.length > 24 || !Array.isArray(parsed.tree.edges)) {
+                throw new Error('La respuesta debe incluir tree.nodes y tree.edges.');
+            }
+            if (!Array.isArray(parsed.measures)) {
+                throw new Error('La respuesta debe incluir la lista “measures”, aunque esté vacía.');
+            }
+
+            const facts = parsed.facts.map((fact, index) => {
+                if (!fact || typeof fact.description !== 'string' || !fact.description.trim() || fact.description.length > 2000) {
+                    throw new Error(`El hecho ${index + 1} no tiene descripción.`);
+                }
+                if (typeof fact.evidence === 'string' && fact.evidence.length > 2000) throw new Error(`La cita del hecho ${index + 1} supera los 2.000 caracteres.`);
+                if (typeof fact.source === 'string' && fact.source.length > 255) throw new Error(`La fuente del hecho ${index + 1} supera los 255 caracteres.`);
+                return {
+                    id: `H${index + 1}`,
+                    description: fact.description.trim(),
+                    classification: ['hecho', 'permanente'].includes(fact.classification) ? fact.classification : 'hecho',
+                    evidence_status: ['verificado', 'declarado', 'no_verificado'].includes(fact.evidence_status) ? fact.evidence_status : 'no_verificado',
+                    evidence: typeof fact.evidence === 'string' ? fact.evidence : '',
+                    source: typeof fact.source === 'string' ? fact.source : 'Sin fuente indicada',
+                };
+            });
+            const nodes = parsed.tree.nodes.map((node, index) => {
+                if (!node || typeof node.id !== 'string' || !node.id.trim() || node.id.length > 40 || typeof node.description !== 'string' || !node.description.trim() || node.description.length > 600) {
+                    throw new Error(`El nodo ${index + 1} no tiene identificador o descripción.`);
+                }
+                const factMatch = /^H([1-9]\d*)$/.exec(node.id.trim());
+                if (!factMatch) throw new Error(`El nodo ${index + 1} debe usar un identificador H válido.`);
+                const fact = facts.find((item) => item.id === node.id.trim());
+                if (!fact) throw new Error(`El nodo ${node.id} no corresponde a ningún hecho de la lista.`);
+                if (fact.description !== node.description.trim()) throw new Error(`La descripción del nodo ${node.id} debe coincidir con la del hecho ${node.id}.`);
+                return { id: node.id.trim(), type: fact.classification, description: fact.description };
+            });
+            const nodeIds = new Set(nodes.map((node) => node.id));
+            if (nodeIds.size !== nodes.length) throw new Error('El árbol contiene identificadores de nodo duplicados.');
+            if (!parsed.tree.final_node_id || !nodeIds.has(parsed.tree.final_node_id)) {
+                throw new Error('tree.final_node_id debe coincidir con el ID de un nodo existente.');
+            }
+            if (parsed.tree.edges.length > 40) throw new Error('El árbol supera el máximo de 40 vínculos.');
+            const edges = parsed.tree.edges.map((edge, index) => {
+                if (!edge || !nodeIds.has(edge.from) || !nodeIds.has(edge.to) || edge.from === edge.to) {
+                    throw new Error(`El vínculo ${index + 1} apunta a nodos inválidos.`);
+                }
+                return {
+                    from: edge.from,
+                    to: edge.to,
+                    link_type: ['causal', 'aparente'].includes(edge.link_type) ? edge.link_type : 'aparente',
+                    logic: ['cadena', 'conjuncion', 'disyuncion'].includes(edge.logic) ? edge.logic : 'cadena',
+                    basis: typeof edge.basis === 'string' && edge.basis.length <= 1000 ? edge.basis : 'Importado sin revisión local.',
+                    evidence: typeof edge.evidence === 'string' && edge.evidence.length <= 1000 ? edge.evidence : '',
+                };
+            });
+            const measures = parsed.measures.map((measure, index) => {
+                if (!measure || typeof measure.description !== 'string' || !measure.description.trim() || measure.description.length > 3000) {
+                    throw new Error(`La medida ${index + 1} no tiene descripción.`);
+                }
+                if (typeof measure.category === 'string' && measure.category.length > 80) throw new Error(`La categoría de la medida ${index + 1} supera los 80 caracteres.`);
+                if (typeof measure.responsible === 'string' && measure.responsible.length > 255) throw new Error(`El responsable de la medida ${index + 1} supera los 255 caracteres.`);
+                if (typeof measure.criterion === 'string' && measure.criterion.length > 2000) throw new Error(`El criterio de la medida ${index + 1} supera los 2.000 caracteres.`);
+                return {
+                    description: measure.description.trim(),
+                    category: typeof measure.category === 'string' ? measure.category : 'Administrativa',
+                    responsible: typeof measure.responsible === 'string' ? measure.responsible : 'Pendiente de asignar',
+                    due_date: typeof measure.due_date === 'string' ? measure.due_date : '',
+                    criterion: typeof measure.criterion === 'string' ? measure.criterion : '',
+                    related_node_ids: Array.isArray(measure.related_node_ids) ? measure.related_node_ids.filter((id) => nodeIds.has(id)) : [],
+                };
+            });
+            const warnings = Array.isArray(parsed.quality_warnings) ? parsed.quality_warnings.filter((item) => typeof item === 'string') : [];
+            warnings.unshift('Carga directa: no se consultó LM Studio ni Groq. Verifica citas, fuentes, hechos, vínculos y medidas antes de guardar.');
+
+            showAnalysis({
+                facts,
+                tree: { final_node_id: parsed.tree.final_node_id, nodes, edges },
+                measures,
+                pending_verifications: Array.isArray(parsed.pending_verifications) ? parsed.pending_verifications.filter((item) => typeof item === 'string') : [],
+                questionnaire_selections: Array.isArray(parsed.questionnaire_selections) ? parsed.questionnaire_selections : [],
+                quality_warnings: warnings,
+                pending_verifications: Array.isArray(parsed.pending_verifications) ? parsed.pending_verifications.filter((item) => typeof item === 'string') : [],
+                model: 'importacion-directa-sin-IA',
+                prompt_version: 'importacion-directa-sin-IA-v1',
+            });
+            status.textContent = 'Campos completados desde el JSON, sin consultar ninguna IA. El borrador aún no está guardado.';
+            resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch (error) {
+            status.textContent = `No se pudieron completar los campos: ${error.message}`;
+        }
     });
 
     panel.querySelector('[data-import-external]')?.addEventListener('click', async () => {
@@ -589,41 +735,46 @@ document.querySelectorAll('[data-external-analysis]').forEach((panel) => {
         if (! importedAnalysis?.facts?.length) return;
         saveButton.disabled = true;
         status.textContent = 'Guardando la propuesta revisada…';
-        const tree = importedAnalysis.tree || { final_node_id: '', nodes: [], edges: [] };
-        const nodes = tree.nodes || [];
-        const finalNode = nodes.find((node) => node.id === tree.final_node_id);
-        const payload = {
-            case_folio: workspace.dataset.caseFolio,
-            story: story.value.trim(),
-            model: importedAnalysis.model || modelSelect.value || null,
-            facts: importedAnalysis.facts.map((fact) => fact.description),
-            fact_details: importedAnalysis.facts,
-            tree: {
-                final: finalNode?.description || '',
-                origin: '',
-                causes: nodes.filter((node) => node.id !== tree.final_node_id).map((node) => node.description),
-                graph: tree,
-            },
-            factor_codes: [],
-            measures: (importedAnalysis.measures || []).map((measure) => ({
-                description: measure.description,
-                category: measure.category,
-                responsible: measure.responsible || 'Pendiente de asignar',
-                due_date: measure.due_date || null,
-                criterion: measure.criterion || '',
-                related_node_ids: measure.related_node_ids || [],
-            })),
-            quality_warnings: importedAnalysis.quality_warnings || [],
-            prompt_version: importedAnalysis.prompt_version || null,
-        };
         try {
-            const data = await requestJson(workspace.dataset.analysisStoreUrl, payload);
+            const data = await requestJson(workspace.dataset.analysisStoreUrl, buildAnalysisStorePayload());
             status.textContent = data.message || 'Análisis guardado correctamente.';
+            saveButton.disabled = false;
         } catch (error) {
             status.textContent = error.message;
             saveButton.disabled = false;
         }
     });
+
+    const investigationForm = workspace.querySelector('[data-investigation-form]');
+    const workflowSaveButton = investigationForm?.querySelector('[data-save-workflow]');
+    const workflowSaveStatus = investigationForm?.querySelector('[data-workflow-save-status]');
+    let analysisSavedForWorkflow = false;
+    investigationForm?.addEventListener('submit', async (event) => {
+        if (! workflowSaveButton || event.submitter !== workflowSaveButton) return;
+        if (analysisSavedForWorkflow) {
+            analysisSavedForWorkflow = false;
+            return;
+        }
+        const payload = buildAnalysisStorePayload();
+        if (! payload) return;
+
+        event.preventDefault();
+        workflowSaveButton.disabled = true;
+        if (workflowSaveStatus) workflowSaveStatus.textContent = 'Guardando hechos, árbol y medidas…';
+        try {
+            await requestJson(workspace.dataset.analysisStoreUrl, payload);
+            analysisSavedForWorkflow = true;
+            workflowSaveButton.disabled = false;
+            if (workflowSaveStatus) workflowSaveStatus.textContent = 'Análisis guardado; guardando los demás cambios…';
+            investigationForm.requestSubmit(workflowSaveButton);
+        } catch (error) {
+            workflowSaveButton.disabled = false;
+            if (workflowSaveStatus) {
+                workflowSaveStatus.textContent = `No se guardó el análisis: ${error.message}`;
+                workflowSaveStatus.classList.add('text-rose-700');
+            }
+        }
+    }, true);
 
     const editor = workspace.querySelector('[data-results-editor]');
     const editorBody = editor?.querySelector('[data-results-editor-body]');
@@ -1131,10 +1282,19 @@ document.querySelectorAll('[data-interviews-workspace]').forEach((workspace) => 
         const role = workspace.querySelector('[name="interviewee_role"]').value.trim() || 'Sin cargo informado';
         const dateValue = workspace.querySelector('[name="interview_date"]').value;
         const answers = {};
+        const questionLabels = {};
         editor.querySelectorAll('[name]:not([disabled])').forEach((field) => {
             if (['interviewee_name', 'interviewee_rut', 'interviewee_role', 'interviewee_company', 'witness_type', 'interview_date', 'interview_start_time', 'interview_location'].includes(field.name)) return;
-            if ((field.type === 'radio' || field.type === 'checkbox') && ! field.checked) return;
             const key = field.name.replace(/\[\]$/, '');
+            if (! questionLabels[key]) {
+                const tableQuestion = field.closest('tr')?.querySelector('td:first-child')?.innerText?.trim();
+                const branchQuestion = field.closest('[data-branch-question]')?.querySelector(':scope > p')?.innerText?.trim();
+                const panelQuestion = field.closest('[data-branch-panel]')?.querySelector(':scope > p')?.innerText?.trim();
+                const fieldLabel = field.closest('label')?.querySelector('span')?.innerText?.trim();
+                const standaloneQuestion = field.closest('fieldset')?.querySelector('p.label')?.innerText?.trim();
+                questionLabels[key] = tableQuestion || panelQuestion || branchQuestion || fieldLabel || standaloneQuestion || key.replace(/_/g, ' ');
+            }
+            if ((field.type === 'radio' || field.type === 'checkbox') && ! field.checked) return;
             if (field.name.endsWith('[]')) answers[key] = [...(answers[key] || []), field.value];
             else answers[key] = field.value;
         });
@@ -1148,7 +1308,7 @@ document.querySelectorAll('[data-interviews-workspace]').forEach((workspace) => 
                 interviewee_role: role, interviewee_company: workspace.querySelector('[name="interviewee_company"]')?.value || null,
                 witness_type: witness.value, interview_date: dateValue || null,
                 interview_start_time: workspace.querySelector('[name="interview_start_time"]')?.value || null,
-                interview_location: workspace.querySelector('[name="interview_location"]')?.value || null, answers,
+                interview_location: workspace.querySelector('[name="interview_location"]')?.value || null, answers, question_labels: questionLabels,
             }),
         });
         const stored = await response.json();
@@ -1261,6 +1421,36 @@ document.querySelectorAll('[data-unsaved-form]').forEach((form) => {
 
 const investigationForm = document.querySelector('[data-investigation-form]');
 const linkedCaseId = new URLSearchParams(window.location.search).get('case');
+if (investigationForm) {
+    const saveButton = investigationForm.querySelector('[data-save-workflow]');
+    const status = investigationForm.querySelector('[data-workflow-save-status]');
+    let saveAttempted = false;
+
+    saveButton?.addEventListener('click', () => {
+        saveAttempted = true;
+        if (status) {
+            status.textContent = 'Comprobando los campos obligatorios…';
+            status.classList.remove('text-rose-700');
+        }
+    });
+    investigationForm.addEventListener('invalid', (event) => {
+        if (!saveAttempted || !status) return;
+        const field = event.target;
+        const label = field.labels?.[0]?.querySelector('.label')?.innerText?.trim() || field.getAttribute('aria-label') || field.name;
+        status.textContent = `No se guardó: completa el campo obligatorio${label ? ` “${label}”` : ''}.`;
+        status.classList.add('text-rose-700');
+    }, true);
+    investigationForm.addEventListener('submit', (event) => {
+        if (event.submitter !== saveButton) return;
+        saveAttempted = false;
+        if (status) {
+            status.textContent = 'Guardando cambios…';
+            status.classList.remove('text-rose-700');
+        }
+        saveButton.disabled = true;
+        saveButton.textContent = 'Guardando…';
+    });
+}
 if (investigationForm?.dataset.investigationReadonly === 'true') {
     investigationForm.querySelectorAll('input:not([name="workflow_action"]):not([name="_token"]), textarea, select, button:not([name="workflow_action"])').forEach((control) => { control.disabled = true; });
 }

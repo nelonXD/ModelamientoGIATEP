@@ -38,6 +38,13 @@ class InterviewAnswer extends Model
         return Attribute::get(fn (mixed $value, array $attributes): mixed => OriginalGiatepSchema::isActive() ? ($attributes['Id_Declaracion'] ?? null) : $value);
     }
 
+    protected function questionKey(): Attribute
+    {
+        return Attribute::get(fn (mixed $value, array $attributes): mixed => OriginalGiatepSchema::isActive()
+            ? QuestionnaireQuestion::query()->whereKey($attributes['Id_Pregunta'] ?? null)->value('Variable')
+            : $value);
+    }
+
     protected function value(): Attribute
     {
         return Attribute::get(function (mixed $value, array $attributes): mixed {
@@ -53,7 +60,9 @@ class InterviewAnswer extends Model
 
     public function question(): BelongsTo
     {
-        return $this->belongsTo(QuestionnaireQuestion::class, 'questionnaire_question_id');
+        $foreignKey = OriginalGiatepSchema::isActive() ? 'Id_Pregunta' : 'questionnaire_question_id';
+
+        return $this->belongsTo(QuestionnaireQuestion::class, $foreignKey);
     }
 
     protected function casts(): array

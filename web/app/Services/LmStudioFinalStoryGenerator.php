@@ -83,7 +83,19 @@ class LmStudioFinalStoryGenerator
         } catch (ConnectionException $exception) {
             throw new RuntimeException('LM Studio agotó el tiempo de espera al generar el relato. Verifica que el modelo siga cargado y vuelve a intentarlo.', previous: $exception);
         } catch (RequestException $exception) {
-            throw new RuntimeException('LM Studio rechazó la generación del relato. Verifica el modelo seleccionado y que su servidor admita salida JSON estructurada.', previous: $exception);
+            $detail = $this->safeLmStudioError($exception->response->json('error.message')
+                ?? $exception->response->json('message')
+                ?? $exception->response->body());
+            $normalized = mb_strtolower($detail);
+            if (str_contains($normalized, 'context') || str_contains($normalized, 'tokens') && (str_contains($normalized, 'exceed') || str_contains($normalized, 'length') || str_contains($normalized, 'limit'))) {
+                $reason = 'La entrada supera el contexto disponible del modelo. Reduce las fuentes o aumenta el contexto asignado al modelo en LM Studio.';
+            } elseif (str_contains($normalized, 'json_schema') || str_contains($normalized, 'response_format') || str_contains($normalized, 'structured output')) {
+                $reason = 'El modelo o el servidor no admite el formato JSON estructurado requerido para el relato. Prueba un modelo compatible con Structured Output.';
+            } else {
+                $reason = 'Verifica el modelo seleccionado, el contexto disponible y su compatibilidad con JSON estructurado.';
+            }
+
+            throw new RuntimeException('LM Studio rechazó la generación del relato (HTTP '.$exception->response->status().'). '.$reason.($detail !== '' ? ' Detalle: '.$detail : ''), previous: $exception);
         }
 
         if ($issues !== []) {
@@ -507,7 +519,7 @@ PROMPT;
                     ->map(fn (mixed $value): string => trim((string) $value))->values()->all();
 
                 return $values === [] ? null : [
-                    'pregunta' => $answer->question?->pregunta ?: Str::of($answer->question_key)->replace('_', ' ')->ucfirst()->toString(),
+                    'pregunta' => $this->interviewQuestionLabel($answer),
                     'respuesta_declarada' => $values,
                 ];
             })->filter()->values()->all();
@@ -532,6 +544,112 @@ PROMPT;
         unset($source);
 
         return $sources;
+    }
+
+    private function interviewQuestionLabel(mixed $answer): string
+    {
+        $question = $answer->question;
+        $label = trim((string) ($question?->texto_pregunta ?? $question?->texto ?? $question?->pregunta ?? ''));
+        $key = trim((string) ($answer->question_key ?? $question?->variable ?? ''));
+        $machineLabel = Str::of($key)->replace(['_', '[]'], ' ')->squish()->lower()->toString();
+
+        if ($key !== '' && ($label === '' || Str::of($label)->squish()->lower()->toString() === $machineLabel)) {
+            $adaptedLabels = $this->adaptedInterviewQuestionLabels();
+            $label = $adaptedLabels[$key]
+                ?? $this->catalogInterviewQuestionLabel($key)
+                ?? Str::of($key)->replace(['_', '[]'], ' ')->squish()->ucfirst()->toString();
+        }
+
+        return $label !== '' ? $label : 'Respuesta declarada';
+    }
+
+    private function catalogInterviewQuestionLabel(string $key): ?string
+    {
+        $catalog = [
+            'task_own_job' => '¿La tarea que desarrollaba era propia de su puesto de trabajo?',
+            'task_habitual' => '¿La tarea desarrollada era habitual?',
+            'task_same_way' => '¿Se realizaba de la misma manera que normalmente?',
+            'task_change_reasons' => 'Motivo por el que la tarea se realizó de manera diferente',
+            'task_usual_accident_possible' => '¿Era posible que ocurriera el accidente realizando la tarea de forma habitual?',
+            'task_frequency' => 'Frecuencia con que había desarrollado esta misma tarea',
+            'instructions_received' => '¿Había recibido instrucciones sobre cómo realizar la tarea?',
+            'instruction_type' => 'Tipo de instrucciones recibidas',
+            'instruction_source' => 'Origen de las instrucciones recibidas',
+            'followed_instructions' => '¿Realizaba la tarea de acuerdo con esas instrucciones?',
+            'ppe_habitual' => '¿La tarea se realizaba habitualmente con equipo de protección personal?',
+            'ppe_description' => 'Equipo de protección personal utilizado',
+            'usual_place' => '¿La tarea se realizaba en el lugar habitual de trabajo?',
+            'usual_place_possible' => '¿Era posible que ocurriera el accidente en el lugar habitual?',
+            'usual_time' => '¿La tarea se realizaba en el momento habitual?',
+            'usual_time_possible' => '¿Era posible que ocurriera el accidente en el momento habitual?',
+            'equipment_used' => '¿Se utilizaban equipos de trabajo durante la tarea?',
+            'equipment_description' => 'Equipos de trabajo utilizados',
+            'equipment_conditions' => 'Circunstancias asociadas a equipos de trabajo',
+            'substance_involved' => '¿Estaba involucrada alguna sustancia o producto?',
+            'interview_observations' => 'Observaciones generales de la entrevista',
+        ];
+
+        if (isset($catalog[$key])) {
+            return $catalog[$key];
+        }
+
+        if (preg_match('/^(ppe|equipment)_followup_(\d+)$/', $key, $match) === 1) {
+            $questions = [
+                'ppe' => ['¿El EPP era adecuado al riesgo?', '¿Utilizaba el EPP al momento del accidente?', '¿Otro EPP habría evitado el accidente?'],
+                'equipment' => ['¿Era el equipo habitual para la tarea?', '¿Era posible que ocurriera el accidente utilizando el equipo habitual?'],
+            ];
+
+            return $questions[$match[1]][(int) $match[2]] ?? null;
+        }
+
+        return null;
+    }
+
+    /** @return array<string, string> */
+    private function adaptedInterviewQuestionLabels(): array
+    {
+        return [
+            'task_own_job' => '¿La tarea que desarrollaba era propia de su puesto de trabajo?',
+            'task_habitual' => '¿La tarea desarrollada era habitual?',
+            'task_same_way' => '¿Se realizaba de la misma manera que normalmente?',
+            'task_usual_accident_possible' => '¿Era posible que ocurriera el accidente realizando la tarea de forma habitual?',
+            'task_change_reasons' => 'Motivo de realizarla de diferente manera',
+            'task_change_other' => 'Otro motivo de realizarla de diferente manera',
+            'task_frequency' => '¿Con qué frecuencia había desarrollado esta misma tarea?',
+            'instructions_received' => '¿Había recibido instrucciones sobre cómo realizar la tarea?',
+            'instruction_type' => 'Tipo de instrucciones',
+            'instruction_source' => '¿De quién las recibió?',
+            'followed_instructions' => '¿Realizaba la tarea de acuerdo con esas instrucciones?',
+            'ppe_habitual' => '¿La tarea se realizaba habitualmente con equipo de protección personal?',
+            'ppe_description' => '¿Qué equipo de protección personal se utilizaba?',
+            'ppe_followup_0' => '¿El EPP era adecuado al riesgo?',
+            'ppe_followup_1' => '¿Utilizaba el EPP al momento del accidente?',
+            'ppe_followup_2' => '¿Otro EPP habría evitado el accidente?',
+            'usual_place' => '¿La tarea se realizaba en el lugar habitual de trabajo?',
+            'usual_place_possible' => '¿Era posible que ocurriera el accidente en el lugar habitual?',
+            'facility_other' => 'Otros antecedentes asociados a las instalaciones',
+            'usual_time' => '¿La tarea se realizaba en el momento habitual?',
+            'usual_time_possible' => '¿Era posible que ocurriera el accidente en el momento habitual?',
+            'equipment_used' => '¿Se utilizaban equipos de trabajo durante la tarea?',
+            'equipment_description' => '¿Qué equipos de trabajo se utilizaban?',
+            'equipment_followup_0' => '¿Era el equipo habitual para la tarea?',
+            'equipment_followup_1' => '¿Era posible que ocurriera el accidente utilizando el equipo habitual?',
+            'equipment_conditions' => 'Circunstancias asociadas a equipos de trabajo',
+            'substance_involved' => '¿Estaba involucrada alguna sustancia o producto?',
+            'interview_observations' => 'Observaciones generales de la entrevista',
+        ];
+    }
+
+    private function safeLmStudioError(mixed $message): string
+    {
+        if (! is_string($message)) {
+            return '';
+        }
+
+        $message = preg_replace('/Bearer\\s+\\S+/i', '[token oculto]', $message) ?? $message;
+        $message = preg_replace('/sk-[A-Za-z0-9_-]{12,}/', '[token oculto]', $message) ?? $message;
+
+        return mb_substr(trim(strip_tags($message)), 0, 420);
     }
 
     private function formatDate(mixed $value): ?string

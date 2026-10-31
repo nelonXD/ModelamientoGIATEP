@@ -135,7 +135,14 @@ class Investigation extends Model
 
     public function causeFactors(): BelongsToMany
     {
-        return $this->belongsToMany(CauseFactor::class, 'investigation_cause_factor')->withPivot(['origen', 'fundamento', 'validated_by', 'validated_at'])->withTimestamps();
+        return $this->belongsToMany(
+            CauseFactor::class,
+            'investigation_cause_factor',
+            'investigation_id',
+            'cause_factor_id',
+            $this->usesOriginalSchema() ? 'Codigo_Investigacion' : 'id',
+            'id',
+        )->withPivot(['origen', 'fundamento', 'validated_by', 'validated_at'])->withTimestamps();
     }
 
     protected function casts(): array

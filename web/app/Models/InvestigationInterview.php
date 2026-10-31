@@ -53,7 +53,7 @@ class InvestigationInterview extends Model
         );
     }
 
-    protected function name(): Attribute
+    protected function intervieweeName(): Attribute
     {
         return Attribute::make(
             get: fn (mixed $value, array $attributes): mixed => OriginalGiatepSchema::isActive()

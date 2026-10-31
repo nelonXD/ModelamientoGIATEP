@@ -626,7 +626,12 @@ PROMPT;
         } catch (ConnectionException $exception) {
             throw new RuntimeException('No se completó la conexión con '.($provider === 'groq' ? 'Groq' : 'LM Studio').' dentro del tiempo de espera. El resultado anterior se conserva.', previous: $exception);
         } catch (RequestException $exception) {
-            throw new RuntimeException(($provider === 'groq' ? 'Groq' : 'LM Studio').' rechazó la solicitud de esta etapa (HTTP '.$exception->response->status().'). Comprueba el modelo y su compatibilidad con salida JSON estructurada.', previous: $exception);
+            $providerName = $provider === 'groq' ? 'Groq' : 'LM Studio';
+            $detail = $this->safeProviderError($exception->response->json('error.message')
+                ?? $exception->response->json('message')
+                ?? $exception->response->body());
+
+            throw new RuntimeException($providerName.' rechazó la solicitud de esta etapa (HTTP '.$exception->response->status().'). '.$this->explainProviderError($detail), previous: $exception);
         }
         if ($response->json('choices.0.finish_reason') === 'length') {
             throw new RuntimeException('El modelo cortó la respuesta al alcanzar su límite de salida. La etapa no se incorporó; usa un relato más acotado o un modelo con mayor capacidad.');
@@ -638,6 +643,33 @@ PROMPT;
         }
 
         return $data;
+    }
+
+    private function safeProviderError(mixed $message): string
+    {
+        if (! is_string($message)) {
+            return '';
+        }
+
+        $message = preg_replace('/Bearer\\s+\\S+/i', '[token oculto]', $message) ?? $message;
+        $message = preg_replace('/sk-[A-Za-z0-9_-]{12,}/', '[token oculto]', $message) ?? $message;
+
+        return mb_substr(trim(strip_tags($message)), 0, 420);
+    }
+
+    private function explainProviderError(string $detail): string
+    {
+        $normalized = mb_strtolower($detail);
+
+        if (str_contains($normalized, 'context') || str_contains($normalized, 'tokens') && (str_contains($normalized, 'exceed') || str_contains($normalized, 'length') || str_contains($normalized, 'limit'))) {
+            return 'La entrada supera el contexto disponible del modelo. Reduce el relato o aumenta el contexto asignado al modelo en LM Studio.'.($detail !== '' ? ' Detalle: '.$detail : '');
+        }
+
+        if (str_contains($normalized, 'json_schema') || str_contains($normalized, 'response_format') || str_contains($normalized, 'structured output') || str_contains($normalized, 'structured output')) {
+            return 'El modelo o el servidor no admite el formato JSON estructurado requerido por esta etapa. Prueba un modelo compatible con Structured Output.'.($detail !== '' ? ' Detalle: '.$detail : '');
+        }
+
+        return 'Revisa el modelo cargado, su contexto y el formato JSON estructurado.'.($detail !== '' ? ' Detalle: '.$detail : '');
     }
 
     private function model(?string $override = null, string $provider = 'lm_studio'): string
