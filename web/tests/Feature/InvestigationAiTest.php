@@ -209,7 +209,7 @@ class InvestigationAiTest extends TestCase
         ]);
         $interview = InvestigationInterview::create([
             'investigation_id' => $investigation->id, 'created_by' => $user->id,
-            'name' => 'Testigo Parcial', 'interviewee_role' => 'Auxiliar',
+            'interviewee_name' => 'Testigo Parcial', 'interviewee_role' => 'Auxiliar',
             'witness_type' => 'Testigo presencial parcial', 'status' => 'Completada',
         ]);
         InterviewAnswer::create([
@@ -408,7 +408,7 @@ class InvestigationAiTest extends TestCase
         ]);
         $matias = InvestigationInterview::create([
             'investigation_id' => $investigation->id, 'created_by' => $user->id,
-            'name' => 'Matías de prueba', 'interviewee_role' => 'Auxiliar',
+            'interviewee_name' => 'Matías de prueba', 'interviewee_role' => 'Auxiliar',
             'witness_type' => 'indirect', 'status' => 'Completada',
         ]);
         InterviewAnswer::create([
@@ -417,7 +417,7 @@ class InvestigationAiTest extends TestCase
         ]);
         $rocio = InvestigationInterview::create([
             'investigation_id' => $investigation->id, 'created_by' => $user->id,
-            'name' => 'Rocío de prueba', 'interviewee_role' => 'Administrativa',
+            'interviewee_name' => 'Rocío de prueba', 'interviewee_role' => 'Administrativa',
             'witness_type' => 'context', 'status' => 'Completada',
         ]);
         InterviewAnswer::create([

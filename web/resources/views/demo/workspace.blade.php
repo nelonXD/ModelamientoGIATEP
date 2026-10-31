@@ -1083,6 +1083,7 @@ $statusClass = fn ($status) => match ($status) {
 
                         <div class="hidden rounded-2xl border border-sky-200 bg-white p-5 shadow-lg sm:p-7" data-results-editor aria-label="Editar resultados">
                             <div class="flex items-center justify-between gap-4"><h3 class="text-xl font-black" data-results-editor-title>Editar resultados</h3><button type="button" class="btn-secondary" data-close-results-editor>Cerrar edición</button></div>
+                            <p class="mt-2 text-sm text-slate-600">Los resultados quedan como borrador hasta que se guarden.</p>
                             <p class="my-3 text-sm text-slate-600">Corrige los datos o agrega y quita elementos de esta sección. Guarda para aplicar los cambios al expediente.</p>
                             <div class="space-y-6" data-results-editor-body></div>
                             <div class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t pt-4"><p class="text-sm text-slate-600" data-results-editor-status></p><button type="button" class="btn-primary" data-save-results-editor>Guardar esta sección</button></div>
